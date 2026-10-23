@@ -100,6 +100,13 @@ void zelda_xenon_renderer_end(void) {
   logged_first_present=true;
  }
 }
+void zelda_xenon_renderer_show_color(uint32_t argb,int frames) {
+ if(!open||!staging) return;
+ uint32_t *px=(uint32_t*)staging;
+ for(uint32_t i=0;i<sw*sh;i++) px[i]=argb;
+ pitch=(int)sw*4;
+ for(int i=0;i<frames;i++) zelda_xenon_renderer_end();
+}
 void zelda_xenon_renderer_close(void) {
  if (staging) free(staging);
  staging = NULL;

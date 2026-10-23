@@ -1,4 +1,7 @@
+#include <errno.h>
 #include <stdint.h>
+#include <stdio.h>
+#include <string.h>
 #include "game.h"
 #include "zelda_rtl.h"
 #include "snes/ppu.h"
@@ -25,25 +28,47 @@ static uint16_t map_input(uint16_t buttons) {
  return out;
 }
 
+
+/* Colour codes shown on screen so a failure can be identified without reading the XSDK log.
+   (Channel order may differ on hardware; what matters is that each stage looks different.) */
+enum { COLOR_RENDERER_OK=0xFF0000FF, COLOR_ASSETS_FAIL=0xFFFF0000, COLOR_ASSETS_OK=0xFF00FF00 };
+
+static bool try_load_assets(const char *path,char *err,size_t err_size) {
+ xsdk_log_write("zelda3: assets try path=%s",path);
+ FILE *f=fopen(path,"rb");
+ if(!f) { xsdk_log_write("zelda3: assets fopen failed errno=%d path=%s",errno,path); return false; }
+ fclose(f);
+ return ZeldaGameLoadAssets(path,err,err_size);
+}
+
+/* There is no reliable working directory on Xbox 360, so try several locations:
+   ZELDA3_ASSETS, the directory of the running XEX, then common drive aliases. */
+static bool load_assets_any(const char *env_path,char *err,size_t err_size) {
+ char path[512];
+ if(env_path && *env_path && try_load_assets(env_path,err,err_size)) return true;
+ const char *img=ExLoadedImageName;
+ if(img) {
+  const char *cut=img;
+  for(const char *p=img;*p;p++) if(*p=='\\'||*p=='/'||*p==':') cut=p+1;
+  size_t len=(size_t)(cut-img);
+  if(len+sizeof "zelda3_assets.dat"<sizeof path) {
+   memcpy(path,img,len); strcpy(path+len,"zelda3_assets.dat");
+   if(try_load_assets(path,err,err_size)) return true;
+  }
+ }
+ static const char *const fallbacks[]={"game:\\zelda3_assets.dat","d:\\zelda3_assets.dat","zelda3_assets.dat"};
+ for(unsigned i=0;i<sizeof fallbacks/sizeof *fallbacks;i++)
+  if(try_load_assets(fallbacks[i],err,err_size)) return true;
+ snprintf(err,err_size,"zelda3_assets.dat not found in any candidate location (see log)");
+ return false;
+}
+
 int main(void) {
  xsdk_log_write("zelda3: stage=program_start image=%s log=%s",
                 ExLoadedImageName ? ExLoadedImageName : "(unknown)",
                 xsdk_log_path() ? xsdk_log_path() : "(log file unavailable)");
  NTSTATUS splash_status=xsdk_splash_show(1500);
  xsdk_log_write("zelda3: stage=splash result=0x%08X", (unsigned)splash_status);
- char asset_error[192];
- const char *asset_path=getenv("ZELDA3_ASSETS");
- xsdk_log_write("zelda3: stage=assets_begin path=%s base=game:\\",
-                asset_path && *asset_path ? asset_path : "zelda3_assets.dat (XSDK title directory)");
- if(!ZeldaGameLoadAssets(asset_path,asset_error,sizeof asset_error)) {
-  xsdk_log_write("zelda3: stage=assets_failed error=%s",asset_error);
-  return 2;
- }
- xsdk_log_write("zelda3: stage=assets_ok");
- xsdk_log_write("zelda3: stage=game_initialize_begin");
- ZeldaGameInitialize(0,0,"us");
- ZeldaGameSetWantedFeatures(0);
- xsdk_log_write("zelda3: stage=game_initialize_ok");
  struct RendererFuncs renderer;
  zelda_xenon_renderer_bind(&renderer);
  xsdk_log_write("zelda3: stage=renderer_open_begin");
@@ -51,6 +76,22 @@ int main(void) {
   xsdk_log_write("zelda3: stage=renderer_open_failed"); return 1;
  }
  xsdk_log_write("zelda3: stage=renderer_open_ok");
+ zelda_xenon_renderer_show_color(COLOR_RENDERER_OK,30);
+ char asset_error[192];
+ const char *asset_path=getenv("ZELDA3_ASSETS");
+ xsdk_log_write("zelda3: stage=assets_begin env=%s",asset_path && *asset_path ? asset_path : "(unset)");
+ if(!load_assets_any(asset_path,asset_error,sizeof asset_error)) {
+  xsdk_log_write("zelda3: stage=assets_failed error=%s",asset_error);
+  zelda_xenon_renderer_show_color(COLOR_ASSETS_FAIL,300);
+  zelda_xenon_renderer_close();
+  return 2;
+ }
+ xsdk_log_write("zelda3: stage=assets_ok");
+ zelda_xenon_renderer_show_color(COLOR_ASSETS_OK,30);
+ xsdk_log_write("zelda3: stage=game_initialize_begin");
+ ZeldaGameInitialize(0,0,"us");
+ ZeldaGameSetWantedFeatures(0);
+ xsdk_log_write("zelda3: stage=game_initialize_ok");
  xsdk_log_write("zelda3: stage=main_loop_enter");
  bool first_frame=true;
  for(;;) {
