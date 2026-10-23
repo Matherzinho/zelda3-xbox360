@@ -442,17 +442,17 @@ void Overlord08_BlobSpawner(int k) {  // 89bcc3
 void Overlord07_MovingFloor(int k) {  // 89bd3f
   if (sprite_state[0] == 4) {
     overlord_type[k] = 0;
-    BYTE(dung_floor_move_flags) = 1;
+    (*(uint8*)(g_ram+(0x41A))) = 1;
     return;
   }
   if (!overlord_gen1[k]) {
     if (++overlord_gen2[k] == 32) {
       overlord_gen2[k] = 0;
-      BYTE(dung_floor_move_flags) = (GetRandomNumber() & (overlord_x_lo[k] ? 3 : 1)) * 2;
+      (*(uint8*)(g_ram+(0x41A))) = (GetRandomNumber() & (overlord_x_lo[k] ? 3 : 1)) * 2;
       overlord_gen2[k] = (GetRandomNumber() & 127) + 128;
       overlord_gen1[k]++;
     } else {
-      BYTE(dung_floor_move_flags) = 1;
+      (*(uint8*)(g_ram+(0x41A))) = 1;
     }
   } else {
     if (!--overlord_gen2[k])

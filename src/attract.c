@@ -405,7 +405,7 @@ void Attract_Fade() {  // 8cede6
 }
 
 void Attract_InitGraphics() {  // 8cee0c
-  memset(&attract_var12, 0, 0x51);
+  memset((g_ram+0x20), 0, 0x51);
   EraseTileMaps_normal();
   Attract_LoadBG3GFX();
   overworld_palette_mode = 4;
@@ -418,7 +418,7 @@ void Attract_InitGraphics() {  // 8cee0c
   Palette_Load_LinkArmorAndGloves();
   main_palette_buffer[0x1d] = 0x3800;
   flag_update_cgram_in_nmi++;
-  BYTE(BG3VOFS_copy2) = 20;
+  (*(uint8*)(g_ram+(0xEA))) = 20;
   Attract_BuildBackgrounds();
   messaging_module = 0;
   dialogue_message_index = 0x112;
@@ -543,7 +543,7 @@ void AttractScene_ThroneRoom() {  // 8cef4e
 void Attract_PrepFinish() {  // 8cefc0
   attract_state++;
   INIDISP_copy = 0;
-  BYTE(BG3VOFS_copy2) = 0;
+  (*(uint8*)(g_ram+(0xEA))) = 0;
   BG2HOFS_copy &= 0x1ff;
   BG2VOFS_copy &= 0x1ff;
   BG2HOFS_copy2 &= 0x1ff;
@@ -608,7 +608,7 @@ void Attract_PrepMaidenWarp() {  // 8cf058
   messaging_module = 0;
   dialogue_message_index = 0x115;
   attract_var10 = 255;
-  BYTE(attract_vram_dst) = 112;
+  (*(uint8*)(g_ram+(0x30))) = 112;
   attract_var19 = 112;
   attract_var20 = 112;
   attract_var1 = 8;
@@ -632,7 +632,7 @@ void Death_Func31() {  // 8cf0e2
   nmi_disable_core_updates++;
   Intro_InitializeMemory_darken();
   Overworld_LoadAllPalettes();
-  BYTE(BG3VOFS_copy2) = 0;
+  (*(uint8*)(g_ram+(0xEA))) = 0;
   M7Y_copy = 0;
   M7X_copy = 0;
   BG1HOFS_copy = 0;
@@ -658,10 +658,10 @@ void Attract_EnactStory() {  // 8cf115
 
 void AttractDramatize_PolkaDots() {  // 8cf126
   if (!(frame_counter & 3)) {
-    BYTE(BG1VOFS_copy)++;
-    BYTE(BG1HOFS_copy)++;
-    BYTE(BG2VOFS_copy)++;
-    BYTE(BG2HOFS_copy)--;
+    (*(uint8*)(g_ram+(0x124)))++;
+    (*(uint8*)(g_ram+(0x120)))++;
+    (*(uint8*)(g_ram+(0x122)))++;
+    (*(uint8*)(g_ram+(0x11E)))--;
   }
 
   if (attract_legend_flag) {
@@ -785,7 +785,7 @@ void AttractDramatize_Prison() {  // 8cf27a
     if (!(++attract_var1 & 7)) {
       if (attract_var3 == 2) {
         attract_var3 = 0xff;
-        if (!HIBYTE(attract_vram_dst) && attract_var1 & 8)
+        if (!(*(uint8*)(g_ram+(0x30)+1)) && attract_var1 & 8)
           sound_effect_2 = 4;
       }
       attract_var3++;
@@ -832,9 +832,9 @@ void AttractDramatize_AgahnimAltar() {  // 8cf423
   }
 
   if (attract_var17 >= 0xa0) {
-    if (BYTE(attract_vram_dst) != 0x60) {
+    if ((*(uint8*)(g_ram+(0x30))) != 0x60) {
       if (!--attract_var1) {
-        BYTE(attract_vram_dst)--;
+        (*(uint8*)(g_ram+(0x30)))--;
         attract_var1 = 8;
       }
     } else {
@@ -852,7 +852,7 @@ void AttractDramatize_AgahnimAltar() {  // 8cf423
 
     attract_x_base = 116;
     attract_y_base = attract_vram_dst;
-    Attract_DrawSpriteSet2(kZeldaPrison_MaidenWarp0 + (BYTE(attract_vram_dst) == 0x70 ? 0 : 2), 2);
+    Attract_DrawSpriteSet2(kZeldaPrison_MaidenWarp0 + ((*(uint8*)(g_ram+(0x30))) == 0x70 ? 0 : 2), 2);
     static const uint8 kAttract_MaidenWarp_Xbase[8] = { 4, 4, 3, 3, 2, 2, 1, 0 };
     static const AttractOamInfo kZeldaPrison_MaidenWarp1[] = {
       { 0,  0, 0x6c, 0x38, 2},
@@ -873,8 +873,8 @@ void AttractDramatize_AgahnimAltar() {  // 8cf423
       { 8,  0, 0x6c, 0x38, 2},
     };
     int k = 7;
-    if (BYTE(attract_vram_dst) < 0x68)
-      k = (BYTE(attract_vram_dst) - 0x68) & 7;
+    if ((*(uint8*)(g_ram+(0x30))) < 0x68)
+      k = ((*(uint8*)(g_ram+(0x30))) - 0x68) & 7;
     attract_x_base = 0x74 + kAttract_MaidenWarp_Xbase[k];
     attract_y_base = 0x76;
     Attract_DrawSpriteSet2(kZeldaPrison_MaidenWarp1 + k * 2, 2);
@@ -994,7 +994,7 @@ void Attract_BuildBackgrounds() {  // 8cf7e6
   {
     int k = 0;
     const uint16 *p = kAttract_CopyToVram_Tab0;
-    uint16 *dst = (uint16 *)&g_ram[0x1006];
+    uint16 *dst = (zle16_t *)&g_ram[0x1006];
     do {
       int j = k & 3;
       do {
@@ -1006,7 +1006,7 @@ void Attract_BuildBackgrounds() {  // 8cf7e6
 
   {
     int k = 0;
-    uint16 *dst = (uint16 *)&g_ram[0x1006];
+    uint16 *dst = (zle16_t *)&g_ram[0x1006];
     do {
       int j = k & 1;
       const uint16 *p = kAttract_CopyToVram_Tab1 + ((k & 0x20) >> 4);

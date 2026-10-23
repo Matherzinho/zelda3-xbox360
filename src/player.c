@@ -89,7 +89,7 @@ static inline uint8 BitSum4(uint8 t) {
 void Dungeon_HandleLayerChange() {  // 81ff05
   link_is_on_lower_level_mirror = 1;
   if (kind_of_in_room_staircase == 0)
-    BYTE(dungeon_room_index) += 16;
+    (*(uint8*)(g_ram+(0xA0))) += 16;
   if (kind_of_in_room_staircase != 2)
     link_is_on_lower_level = 1;
   about_to_jump_off_ledge = 0;
@@ -762,14 +762,14 @@ timer_running:
     fallhole_var1 = 0;
   }
   HandleIndoorCameraAndDoors();
-  if (BYTE(link_z_coord) == 0 || BYTE(link_z_coord) >= 0xe0) {
+  if ((*(uint8*)(g_ram+(0x24))) == 0 || (*(uint8*)(g_ram+(0x24))) >= 0xe0) {
     Player_TileDetectNearby();
     if ((tiledetect_pit_tile & 0xf) == 0xf) {
       link_player_handler_state = kPlayerState_FallingIntoHole;
       link_speed_setting = 4;
     }
   }
-  HIBYTE(link_z_coord) = 0;
+  (*(uint8*)(g_ram+(0x24)+1)) = 0;
 }
 
 void LinkState_OnIce() {  // 878872
@@ -845,7 +845,7 @@ void LinkHop_HoppingSouthOW() {  // 87894e
 void LinkState_HandlingJump() {  // 878a05
   link_actual_vel_z = link_actual_vel_z_mirror;
   link_actual_vel_z_copy = link_actual_vel_z_copy_mirror;
-  BYTE(link_z_coord) = link_z_coord_mirror;
+  (*(uint8*)(g_ram+(0x24))) = link_z_coord_mirror;
   link_actual_vel_z -= 2;
   Link_MovePosition();
   if (sign8(link_actual_vel_z)) {
@@ -890,7 +890,7 @@ after_pit:
   }
   link_actual_vel_z_mirror = link_actual_vel_z;
   link_actual_vel_z_copy_mirror = link_actual_vel_z_copy;
-  BYTE(link_z_coord_mirror) = link_z_coord;
+  (*(uint8*)(g_ram+(0x364))) = link_z_coord;
 }
 
 void LinkHop_FindTileToLandOnSouth() {  // 878ad1
@@ -1358,7 +1358,7 @@ void LinkApplyTileRebound() {  // 879222
   }
   link_auxiliary_state = 1;
   link_want_make_noise_when_dashed = 1;
-  BYTE(scratch_1) = 0;
+  (*(uint8*)(g_ram+(0x74))) = 0;
   link_electrocute_on_touch = 0;
   link_speed_setting = 0;
   link_cant_change_direction = 0;
@@ -1534,15 +1534,15 @@ endif_1:
     link_grabbing_wall = 0;
     some_animation_timer = 0;
     if (player_is_indoors) {
-      BYTE(dungeon_room_index_prev) = dungeon_room_index;
+      (*(uint8*)(g_ram+(0xA2))) = dungeon_room_index;
       Dungeon_FlagRoomData_Quadrants();
       if (Dungeon_IsPitThatHurtsPlayer()) {
         DungeonPitDoDamage();
         return;
       }
     }
-    BYTE(dungeon_room_index_prev) = dungeon_room_index;
-    BYTE(dungeon_room_index) = dung_hdr_travel_destinations[0];
+    (*(uint8*)(g_ram+(0xA2))) = dungeon_room_index;
+    (*(uint8*)(g_ram+(0xA0))) = dung_hdr_travel_destinations[0];
     tiledetect_which_y_pos[0] = link_y_coord;
     link_y_coord = link_y_coord - y - 0x10;
     if (player_is_indoors) {
@@ -1814,7 +1814,7 @@ void Link_HandleSwimAccels() {  // 8798a8
   uint8 mask = 12;
   for (int i = 0; i < 2; i++, mask >>= 2) {
     if (joypad1H_last & mask) {
-      if (swimcoll_var7[i] && swimcoll_var9[i] >= 384) {
+      if (swimcoll_var7[i] &(RAM16P(g_ram+0x334) + (i)) >= 384) {
         uint16 t;
         for (int j = 0; j < 9 && (t = kSwimmingTab3[j]) < swimcoll_var7[i]; j++) {}
         swimcoll_var9[i] = t;
@@ -1839,8 +1839,8 @@ void Link_SetTheMaxAccel() {  // 879903
     return;
   uint8 mask = 12;
   for (int i = 0; i < 2; i++, mask >>= 2) {
-    if ((joypad1H_last & mask) && swimcoll_var5[i] != 2) {
-      if (swimcoll_var1[i] || swimcoll_var7[i] >= 240 && swimcoll_var7[i] >= swimcoll_var9[i]) {
+    if ((joypad1H_last & mask) &(RAM16P(g_ram+0x32B) + (i)) != 2) {
+      if (swimcoll_var1[i] || swimcoll_var7[i] >= 240 &(RAM16P(g_ram+0x33C) + (i)) >= swimcoll_var9[i]) {
         swimcoll_var5[i] = 0;
         if (swimcoll_var7[i] >= 240) {
           swimcoll_var1[i] = 1;
@@ -2585,7 +2585,7 @@ void LinkItem_Shovel() {  // 87a32c
 
   if (player_handler_timer == 1) {
     TileDetect_MainHandler(2);
-    if (BYTE(word_7E04B2)) {
+    if ((*(uint8*)(g_ram+(0x4B2)))) {
       Ancilla_Sfx3_Near(27);
       AncillaAdd_DugUpFlute(54, 0);
     }
@@ -2770,7 +2770,7 @@ void LinkItem_Quake() {  // 87a64b
   byte_7E0324 = 0;
   link_actual_vel_z_mirror = 40;
   link_actual_vel_z_copy_mirror = 40;
-  BYTE(link_z_coord_mirror) = 0;
+  (*(uint8*)(g_ram+(0x364))) = 0;
   Ancilla_Sfx3_Near(35);
 }
 
@@ -2781,13 +2781,13 @@ void LinkState_UsingQuake() {  // 87a6d6
   if (step_counter_for_spin_attack == 10) {
     link_actual_vel_z = link_actual_vel_z_mirror;
     link_actual_vel_z_copy = link_actual_vel_z_copy_mirror;
-    BYTE(link_z_coord) = link_z_coord_mirror;
+    (*(uint8*)(g_ram+(0x24))) = link_z_coord_mirror;
     link_auxiliary_state = 2;
     Player_ChangeZ(2);
     Link_MovePosition();
     link_actual_vel_z_mirror = link_actual_vel_z;
     link_actual_vel_z_copy_mirror = link_actual_vel_z_copy;
-    BYTE(link_z_coord_mirror) = link_z_coord;
+    (*(uint8*)(g_ram+(0x364))) = link_z_coord;
     if (!sign8(link_z_coord)) {
       state_for_spin_attack = sign8(link_actual_vel_z) ? 21 : 20;
       return;
@@ -3151,8 +3151,8 @@ void LinkState_Hookshotting() {  // 87ab7c
     link_is_on_lower_level_mirror ^= 1;
     dung_cur_floor--;
     if (kind_of_in_room_staircase == 0) {
-      BYTE(dungeon_room_index2) = dungeon_room_index;
-      BYTE(dungeon_room_index) += 0x10;
+      (*(uint8*)(g_ram+(0x48E))) = dungeon_room_index;
+      (*(uint8*)(g_ram+(0xA0))) += 0x10;
     }
     if (kind_of_in_room_staircase != 2) {
       link_is_on_lower_level ^= 1;
@@ -3565,7 +3565,7 @@ void Link_APress_LiftCarryThrow() {  // 87b1ca
         some_animation_timer = kLiftTab0[player_handler_timer];
         some_animation_timer_steps = kLiftTab1[player_handler_timer];
         if (player_handler_timer == 6) {
-          BYTE(dung_secrets_unk1) = 0;
+          (*(uint8*)(g_ram+(0xB9C))) = 0;
           Point16U pt;
           uint8 what = (player_is_indoors) ? Dungeon_LiftAndReplaceLiftable(&pt) : Overworld_HandleLiftableTiles(&pt);
           link_player_handler_state = 24;
@@ -3966,9 +3966,9 @@ xy:   RunSlopeCollisionChecks_HorizontalFirst();
       if (!countdown_for_blink)
         countdown_for_blink = 58;
       if (link_direction == 0) {
-        if (BYTE(dung_floor_y_vel))
+        if ((*(uint8*)(g_ram+(0x310))))
           link_y_vel = -link_y_vel;
-        if (BYTE(dung_floor_x_vel))
+        if ((*(uint8*)(g_ram+(0x312))))
           link_x_vel = -link_x_vel;
       }
     }
@@ -5340,8 +5340,8 @@ void TileDetect_MainHandler(uint8 item) {  // 87d077
         Ancilla_Sfx2_Near(0x33);
         link_speed_setting = 0;
         submodule_index = 21;
-        BYTE(dungeon_room_index_prev) = dungeon_room_index;
-        BYTE(dungeon_room_index) = dung_hdr_travel_destinations[0];
+        (*(uint8*)(g_ram+(0xA2))) = dungeon_room_index;
+        (*(uint8*)(g_ram+(0xA0))) = dung_hdr_travel_destinations[0];
         HandleLayerOfDestination();
       } else if (!link_triggered_by_whirlpool_sprite) {
         DoSwordInteractionWithTiles_Mirror();
@@ -5877,7 +5877,7 @@ void Player_SomethingWithVelocity_TiredOrSwim(uint16 xvel, uint16 yvel) {  // 87
 void Link_HandleMovingFloor() {  // 87e595
   if (!dung_hdr_collision)
     return;
-  if (BYTE(link_z_coord) != 0 && BYTE(link_z_coord) != 255)
+  if ((*(uint8*)(g_ram+(0x24))) != 0 && (*(uint8*)(g_ram+(0x24))) != 255)
     return;
   if (((byte_7E0322) & 3) != 3)
     return;
@@ -5906,7 +5906,7 @@ void Link_ApplyConveyor() {  // 87e5f0
 
   if (!link_on_conveyor_belt)
     return;
-  if (BYTE(link_z_coord) != 0 && BYTE(link_z_coord) != 0xff)
+  if ((*(uint8*)(g_ram+(0x24))) != 0 && (*(uint8*)(g_ram+(0x24))) != 0xff)
     return;
   if (link_grabbing_wall & 1 || link_player_handler_state == kPlayerState_Hookshot || link_auxiliary_state)
     return;
@@ -6200,7 +6200,7 @@ bool InitializePushBlock(uint8 r14, uint8 idx) {  // 87ed3f
   pushedblocks_target[r14] = 0;
   pushedblocks_subpixel[r14] = 0;
 
-  if (dung_hdr_tag[0] != 38 && dung_replacement_tile_state[idx >> 1] == 0) {
+  if (dung_hdr_tag[0] != 38 &(RAM16P(g_ram+0x500) + (idx >> 1)) == 0) {
     if (!PushBlock_AttemptToPushTheBlock(0, x, y)) {
       Ancilla_Sfx2_Near(0x22);
       dung_replacement_tile_state[idx >> 1] = 1;
@@ -6295,17 +6295,17 @@ void Link_ResetProperties_A() {  // 87f1a3
   ancilla_arr24[0] = 0;
   link_is_bunny = 0;
   link_is_bunny_mirror = 0;
-  BYTE(link_timer_tempbunny) = 0;
+  (*(uint8*)(g_ram+(0x3F5))) = 0;
   link_need_for_poof_for_transform = 0;
   is_archer_or_shovel_game = 0;
   link_need_for_pullforrupees_sprite = 0;
-  BYTE(bit9_of_xcoord) = 0;
+  (*(uint8*)(g_ram+(0x3FA))) = 0;
   link_something_with_hookshot = 0;
   link_give_damage = 0;
   link_spin_offsets = 0;
   tagalong_event_flags = 0;
   link_want_make_noise_when_dashed = 0;
-  BYTE(tiledetect_tile_type) = 0;
+  (*(uint8*)(g_ram+(0x2EA))) = 0;
   item_receipt_method = 0;
   link_triggered_by_whirlpool_sprite = 0;
   Link_ResetProperties_B();
@@ -6485,8 +6485,8 @@ void Gravestone_Move(int k) {  // 88ed89
   ancilla_type[k] = 0;
   link_something_with_hookshot = 0;
   bitmask_of_dragstate &= ~4;
-  BYTE(scratch_0) = ((uint8 *)door_debris_y)[k];
-  HIBYTE(scratch_0) = ((uint8 *)door_debris_x)[k];
+  (*(uint8*)(g_ram+(0x72))) = ((uint8 *)RAM16P(g_ram+0x732))[k];
+  (*(uint8*)(g_ram+(0x72)+1)) = ((uint8 *)RAM16P(g_ram+0x728))[k];
   big_rock_starting_address = scratch_0;
 
   door_open_closed_counter = big_rock_starting_address == 0x532 ? 0x48 :
@@ -6585,7 +6585,7 @@ void ResetSomeThingsAfterDeath(uint8 a) {  // 8bffbf
   link_actual_vel_y = 0;
   link_actual_vel_x = 0;
   link_actual_vel_z = 0;
-  BYTE(link_z_coord) = 0;
+  (*(uint8*)(g_ram+(0x24))) = 0;
   draw_water_ripples_or_grass = 0;
   byte_7E0316 = 0;
   countdown_for_blink = 0;

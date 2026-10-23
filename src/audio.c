@@ -89,7 +89,7 @@ static uint8 RemapMsuDeluxeTrack(MsuPlayer *mp, uint8 track) {
     return track;
   switch (kIsMusicOwOrDungeon[track]) {
   case 1:
-    return BYTE(overworld_area_index) < sizeof(kMsuDeluxe_OW_Songs) ? kMsuDeluxe_OW_Songs[BYTE(overworld_area_index)] : track;
+    return (*(uint8*)(g_ram+(0x40A))) < sizeof(kMsuDeluxe_OW_Songs) ? kMsuDeluxe_OW_Songs[(*(uint8*)(g_ram+(0x40A)))] : track;
   case 2:
     if (which_entrance >= sizeof(kMsuDeluxe_Entrance_Songs) || kMsuDeluxe_Entrance_Songs[which_entrance] == 242)
       return track;
@@ -204,8 +204,8 @@ static void MsuPlayer_Open(MsuPlayer *mp, int orig_track, bool resume_from_snaps
     MsuPlayer_CloseFile(mp);
     return;
   }
-  uint32 file_tag = *(uint32 *)(buf + 0);
-  mp->repeat_position = *(uint32 *)(buf + 4);
+  uint32 file_tag = RAM32((buf + 0));
+  mp->repeat_position = RAM32((buf + 4));
   mp->state = (resume.actual_track == actual_track && resume.tag == file_tag) ? kMsuState_Resuming : kMsuState_Playing;
   if (mp->state == kMsuState_Resuming) {
     memcpy(&mp->resume_info, &resume, sizeof(mp->resume_info));
@@ -302,10 +302,10 @@ void MsuPlayer_Mix(MsuPlayer *mp, int16 *audio_buffer, int audio_samples) {
             MsuPlayer_CloseFile(mp);
             return;
           }
-          uint32 file_offs = *(uint32 *)&file_data[0];
+          uint32 file_offs = RAM32(&file_data[0]);
           assert((file_offs & 0xF0000000) == 0);
-          uint32 samples_until_repeat = *(uint32 *)&file_data[4];
-          uint16 preskip = *(uint32 *)&file_data[8];
+          uint32 samples_until_repeat = RAM32(&file_data[4]);
+          uint16 preskip = RAM32(&file_data[8]);
           mp->samples_until_repeat = samples_until_repeat;
           mp->preskip = preskip & 0x3fff;
           if (preskip & 0x4000)
@@ -322,10 +322,10 @@ void MsuPlayer_Mix(MsuPlayer *mp, int16 *audio_buffer, int audio_samples) {
           *(uint64 *)file_data = 0;
           if (fread(file_data, 1, 2, mp->f) != 2)
             goto READ_ERROR;
-          int size = *(uint16 *)file_data & 0x7fff;
+          int size = RAM16(file_data) & 0x7fff;
           if (size > 1275)
             goto READ_ERROR;
-          int n = (*(uint16 *)file_data >> 15);
+          int n = (RAM16(file_data) >> 15);
           if (fread(&file_data[2], 1, size, mp->f) != size)
             goto READ_ERROR;
           // Verify if the snapshot matches the file on disk.

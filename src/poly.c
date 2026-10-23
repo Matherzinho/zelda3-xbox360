@@ -154,7 +154,7 @@ void Polyhedral_DrawPolyhedron() {  // 89fa4f
   const uint8 *src = poly_config->poly;
   do {
     poly_num_vertex_in_poly = *src++;
-    BYTE(poly_tmp0) = poly_num_vertex_in_poly;
+    (*(uint8*)(g_ram+(0x1FB0))) = poly_num_vertex_in_poly;
     poly_xy_coords[0] = poly_num_vertex_in_poly * 2;
 
     int i = 1;
@@ -163,7 +163,7 @@ void Polyhedral_DrawPolyhedron() {  // 89fa4f
       poly_xy_coords[i + 0] = poly_arr_x[j];
       poly_xy_coords[i + 1] = poly_arr_y[j];
       i += 2;
-    } while (--BYTE(poly_tmp0));
+    } while (--(*(uint8*)(g_ram+(0x1FB0))));
 
     poly_raster_color_config = *src++;
     int order = Polyhedral_CalculateCrossProduct();
@@ -215,10 +215,10 @@ void Polyhedral_DrawFace() {  // 89fd1e
     return;
   for (;;) {
     Polyhedral_FillLine();
-    if (BYTE(poly_raster_dst_ptr) != 0xe) {
+    if ((*(uint8*)(g_ram+(0x1FB9))) != 0xe) {
       poly_raster_dst_ptr += 2;
     } else {
-      uint8 a = HIBYTE(poly_raster_dst_ptr) + 2;
+      uint8 a = (*(uint8*)(g_ram+(0x1FB9)+1)) + 2;
       poly_raster_dst_ptr = (a ^ ((a & 8) ? 0 : 0x19)) << 8;
     }
     if (poly_y0_cur == poly_y0_trig) {
@@ -243,7 +243,7 @@ void Polyhedral_FillLine() {  // 89fdcf
   uint16 right = kPoly_RightSideMask[(poly_x1_frac >> 8) & 7];
   poly_tmp2 = (poly_x0_frac >> 8) & 0x38;
   int d0 = ((poly_x1_frac >> 8) & 0x38);
-  uint16 *ptr = (uint16*)&g_ram[poly_raster_dst_ptr + d0 * 4];
+  uint16 *ptr = (zle16_t *)&g_ram[poly_raster_dst_ptr + d0 * 4];
   if ((d0 -= poly_tmp2) == 0) {
     poly_tmp1 = left & right;
     ptr[0] ^= (ptr[0] ^ poly_raster_color0) & poly_tmp1;

@@ -180,7 +180,7 @@ static PlayerHandlerFunc *const kMainRouting[28] = {
 };
 
 const uint16 *SrcPtr(uint16 src) {
-  return &kPredefinedTileData[src >> 1];
+  return (RAM16P(g_asset_ptrs[69]) + (src >> 1));
 }
 
 uint8 Ancilla_Sfx2_Near(uint8 a) {
@@ -217,7 +217,7 @@ static void KillAgahnim_LoadMusic() {
 
 static void KillAghanim_Init() {
   music_control = 8;
-  BYTE(overworld_screen_trans_dir_bits) = 8;
+  (*(uint8*)(g_ram+(0x410))) = 8;
   InitializeMirrorHDMA();
   overworld_map_state = 0;
   PaletteFilter_InitializeWhiteFilter();
@@ -311,12 +311,12 @@ static void KillAghanim_Func12() {
   ResetAncillaAndCutscene();
   Overworld_SetSongList();
   save_ow_event_info[0x1b] |= 32;
-  BYTE(cur_palace_index_x2) = 255;
+  (*(uint8*)(g_ram+(0x40C))) = 255;
   submodule_index = 0;
   overworld_map_state = 0;
   nmi_disable_core_updates = 0;
   main_module_index = 9;
-  BYTE(BG1VOFS_copy2) = 0;
+  (*(uint8*)(g_ram+(0xE6))) = 0;
   music_control = link_item_moon_pearl ? 9 : 4;
   savegame_map_icons_indicator = 6;
 }
@@ -422,7 +422,7 @@ void NMI_PrepareSprites() {  // 8085fc
   dma_source_addr_15 = dma_source_addr_10 + 0x100;
 
   if (--bg_tile_animation_countdown == 0) {
-    bg_tile_animation_countdown = (BYTE(overlay_index) == 0xb5 || BYTE(overlay_index) == 0xbc) ? 0x17 : 9;
+    bg_tile_animation_countdown = ((*(uint8*)(g_ram+(0x8C))) == 0xb5 || (*(uint8*)(g_ram+(0x8C))) == 0xbc) ? 0x17 : 9;
 
     uint16 t = word_7EC00F + 0x400;
     if (t == 0xc00)
@@ -744,7 +744,7 @@ void AncillaAdd_ItemReceipt(uint8 ain, uint8 yin, int chest_pos) {  // 8985e8
     if (*p == 0)
       *p = 1;
   } else if (j == 0x25 || j == 0x32 || j == 0x33) {
-    WORD(*p) |= 0x8000 >> (BYTE(cur_palace_index_x2) >> 1);
+    WORD(*p) |= 0x8000 >> ((*(uint8*)(g_ram+(0x40C))) >> 1);
   } else if (j == 0x3e) {
     if (link_state_bits & 0x80)
       link_picking_throw_state = 2;
@@ -803,7 +803,7 @@ void AncillaAdd_ItemReceipt(uint8 ain, uint8 yin, int chest_pos) {  // 8985e8
   if (j == 1 && item_receipt_method != 2) {
     ancilla_timer[ancilla] = 160;
     submodule_index = 43;
-    BYTE(palette_filter_countdown) = 0;
+    (*(uint8*)(g_ram+(0xC007))) = 0;
     AncillaAdd_MSCutscene(0x35, 4);
     ancilla_arr3[ancilla] = 2;
   } else {

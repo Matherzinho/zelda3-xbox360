@@ -103,12 +103,12 @@ void Player_TileDetectNearby() {  // 87cf12
 }
 
 void Hookshot_CheckTileCollision(int k) {  // 87d576
-  uint8 bak0 = BYTE(dungeon_room_index);
+  uint8 bak0 = (*(uint8*)(g_ram+(0xA0)));
   uint8 bak1 = link_is_on_lower_level;
 
   if (ancilla_arr1[k]) {
-    if (!BYTE(kind_of_in_room_staircase))
-      BYTE(dungeon_room_index) += 0x10;
+    if (!(*(uint8*)(g_ram+(0x44A))))
+      (*(uint8*)(g_ram+(0xA0))) += 0x10;
     link_is_on_lower_level ^= 1;
   }
 
@@ -125,7 +125,7 @@ void Hookshot_CheckTileCollision(int k) {  // 87d576
   Hookshot_CheckSingleLayerTileCollision(x, y, dir);
 
   link_is_on_lower_level = bak1;
-  BYTE(dungeon_room_index) = bak0;
+  (*(uint8*)(g_ram+(0xA0))) = bak0;
 }
 
 void Hookshot_CheckSingleLayerTileCollision(uint16 x, uint16 y, int dir) {  // 87d607

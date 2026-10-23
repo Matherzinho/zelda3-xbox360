@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <stddef.h>
 
 // Build time config options
 enum {
@@ -25,7 +26,7 @@ typedef unsigned int uint;
 #define arraysize(x) sizeof(x)/sizeof(x[0])
 #define sign8(x) ((x) & 0x80)
 #define sign16(x) ((x) & 0x8000)
-#define load24(x) ((*(uint32*)&(x))&0xffffff)
+#define load24(x) (RAM32(&(x))&0xffffff)
 
 #ifdef _MSC_VER
 #define countof _countof
@@ -57,10 +58,47 @@ static FORCEINLINE uint UintMax(uint a, uint b) { return a > b ? a : b; }
 #undef HIBYTE
 #endif
 
-#define BYTE(x) (*(uint8*)&(x))
-#define HIBYTE(x) (((uint8*)&(x))[1])
-#define WORD(x) (*(uint16*)&(x))
-#define DWORD(x) (*(uint32*)&(x))
+// ---- Endianness ---------------------------------------------------------------------------
+// The game's RAM, ROM-derived assets and save data are little-endian (SNES). On a big-endian
+// host (Xbox 360) multi-byte accesses go through types the compiler byte-swaps for us.
+#if defined(__BYTE_ORDER__) && __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+#define ZELDA_BIG_ENDIAN_HOST 1
+#define ZELDA_LE_STRUCT __attribute__((scalar_storage_order("little-endian"), packed))
+typedef struct ZELDA_LE_STRUCT { uint16 a[0x10000]; } zle16_array_t;
+typedef struct ZELDA_LE_STRUCT { int16 a[0x10000]; } zles16_array_t;
+typedef struct ZELDA_LE_STRUCT { uint32 a[0x10000]; } zle32_array_t;
+#define RAM16(p) (((zle16_t*)(p))->v)
+#define RAM32(p) (((zle32_t*)(p))->v)
+#define RAMS16(p) (((zles16_t*)(p))->v)
+#define RAM16A(p) (((zle16_array_t*)(p))->a)
+#define RAMS16A(p) (((zles16_array_t*)(p))->a)
+#define RAM32A(p) (((zle32_array_t*)(p))->a)
+#define ZELDA_LOW_IDX(x) (sizeof(x) - 1)
+#define ZELDA_HIGH_IDX(x) (sizeof(x) - 2)
+#else
+#define ZELDA_LE_STRUCT
+#define RAM16(p) (*(uint16*)(p))
+#define RAM32(p) (*(uint32*)(p))
+#define RAMS16(p) (*(int16*)(p))
+#define RAM16A(p) ((uint16*)(p))
+#define RAMS16A(p) ((int16*)(p))
+#define RAM32A(p) ((uint32*)(p))
+#define ZELDA_LOW_IDX(x) 0
+#define ZELDA_HIGH_IDX(x) 1
+#endif
+
+// Little-endian scalar wrappers (plain structs on little-endian hosts), usable for pointers on every host.
+typedef struct ZELDA_LE_STRUCT { uint16 v; } zle16_t;
+typedef struct ZELDA_LE_STRUCT { int16 v; } zles16_t;
+typedef struct ZELDA_LE_STRUCT { uint32 v; } zle32_t;
+#define RAM16P(p) ((zle16_t*)(p))
+#define RAMS16P(p) ((zles16_t*)(p))
+
+// Byte/word views of a variable. For byte lvalues WORD/DWORD read the following bytes as little-endian.
+#define BYTE(x) (((uint8*)&(x))[ZELDA_LOW_IDX(x)])
+#define HIBYTE(x) (((uint8*)&(x))[ZELDA_HIGH_IDX(x)])
+#define WORD(x) RAM16(&(x))
+#define DWORD(x) RAM32(&(x))
 #define XY(x, y) ((y)*64+(x))
 
 #ifndef swap16

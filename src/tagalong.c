@@ -365,9 +365,9 @@ void Follower_BasicMover() {  // 89a197
     uint16 y = tagalong_y_lo[k] | tagalong_y_hi[k] << 8;
     follower_indicator = 0;
     Blind_SpawnFromMaiden(x, y);
-    BYTE(dung_flag_trapdoors_down)++;
-    BYTE(dung_cur_door_pos) = 0;
-    BYTE(door_animation_step_indicator) = 0;
+    (*(uint8*)(g_ram+(0x468)))++;
+    (*(uint8*)(g_ram+(0x68E))) = 0;
+    (*(uint8*)(g_ram+(0x690))) = 0;
     submodule_index = 5;
     music_control = 21;
     return;
@@ -567,7 +567,7 @@ void Follower_HandleTrigger() {  // 89a59e
       if (tmi->msg == 0xffff) {
         if (!(tmi->bit & 3))
           Kiki_RevertToSprite(st);
-        else if (!(save_ow_event_info[BYTE(overworld_screen_index)] & 1))
+        else if (!(save_ow_event_info[(*(uint8*)(g_ram+(0x8A)))] & 1))
           Kiki_SpawnHandler_A(st);
         return;
       }
@@ -678,12 +678,12 @@ skip_first_sprites:
     SetOam_Follower(oam, scrollx + sprd->x1, scrolly + sprd->y1, 0x20, 
                   (sprf->flags & 0xf0) | pal << 1 | (oam_priority_value >> 8), 2);
     oam++;
-    BYTE(dma_var6) = sprf->dma6;
+    (*(uint8*)(g_ram+(0xAE8))) = sprf->dma6;
   }
   {
     SetOam_Follower(oam, scrollx + sprd->x2, scrolly + sprd->y2 + 8, 0x22,
                   ((sprf->flags & 0xf) << 4) | pal << 1 | (oam_priority_value >> 8), 2);
-    BYTE(dma_var7) = sprf->dma7;
+    (*(uint8*)(g_ram+(0xAEA))) = sprf->dma7;
   }
 }
 

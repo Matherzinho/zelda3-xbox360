@@ -17,7 +17,7 @@
 
 static const uint16 kPolyhedralPalette[8] = { 0, 0x14d, 0x1b0, 0x1f3, 0x256, 0x279, 0x2fd, 0x35f };
 
-#define ending_which_dung (*(uint16*)(g_ram+0xcc))
+#define ending_which_dung RAM16(g_ram+0xcc)
 #define kPolyThreadRam (g_ram + 0x1f00)
 static const int8 kIntroSprite0_Xvel[3] = { 1, 0, -1 };
 static const int8 kIntroSprite0_Yvel[3] = { -1, 1, -1 };
@@ -173,7 +173,7 @@ void Credits_LoadScene_Overworld_PrepGFX() {  // 828604
   music_control = 0;
   sound_effect_ambient = 0;
 
-  int t = BYTE(overworld_screen_index) & ~0x40;
+  int t = (*(uint8*)(g_ram+(0x8A))) & ~0x40;
   DecompressAnimatedOverworldTiles((t == 3 || t == 5 || t == 7) ? 0x58 : 0x5a);
 
   k = submodule_index >> 1;
@@ -181,7 +181,7 @@ void Credits_LoadScene_Overworld_PrepGFX() {  // 828604
   uint8 sprpal = kEnding_SpritePal[k];
   InitializeTilesets();
   OverworldLoadScreensPaletteSet();
-  Overworld_LoadPalettes(GetOverworldBgPalette(BYTE(overworld_screen_index)), sprpal);
+  Overworld_LoadPalettes(GetOverworldBgPalette((*(uint8*)(g_ram+(0x8A)))), sprpal);
 
   hud_palette = 1;
   Palette_Load_HUD();
@@ -189,7 +189,7 @@ void Credits_LoadScene_Overworld_PrepGFX() {  // 828604
     TransferFontToVRAM();
   Overworld_LoadPalettesInner();
   Overworld_SetFixedColAndScroll();
-  if (BYTE(overworld_screen_index) >= 128)
+  if ((*(uint8*)(g_ram+(0x8A))) >= 128)
     Palette_SetOwBgColor();
   BGMODE_copy = 9;
   subsubmodule_index++;
@@ -212,7 +212,7 @@ void Credits_LoadScene_Overworld_LoadMap() {  // 8286a5
 
 void Credits_OperateScrollingAndTileMap() {  // 8286b3
   Credits_HandleCameraScrollControl();
-  if (BYTE(overworld_screen_trans_dir_bits2))
+  if ((*(uint8*)(g_ram+(0x416))))
     OverworldHandleMapScroll();
 }
 
@@ -221,8 +221,8 @@ void Credits_LoadCoolBackground() {  // 8286c0
   aux_tile_theme_index = 59;
   sprite_graphics_index = 45;
   InitializeTilesets();
-  BYTE(overworld_screen_index) = 0x5b;
-  Overworld_LoadPalettes(GetOverworldBgPalette(BYTE(overworld_screen_index)), 0x13);
+  (*(uint8*)(g_ram+(0x8A))) = 0x5b;
+  Overworld_LoadPalettes(GetOverworldBgPalette((*(uint8*)(g_ram+(0x8A)))), 0x13);
   overworld_palette_aux2_bp5to7_hi = 3;
   Palette_Load_OWBG2();
   Overworld_CopyPalettesToCache();
@@ -323,7 +323,7 @@ void Module18_GanonEmerges() {  // 829edc
       player_is_indoors = 0;
       overworld_map_state++;
       subsubmodule_index = 128;
-      BYTE(cur_palace_index_x2) = 255;
+      (*(uint8*)(g_ram+(0x40C))) = 255;
     }
     break;
   case 6:  // DelayForBatSmashIntoPyramid
@@ -381,12 +381,12 @@ void Module19_TriforceRoom() {  // 829fec
     INIDISP_copy = 15;
     palette_filter_countdown = 31;
     mosaic_target_level = 0;
-    HIBYTE(BG1HOFS_copy2) = 1;
+    (*(uint8*)(g_ram+(0xE0)+1)) = 1;
     CGWSEL_copy = 2;
     CGADSUB_copy = 50;
     mosaic_level = 240;
-    BYTE(link_y_coord) = 236;
-    BYTE(link_x_coord) = 120;
+    (*(uint8*)(g_ram+(0x20))) = 236;
+    (*(uint8*)(g_ram+(0x22))) = 120;
     link_is_on_lower_level = 2;
     music_control = 32;
     main_module_index = 25;
@@ -397,7 +397,7 @@ void Module19_TriforceRoom() {  // 829fec
     link_direction = 8;
     link_direction_last = 8;
     link_direction_facing = 0;
-    if (BYTE(link_y_coord) < 192) {
+    if ((*(uint8*)(g_ram+(0x20))) < 192) {
       link_direction = 0;
       link_direction_last = 0;
       link_animation_steps = 0;
@@ -416,7 +416,7 @@ void Module19_TriforceRoom() {  // 829fec
     dialogue_message_index = 0x173;
     Main_ShowTextMessage();
     RenderText();
-    BYTE(R16) = 0x80;
+    (*(uint8*)(g_ram+(0xc8))) = 0x80;
     main_module_index = 25;
     subsubmodule_index++;
     break;
@@ -450,7 +450,7 @@ void Module19_TriforceRoom() {  // 829fec
     break;
   case 12:  //
     AdvancePolyhedral();
-    if (!--BYTE(R16)) {
+    if (!--(*(uint8*)(g_ram+(0xc8)))) {
       Palette_AnimGetMasterSword2();
       submodule_index++;
     }
@@ -458,7 +458,7 @@ void Module19_TriforceRoom() {  // 829fec
   case 13:  //
     AdvancePolyhedral();
     PaletteFilter_BlindingWhiteTriforce();
-    if (BYTE(darkening_or_lightening_screen) == 255)
+    if ((*(uint8*)(g_ram+(0xC009))) == 255)
       subsubmodule_index++;
     break;
   case 14:  //
@@ -577,7 +577,7 @@ void Intro_InitializeMemory_darken() {  // 8cc1f5
   InitializeTilesets();
   DecompressAnimatedDungeonTiles(0x5d);
   bg_tile_animation_countdown = 2;
-  BYTE(overworld_screen_index) = 0;
+  (*(uint8*)(g_ram+(0x8A))) = 0;
   palette_main_indoors = 0;
   overworld_palette_aux3_bp7_lo = 0;
   R16 = 0;
@@ -593,11 +593,11 @@ void IntroZeldaFadein() {  // 8cc25c
   if (!(frame_counter & 1))
     return;
   Palette_FadeIntroOneStep();
-  if (BYTE(palette_filter_countdown) == 0) {
+  if ((*(uint8*)(g_ram+(0xC007))) == 0) {
     subsubmodule_index = 42;
     submodule_index++;
     Intro_SetupSwordAndIntroFlash();
-  } else if (BYTE(palette_filter_countdown) == 13) {
+  } else if ((*(uint8*)(g_ram+(0xC007))) == 13) {
     TM_copy = 0x15;
     TS_copy = 0;
   }
@@ -606,7 +606,7 @@ void IntroZeldaFadein() {  // 8cc25c
 void Intro_FadeInBg() {  // 8cc284
   Intro_PeriodicSwordAndIntroFlash();
   Intro_HandleAllTriforceAnimations();
-  if (BYTE(palette_filter_countdown)) {
+  if ((*(uint8*)(g_ram+(0xC007)))) {
     if (frame_counter & 1)
       Palette_FadeIntro2();
   } else {
@@ -642,7 +642,7 @@ void Intro_WaitPlayer() {  // 8cc2d4
     submodule_index++;
     main_module_index = 20;
     submodule_index = 0;
-    BYTE(link_x_coord) = 0;
+    (*(uint8*)(g_ram+(0x22))) = 0;
   }
 }
 
@@ -654,8 +654,8 @@ void FadeMusicAndResetSRAMMirror() {  // 8cc2f0
   music_control = 0xf1;
   SetBackdropcolorBlack();
 
-  memset(&link_y_coord, 0, 0x70);
-  memset(save_dung_info, 0, 256 * 5);
+  memset((g_ram+0x20), 0, 0x70);
+  memset(RAM16P(g_ram+0xF000), 0, 256 * 5);
 
   main_module_index = 1;
   death_var4 = 1;
@@ -685,7 +685,7 @@ void Intro_InitGfx_Helper() {  // 8cc36f
   poly_config1 = 255;
   poly_base_x = 32;
   poly_base_y = 32;
-  BYTE(poly_var1) = 32;
+  (*(uint8*)(g_ram+(0x1F08))) = 32;
   poly_a = 0xA0;
   poly_b = 0x60;
   poly_config_color_mode = 1;
@@ -696,7 +696,7 @@ void Intro_InitGfx_Helper() {  // 8cc36f
 }
 
 void LoadTriforceSpritePalette() {  // 8cc3bd
-  memcpy(main_palette_buffer + 0xd0, kPolyhedralPalette, 16);
+  memcpy(RAM16P(g_ram+0xC500) + 0xd0, kPolyhedralPalette, 16);
   flag_update_cgram_in_nmi++;
 }
 
@@ -1485,7 +1485,7 @@ void Credits_HandleSceneFade() {  // 8e9a2a
     static const int8 kEnding_Case2_Tab3[5] = { 3, 3, 3, 3, 3 };
     static const uint8 kEnding_Case2_Delay[2] = { 0x30, 0x10 };
 
-    BYTE(flag_travel_bird) = kEnding_Case2_Tab0[frame_counter >> 2 & 1];
+    (*(uint8*)(g_ram+(0xAF4))) = kEnding_Case2_Tab0[frame_counter >> 2 & 1];
     k = 6;
     j = sprite_x_vel[k] >> 7 & 1;
     sprite_oam_flags[k] = (sprite_x_vel[k] + kEnding_Case2_Tab1[j]) >> 1 & 0x40 | 0x32;
@@ -2335,16 +2335,16 @@ void Credits_HandleCameraScrollControl() {  // 8eaea6
   if (link_y_vel != 0) {
     uint8 yvel = link_y_vel;
     BG2VOFS_copy2 += (int8)yvel;
-    uint16 *which = sign8(yvel) ? &overworld_unk1 : &overworld_unk1_neg;
+    uint16 *which = sign8(yvel) ? (g_ram+0x624) : (g_ram+0x626);
     *which += abs8(yvel);
     if (!sign16(*which - 0x10)) {
       *which -= 0x10;
       overworld_screen_trans_dir_bits2 |= sign8(yvel) ? 8 : 4;
     }
-    *(sign8(yvel) ? &overworld_unk1_neg : &overworld_unk1) = -*which;
+    *(sign8(yvel) ? (g_ram+0x626) : (g_ram+0x624)) = -*which;
     uint16 r4 = (int8)yvel, subp;
     WORD(byte_7E069E[0]) = r4;
-    uint8 oi = BYTE(overlay_index);
+    uint8 oi = (*(uint8*)(g_ram+(0x8C)));
     if (oi != 0x97 && oi != 0x9d) {
       if (oi == 0xb5 || oi == 0xbe) {
         subp = (r4 & 3) << 14;
@@ -2367,17 +2367,17 @@ void Credits_HandleCameraScrollControl() {  // 8eaea6
   if (link_x_vel != 0) {
     uint8 xvel = link_x_vel;
     BG2HOFS_copy2 += (int8)xvel;
-    uint16 *which = sign8(xvel) ? &overworld_unk3 : &overworld_unk3_neg;
+    uint16 *which = sign8(xvel) ? (g_ram+0x628) : (g_ram+0x62A);
     *which += abs8(xvel);
     if (!sign16(*which - 0x10)) {
       *which -= 0x10;
       overworld_screen_trans_dir_bits2 |= sign8(xvel) ? 2 : 1;
     }
-    *(sign8(xvel) ? &overworld_unk3_neg : &overworld_unk3) = -*which;
+    *(sign8(xvel) ? (g_ram+0x62A) : (g_ram+0x628)) = -*which;
 
     uint16 r4 = (int8)xvel, subp;
     WORD(byte_7E069E[1]) = r4;
-    uint8 oi = BYTE(overlay_index);
+    uint8 oi = (*(uint8*)(g_ram+(0x8C)));
     if (oi != 0x97 && oi != 0x9d && r4 != 0) {
       if (oi == 0x95 || oi == 0x9e) {
         subp = (r4 & 3) << 14;
@@ -2396,12 +2396,12 @@ void Credits_HandleCameraScrollControl() {  // 8eaea6
     }
   }
 
-  if (BYTE(overlay_index) == 0x9c) {
+  if ((*(uint8*)(g_ram+(0x8C))) == 0x9c) {
     uint32 tmp = BG1VOFS_subpixel | BG1VOFS_copy2 << 16;
     tmp -= 0x2000;
     BG1VOFS_subpixel = (uint16)(tmp), BG1VOFS_copy2 = (uint16)(tmp >> 16) + WORD(byte_7E069E[0]);
     BG1HOFS_copy2 = BG2HOFS_copy2;
-  } else if (BYTE(overlay_index) == 0x97 || BYTE(overlay_index) == 0x9d) {
+  } else if ((*(uint8*)(g_ram+(0x8C))) == 0x97 || (*(uint8*)(g_ram+(0x8C))) == 0x9d) {
     uint32 tmp = BG1VOFS_subpixel | BG1VOFS_copy2 << 16;
     tmp += 0x2000;
     BG1VOFS_subpixel = (uint16)(tmp), BG1VOFS_copy2 = (uint16)(tmp >> 16);
@@ -2519,7 +2519,7 @@ void Credits_AddNextAttribution() {  // 8ebe24
   static const uint16 kEnding_Digits_ScrollY[14] = { 0x290, 0x298, 0x2a0, 0x2a8, 0x2b0, 0x2ba, 0x2c2, 0x2ca, 0x2d2, 0x2da, 0x2e2, 0x2ea, 0x2f2, 0x310 };
   static const uint16 kEnding_Credits_DigitChar[2] = { 0x3ce6, 0x3cf6 };
 
-  uint16 *dst = vram_upload_data + (vram_upload_offset >> 1);
+  uint16 *dst = RAM16P(g_ram+0x1002) + (vram_upload_offset >> 1);
 
   dst[0] = swap16(R16);
   dst[1] = 0x3e40;
@@ -2560,14 +2560,14 @@ void Credits_AddNextAttribution() {  // 8ebe24
   R16 += 0x20;
   if (!(R16 & 0x3ff))
     R16 = (R16 & 0x6800) ^ 0x800;
-  vram_upload_offset = (char *)dst - (char *)vram_upload_data;
+  vram_upload_offset = (char *)dst - (char *)RAM16P(g_ram+0x1002);
   BYTE(*dst) = 0xff;
   nmi_load_bg_from_vram = 1;
 }
 
 void Credits_AddEndingSequenceText() {  // 8ec303
 
-  uint16 *dst = vram_upload_data;
+  uint16 *dst = RAM16P(g_ram+0x1002);
   dst[0] = 0x60;
   dst[1] = 0xfe47;
   dst[2] = kEnding_MapData[159];
@@ -2585,7 +2585,7 @@ void Credits_AddEndingSequenceText() {  // 8ec303
     } while (--m >= 0);
   } while (curo != endo);
 
-  vram_upload_offset = (char *)dst - (char *)vram_upload_data;
+  vram_upload_offset = (char *)dst - (char *)RAM16P(g_ram+0x1002);
   BYTE(*dst) = 0xff;
   nmi_load_bg_from_vram = 1;
 }
@@ -2597,7 +2597,7 @@ void Credits_BrightenTriangles() {  // 8ec37c
 }
 
 void Credits_StopCreditsScroll() {  // 8ec391
-  if (!--BYTE(R16)) {
+  if (!--(*(uint8*)(g_ram+(0xc8)))) {
     darkening_or_lightening_screen = 0;
     palette_filter_countdown = 0;
     WORD(mosaic_target_level) = 0x1f;
@@ -2609,16 +2609,16 @@ void Credits_StopCreditsScroll() {  // 8ec391
 }
 
 void Credits_FadeAndDisperseTriangles() {  // 8ec3b8
-  BYTE(R16)--;
-  if (!BYTE(R18)) {
+  (*(uint8*)(g_ram+(0xc8)))--;
+  if (!(*(uint8*)(g_ram+(0xca)))) {
     ApplyPaletteFilter_bounce();
-    if (BYTE(palette_filter_countdown)) {
+    if ((*(uint8*)(g_ram+(0xC007)))) {
       Credits_AnimateTheTriangles();
       return;
     }
-    BYTE(R18)++;
+    (*(uint8*)(g_ram+(0xca)))++;
   }
-  if (BYTE(R16)) {
+  if ((*(uint8*)(g_ram+(0xc8)))) {
     Credits_AnimateTheTriangles();
     return;
   }
@@ -2629,7 +2629,7 @@ void Credits_FadeAndDisperseTriangles() {  // 8ec3b8
 void Credits_FadeInTheEnd() {  // 8ec3d5
   if (!(frame_counter & 7)) {
     PaletteFilter_SP5F();
-    if (!BYTE(palette_filter_countdown))
+    if (!(*(uint8*)(g_ram+(0xC007))))
       submodule_index++;;
   }
   Credits_HangForever();
@@ -2649,7 +2649,7 @@ void CrystalCutscene_InitializePolyhedral() {  // 9ecdd9
   intro_did_run_step = 1;
   poly_base_x = 32;
   poly_base_y = 32;
-  BYTE(poly_var1) = 32;
+  (*(uint8*)(g_ram+(0x1F08))) = 32;
   poly_which_model = 0;
   poly_a = 16;
   TS_copy = 0;

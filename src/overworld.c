@@ -82,8 +82,8 @@ static PlayerHandlerFunc *const kOverworld_EntranceSequence[5] = {
 #define map16_decode_1 ((uint8*)(g_ram+0x14410))
 #define map16_decode_2 ((uint8*)(g_ram+0x14420))
 #define map16_decode_3 ((uint8*)(g_ram+0x14430))
-#define map16_decode_last (*(uint16*)(g_ram+0x14440))
-#define map16_decode_tmp (*(uint16*)(g_ram+0x14442))
+#define map16_decode_last RAM16(g_ram+0x14440)
+#define map16_decode_tmp RAM16(g_ram+0x14442)
 #endif
 static const uint16 kSecondaryOverlayPerOw[128] = {
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -248,7 +248,7 @@ const uint8 *GetMap8toTileAttr() {
 }
 
 const uint16 *GetMap16toMap8Table() {
-  return kMap16ToMap8;
+  return RAM16P(g_asset_ptrs[70]);
 }
 
 bool LookupInOwEntranceTab(uint16 r0, uint16 r2) {
@@ -471,7 +471,7 @@ setsong:
   overworld_fixed_color_plusminus = 0;
   Follower_Initialize();
 
-  if (!(BYTE(overworld_screen_index) & 0x3f))
+  if (!((*(uint8*)(g_ram+(0x8A))) & 0x3f))
     DecodeAnimatedSpriteTile_variable(0x1e);
   saved_module_for_menu = 9;
   Sprite_ReloadAll_Overworld();
@@ -582,7 +582,7 @@ void Module0F_SpotlightClose() {  // 829982
     Spotlight_ConfigureTableAndControl();
 
   if (!player_is_indoors) {
-    if (BYTE(overworld_screen_index) == 0xf)
+    if ((*(uint8*)(g_ram+(0x8A))) == 0xf)
       draw_water_ripples_or_grass = 1;
     link_speed_setting = 6;
     Link_HandleVelocity();
@@ -642,10 +642,10 @@ void OpenSpotlight_Next2() {  // 829a37
       submodule_index = link_direction_facing ? 0xa : 0xb;
 
     ow_countdown_transition = 16;
-    if ((BYTE(ow_entrance_value) | BYTE(big_rock_starting_address)) && HIBYTE(big_rock_starting_address)) { // wtf
-      BYTE(door_open_closed_counter) = (big_rock_starting_address & 0x8000) ? 0x18 : 0;
+    if (((*(uint8*)(g_ram+(0x696))) | (*(uint8*)(g_ram+(0x698)))) && (*(uint8*)(g_ram+(0x698)+1))) { // wtf
+      (*(uint8*)(g_ram+(0x692))) = (big_rock_starting_address & 0x8000) ? 0x18 : 0;
       big_rock_starting_address &= 0x7fff;
-      BYTE(door_animation_step_indicator) = 0;
+      (*(uint8*)(g_ram+(0x690))) = 0;
       submodule_index = 9;
       subsubmodule_index = 0;
       sound_effect_2 = 21;
@@ -729,7 +729,7 @@ void Module09_Overworld() {  // 82a475
 void OverworldOverlay_HandleRain() {  // 82a4cd
   static const uint8 kOverworld_DrawBadWeather_X[4] = { 1, 0, 1, 0 };
   static const uint8 kOverworld_DrawBadWeather_Y[4] = { 0, 17, 0, 17 };
-  if (BYTE(overworld_screen_index) != 0x70 && sram_progress_indicator >= 2 || (save_ow_event_info[0x70] & 0x20))
+  if ((*(uint8*)(g_ram+(0x8A))) != 0x70 && sram_progress_indicator >= 2 || (save_ow_event_info[0x70] & 0x20))
     return;
   if (frame_counter == 3 || frame_counter == 88) {
     CGADSUB_copy = 0x32;
@@ -788,19 +788,19 @@ void Module09_00_PlayerControl() {  // 82a53c
 }
 
 void OverworldHandleTransitions() {  // 82a9c4
-  if (BYTE(overworld_screen_trans_dir_bits2))
+  if ((*(uint8*)(g_ram+(0x416))))
     OverworldHandleMapScroll();
   int dir;
   uint16 x, y, t;
   if (link_y_vel != 0) {
     dir = link_direction & 12;
-    t = link_y_coord - kOverworld_OffsetBaseY[BYTE(current_area_of_player) >> 1];
+    t = link_y_coord - kOverworld_OffsetBaseY[(*(uint8*)(g_ram+(0x700))) >> 1];
     if ((y = 6, x = 8, t < 4) || (y = 4, x = 4, t >= overworld_right_bottom_bound_for_scroll))
       goto compare;
   }
   if (link_x_vel != 0) {
     dir = link_direction & 3;
-    t = link_x_coord - kOverworld_OffsetBaseX[BYTE(current_area_of_player) >> 1];
+    t = link_x_coord - kOverworld_OffsetBaseX[(*(uint8*)(g_ram+(0x700))) >> 1];
     if ((y = 2, x = 2, t < 6) || (y = 0, x = 1, t >= (uint16)(overworld_right_bottom_bound_for_scroll + 4))) {
 compare:
       if (x == dir && !Link_CheckForEdgeScreenTransition())
@@ -821,8 +821,8 @@ after:
     sound_effect_ambient = 0x80;
 
   uint8 new_area = kOverworldAreaHeads[pushed] | savegame_is_darkworld;
-  BYTE(overworld_screen_index) = new_area;
-  BYTE(overworld_area_index) = new_area;
+  (*(uint8*)(g_ram+(0x8A))) = new_area;
+  (*(uint8*)(g_ram+(0x40A))) = new_area;
   if (!savegame_is_darkworld || link_item_moon_pearl) {
     uint8 music = overworld_music[new_area];
     if ((music & 0xf0) == 0)
@@ -832,11 +832,11 @@ after:
   }
   Overworld_LoadGFXAndScreenSize();
   submodule_index = 1;
-  BYTE(overworld_screen_trans_dir_bits) = dir;
-  BYTE(overworld_screen_trans_dir_bits2) = dir;
+  (*(uint8*)(g_ram+(0x410))) = dir;
+  (*(uint8*)(g_ram+(0x416))) = dir;
   byte_7E069C = overworld_screen_transition = DirToEnum(dir);
-  BYTE(ow_entrance_value) = 0;
-  BYTE(big_rock_starting_address) = 0;
+  (*(uint8*)(g_ram+(0x696))) = 0;
+  (*(uint8*)(g_ram+(0x698))) = 0;
   transition_counter = 0;
 
   if (!(old_screen & 0x3f) || !(overworld_screen_index & 0xbf)) {
@@ -852,14 +852,14 @@ after:
 }
 
 void Overworld_LoadGFXAndScreenSize() {  // 82ab08
-  int i = BYTE(overworld_screen_index);
+  int i = (*(uint8*)(g_ram+(0x8A)));
   incremental_counter_for_vram = 0;
   sprite_graphics_index = overworld_sprite_gfx[i];
   aux_tile_theme_index = kOverworldAuxTileThemeIndexes[i];
 
   overworld_area_is_big_backup = overworld_area_is_big;
-  BYTE(overworld_area_is_big) = kOverworldMapIsSmall[i & 0x3f] ? 0 : 0x20;
-  ((uint8 *)&overworld_right_bottom_bound_for_scroll)[1] = kOverworldMapIsSmall[i & 0x3f] ? 1 : 3;
+  (*(uint8*)(g_ram+(0x712))) = kOverworldMapIsSmall[i & 0x3f] ? 0 : 0x20;
+  (*(uint8*)(g_ram+0x716+1)) = kOverworldMapIsSmall[i & 0x3f] ? 1 : 3;
   main_tile_theme_index = overworld_screen_index & 0x40 ? 0x21 : 0x20;
   misc_sprites_graphics_index = kVariousPacks[6 + (overworld_screen_index & 0x40 ? 8 : 0)];
 
@@ -873,7 +873,7 @@ void Overworld_LoadGFXAndScreenSize() {  // 82ab08
 }
 
 void ScrollAndCheckForSOWExit() {  // 82ab7b
-  if (BYTE(overworld_screen_trans_dir_bits2))
+  if ((*(uint8*)(g_ram+(0x416))))
     OverworldHandleMapScroll();
 
   const uint16 *map8 = Overworld_GetMap16OfLink_Mult8();
@@ -884,7 +884,7 @@ void ScrollAndCheckForSOWExit() {  // 82ab7b
       byte_7E069C = overworld_screen_transition = DirToEnum(link_direction);
       submodule_index = 36;
       subsubmodule_index = 0;
-      BYTE(dungeon_room_index) = 0;
+      (*(uint8*)(g_ram+(0xA0))) = 0;
       break;
     }
   }
@@ -919,9 +919,9 @@ void Overworld_RunScrollTransition() {  // 82abda
   Graphics_IncrementalVRAMUpload();
   uint8 rv = OverworldScrollTransition();
   if (!(rv & 0xf)) {
-    BYTE(overworld_screen_trans_dir_bits2) = BYTE(overworld_screen_trans_dir_bits);
+    (*(uint8*)(g_ram+(0x416))) = (*(uint8*)(g_ram+(0x410)));
     OverworldTransitionScrollAndLoadMap();
-    BYTE(overworld_screen_trans_dir_bits2) = 0;
+    (*(uint8*)(g_ram+(0x416))) = 0;
   }
 }
 
@@ -939,28 +939,28 @@ void Module09_LoadNewSprites() {  // 82abed
 
 void Overworld_StartScrollTransition() {  // 82ac27
   submodule_index++;
-  if (BYTE(overworld_screen_trans_dir_bits) >= 4) {
-    BYTE(overworld_screen_trans_dir_bits2) = BYTE(overworld_screen_trans_dir_bits);
+  if ((*(uint8*)(g_ram+(0x410))) >= 4) {
+    (*(uint8*)(g_ram+(0x416))) = (*(uint8*)(g_ram+(0x410)));
     OverworldTransitionScrollAndLoadMap();
-    BYTE(overworld_screen_trans_dir_bits2) = 0;
+    (*(uint8*)(g_ram+(0x416))) = 0;
   }
 }
 
 void Overworld_EaseOffScrollTransition() {  // 82ac3a
-  if (kOverworldMapIsSmall[BYTE(overworld_screen_index)]) {
-    BYTE(overworld_screen_trans_dir_bits2) = BYTE(overworld_screen_trans_dir_bits);
+  if (kOverworldMapIsSmall[(*(uint8*)(g_ram+(0x8A)))]) {
+    (*(uint8*)(g_ram+(0x416))) = (*(uint8*)(g_ram+(0x410)));
     OverworldTransitionScrollAndLoadMap();
-    BYTE(overworld_screen_trans_dir_bits2) = 0;
+    (*(uint8*)(g_ram+(0x416))) = 0;
   }
   if (++subsubmodule_index < 8)
     return;
-  if ((BYTE(overworld_screen_trans_dir_bits) == 8 || BYTE(overworld_screen_trans_dir_bits) == 2) && subsubmodule_index < 9)
+  if (((*(uint8*)(g_ram+(0x410))) == 8 || (*(uint8*)(g_ram+(0x410))) == 2) && subsubmodule_index < 9)
     return;
 
   subsubmodule_index = 0;
-  BYTE(overworld_screen_trans_dir_bits) = 0;
+  (*(uint8*)(g_ram+(0x410))) = 0;
 
-  if (kOverworldMapIsSmall[BYTE(overworld_screen_index)]) {
+  if (kOverworldMapIsSmall[(*(uint8*)(g_ram+(0x8A)))]) {
     map16_load_src_off = orange_blue_barrier_state;
     map16_load_dst_off = word_7EC174;
     map16_load_var2 = word_7EC176;
@@ -979,7 +979,7 @@ void Module09_0A_WalkFromExiting_FacingDown() {  // 82ac8f
   link_y_coord += 3;
   link_y_vel = 3;
   Overworld_OperateCameraScroll();
-  if (BYTE(overworld_screen_trans_dir_bits2))
+  if ((*(uint8*)(g_ram+(0x416))))
     OverworldHandleMapScroll();
 }
 
@@ -992,33 +992,33 @@ void Module09_0B_WalkFromExiting_FacingUp() {  // 82acc2
 }
 
 void Module09_09_OpenBigDoorFromExiting() {  // 82ad4a
-  if (BYTE(door_animation_step_indicator) != 3) {
+  if ((*(uint8*)(g_ram+(0x690))) != 3) {
     Overworld_DoMapUpdate32x32_conditional();
     return;
   }
   ow_countdown_transition = 36;
-  BYTE(overworld_screen_trans_dir_bits2) = 0;
+  (*(uint8*)(g_ram+(0x416))) = 0;
   submodule_index++;
 }
 
 void Overworld_DoMapUpdate32x32_B() {  // 82ad5c
   Overworld_DoMapUpdate32x32();
-  BYTE(door_open_closed_counter) = 0;
+  (*(uint8*)(g_ram+(0x692))) = 0;
 }
 
 void Module09_0C_OpenBigDoor() {  // 82ad6c
-  if (BYTE(door_animation_step_indicator) != 3) {
+  if ((*(uint8*)(g_ram+(0x690))) != 3) {
     Overworld_DoMapUpdate32x32_conditional();
     return;
   }
   submodule_index = 0;
   subsubmodule_index = 0;
-  BYTE(overworld_screen_trans_dir_bits2) = 0;
+  (*(uint8*)(g_ram+(0x416))) = 0;
 }
 
 void Overworld_DoMapUpdate32x32_conditional() {  // 82ad7b
   if (door_open_closed_counter & 7)
-    BYTE(door_open_closed_counter)++;
+    (*(uint8*)(g_ram+(0x692)))++;
   else
     Overworld_DoMapUpdate32x32();
 }
@@ -1047,15 +1047,15 @@ void Overworld_DoMapUpdate32x32() {  // 82ad85
   num_memorized_tiles += 8;
   door_animation_step_indicator += (door_open_closed_counter == 32) ? 2 : 1;
   nmi_load_bg_from_vram = 1;
-  BYTE(door_open_closed_counter)++;
+  (*(uint8*)(g_ram+(0x692)))++;
 }
 
 void Overworld_StartMosaicTransition() {  // 82ae5e
   ConditionalMosaicControl();
   switch (subsubmodule_index) {
   case 0:
-    if (BYTE(overworld_screen_index) != 0x80) {
-      if (!ZeldaIsPlayingMusicTrack(overworld_music[BYTE(overworld_screen_index)] & 0xf))
+    if ((*(uint8*)(g_ram+(0x8A))) != 0x80) {
+      if (!ZeldaIsPlayingMusicTrack(overworld_music[(*(uint8*)(g_ram+(0x8A)))] & 0xf))
         music_control = 0xf1;
     }
     ResetTransitionPropsAndAdvance_ResetInterface();
@@ -1068,7 +1068,7 @@ void Overworld_StartMosaicTransition() {  // 82ae5e
     subsubmodule_index = 0;
     if (!(overworld_screen_index & 0x3f))
       DecodeAnimatedSpriteTile_variable(0x1e);
-    if (BYTE(overworld_area_index) != 0 && main_module_index != 11) {
+    if ((*(uint8*)(g_ram+(0x40A))) != 0 && main_module_index != 11) {
       TM_copy = 0x16;
       TS_copy = 1;
       CGWSEL_copy = 0x82;
@@ -1161,18 +1161,18 @@ load_overlay:
   CGWSEL_copy = 0x82;
   TM_copy = 0x16;
   TS_copy = 1;
-  sound_effect_ambient = overworld_music[BYTE(overworld_screen_index)] >> 4;
+  sound_effect_ambient = overworld_music[(*(uint8*)(g_ram+(0x8A)))] >> 4;
 
   if (xv == 0x97 || xv == 0x94 || xv == 0x93 || xv == 0x9d || xv == 0x9e || xv == 0x9f)
     CGADSUB_copy = 0x72;
-  else if (xv == 0x95 || xv == 0x9c || BYTE(overworld_screen_index_prev) == 0x5b ||
-           BYTE(overworld_screen_index_prev) == 0x1b && (submodule_index == 35 || submodule_index == 44))
+  else if (xv == 0x95 || xv == 0x9c || (*(uint8*)(g_ram+(0xC213))) == 0x5b ||
+           (*(uint8*)(g_ram+(0xC213))) == 0x1b && (submodule_index == 35 || submodule_index == 44))
     CGADSUB_copy = 0x20;
   else
     TS_copy = 0, CGADSUB_copy = 0x20;
 
   LoadOverworldOverlay();
-  if (BYTE(overlay_index) == 0x94)
+  if ((*(uint8*)(g_ram+(0x8C))) == 0x94)
     BG1VOFS_copy2 |= 0x100;
 
   overworld_screen_index = overworld_screen_index_prev;
@@ -1199,8 +1199,8 @@ void Module09_FadeBackInFromMosaic() {  // 82b0d2
     break;
   default:
     last_music_control = music_unk1;
-    if (BYTE(overworld_screen_index) != 0x80 && BYTE(overworld_screen_index) != 0x2a) {
-      uint8 m = overworld_music[BYTE(overworld_screen_index)];
+    if ((*(uint8*)(g_ram+(0x8A))) != 0x80 && (*(uint8*)(g_ram+(0x8A))) != 0x2a) {
+      uint8 m = overworld_music[(*(uint8*)(g_ram+(0x8A)))];
       sound_effect_ambient = (m >> 4) ? (m >> 4) : 5;
       if (!ZeldaIsPlayingMusicTrack(m & 0xf))
         music_control = (m & 0xf);
@@ -1226,7 +1226,7 @@ void Overworld_Func1C() {  // 82b150
     ApplyPaletteFilter_bounce();
     break;
   default:
-    if (BYTE(overworld_screen_index) < 0x80)
+    if ((*(uint8*)(g_ram+(0x8A))) < 0x80)
       music_control = (overworld_screen_index & 0x3f) ? 2 : 5;
     submodule_index = 8;
     subsubmodule_index = 0;
@@ -1238,9 +1238,9 @@ void OverworldMosaicTransition_LoadSpriteGraphicsAndSetMosaic() {  // 82b171
   LoadNewSpriteGFXSet();
   INIDISP_copy = 0xf;
   HDMAEN_copy = 0x80;
-  BYTE(palette_filter_countdown) = mosaic_target_level - 1;
+  (*(uint8*)(g_ram+(0xC007))) = mosaic_target_level - 1;
   mosaic_target_level = 0;
-  BYTE(darkening_or_lightening_screen) = 2;
+  (*(uint8*)(g_ram+(0xC009))) = 2;
   subsubmodule_index++;
 }
 
@@ -1273,7 +1273,7 @@ void Module09_MirrorWarp() {  // 82b1fa
   nmi_disable_core_updates++;
   switch (subsubmodule_index) {
   case 0:
-    if (BYTE(overworld_screen_index) >= 0x80) {
+    if ((*(uint8*)(g_ram+(0x8A))) >= 0x80) {
       submodule_index = 0;
       subsubmodule_index = 0;
       overworld_map_state = 0;
@@ -1285,7 +1285,7 @@ void Module09_MirrorWarp() {  // 82b1fa
     InitializeMirrorHDMA();
     savegame_is_darkworld ^= 0x40;
     word_7E04C8 = 0;
-    BYTE(overworld_screen_index) = BYTE(overworld_area_index) = (overworld_screen_index & 0x3f) | savegame_is_darkworld;
+    (*(uint8*)(g_ram+(0x8A))) = (*(uint8*)(g_ram+(0x40A))) = (overworld_screen_index & 0x3f) | savegame_is_darkworld;
     overworld_map_state = 0;
     PaletteFilter_InitializeWhiteFilter();
     Overworld_LoadGFXAndScreenSize();
@@ -1314,10 +1314,10 @@ void MirrorWarp_FinalizeAndLoadDestination() {  // 82b260
   ReloadPreviouslyLoadedSheets();
   Overworld_SetSongList();
   HDMAEN_copy = 0x80;
-  uint8 m = overworld_music[BYTE(overworld_screen_index)];
+  uint8 m = overworld_music[(*(uint8*)(g_ram+(0x8A)))];
   music_control = m & 0xf;
   sound_effect_ambient = m >> 4;
-  if (BYTE(overworld_screen_index) >= 0x40 && !link_item_moon_pearl)
+  if ((*(uint8*)(g_ram+(0x8A))) >= 0x40 && !link_item_moon_pearl)
     music_control = 4;
 
   saved_module_for_menu = submodule_index;
@@ -1331,7 +1331,7 @@ void Overworld_DrawScreenAtCurrentMirrorPosition() {  // 82b2e6
   uint16 bak1 = map16_load_src_off;
   uint16 bak2 = map16_load_dst_off;
   uint16 bak3 = map16_load_var2;
-  if (kOverworldMapIsSmall[BYTE(overworld_screen_index)]) {
+  if (kOverworldMapIsSmall[(*(uint8*)(g_ram+(0x8A)))]) {
     map16_load_src_off = 0x390;
     map16_load_var2 = (0x390 - 0x400 & 0xf80) >> 7;
     map16_load_dst_off = (0x390 - 0x10 & 0x3e) >> 1;
@@ -1349,7 +1349,7 @@ void MirrorWarp_LoadSpritesAndColors() {  // 82b334
   uint16 bak1 = map16_load_src_off;
   uint16 bak2 = map16_load_dst_off;
   uint16 bak3 = map16_load_var2;
-  if (kOverworldMapIsSmall[BYTE(overworld_screen_index)]) {
+  if (kOverworldMapIsSmall[(*(uint8*)(g_ram+(0x8A)))]) {
     map16_load_src_off = 0x390;
     map16_load_var2 = (0x390 - 0x400 & 0xf80) >> 7;
     map16_load_dst_off = (0x390 - 0x10 & 0x3e) >> 1;
@@ -1363,7 +1363,7 @@ void MirrorWarp_LoadSpritesAndColors() {  // 82b334
   Overworld_LoadPalettes(kOverworldBgPalettes[sc], overworld_sprite_palettes[sc]);
   Palette_SpecialOw();
   Overworld_SetFixedColAndScroll();
-  if (BYTE(overworld_screen_index) == 0x1b || BYTE(overworld_screen_index) == 0x5b)
+  if ((*(uint8*)(g_ram+(0x8A))) == 0x1b || (*(uint8*)(g_ram+(0x8A))) == 0x5b)
     TS_copy = 1;
   for (int i = 0; i < 16 * 6; i++)
     main_palette_buffer[32 + i] = 0x7fff;
@@ -1411,7 +1411,7 @@ void Module09_2E_Whirlpool() {  // 82b40f
     overworld_palette_aux_or_main = 0;
     hud_palette = 0;
     FindPartnerWhirlpoolExit();
-    BYTE(dung_draw_width_indicator) = 0;
+    (*(uint8*)(g_ram+(0xB2))) = 0;
     Overworld_LoadOverlays2();
     submodule_index--;
     nmi_subroutine_index = 12;
@@ -1465,7 +1465,7 @@ void Module09_2E_Whirlpool() {  // 82b40f
   }
   case 10:
     PaletteFilter_WhirlpoolRestoreRedGreen();
-    if (BYTE(palette_filter_countdown))
+    if ((*(uint8*)(g_ram+(0xC007))))
       PaletteFilter_WhirlpoolRestoreRedGreen();
     break;
   case 11:
@@ -1476,7 +1476,7 @@ void Module09_2E_Whirlpool() {  // 82b40f
     countdown_for_blink = 144;
     ReloadPreviouslyLoadedSheets();
     HDMAEN_copy = 0x80;
-    sound_effect_ambient = overworld_music[BYTE(overworld_screen_index)] >> 4;
+    sound_effect_ambient = overworld_music[(*(uint8*)(g_ram+(0x8A)))] >> 4;
     music_control = savegame_is_darkworld ? 9 : 2;
     submodule_index = 0;
     subsubmodule_index = 0;
@@ -1527,7 +1527,7 @@ void Module09_2A_00_ScrollToLand() {  // 82b532
     set_when_damaging_enemies = 0;
   }
   Overworld_OperateCameraScroll();
-  if (BYTE(overworld_screen_trans_dir_bits2))
+  if ((*(uint8*)(g_ram+(0x416))))
     OverworldHandleMapScroll();
 }
 
@@ -1549,7 +1549,7 @@ void Overworld_OperateCameraScroll() {  // 82bb90
       }
     } while (--av);
     WORD(byte_7E069E[0]) = r4;
-    uint8 oi = BYTE(overlay_index);
+    uint8 oi = (*(uint8*)(g_ram+(0x8C)));
     if (oi != 0x97 && oi != 0x9d && r4 != 0) {
       if (oi == 0xb5 || oi == 0xbe) {
         subp = (r4 & 3) << 14;
@@ -1590,7 +1590,7 @@ void Overworld_OperateCameraScroll() {  // 82bb90
       }
     } while (--ax);
     WORD(byte_7E069E[1]) = r4;
-    uint8 oi = BYTE(overlay_index);
+    uint8 oi = (*(uint8*)(g_ram+(0x8C)));
     if (oi != 0x97 && oi != 0x9d && r4 != 0) {
       if (oi == 0x95 || oi == 0x9e) {
         subp = (r4 & 3) << 14;
@@ -1608,13 +1608,13 @@ void Overworld_OperateCameraScroll() {  // 82bb90
       BG1HOFS_subpixel = (uint16)(tmp), BG1HOFS_copy2 = (uint16)(tmp >> 16);
     }
   }
-  if (BYTE(overworld_screen_index) != 0x47) {
-    if (BYTE(overlay_index) == 0x9c) {
+  if ((*(uint8*)(g_ram+(0x8A))) != 0x47) {
+    if ((*(uint8*)(g_ram+(0x8C))) == 0x9c) {
       uint32 tmp = BG1VOFS_subpixel | BG1VOFS_copy2 << 16;
       tmp -= 0x2000;
       BG1VOFS_subpixel = (uint16)(tmp), BG1VOFS_copy2 = (uint16)(tmp >> 16) + WORD(byte_7E069E[0]);
       BG1HOFS_copy2 = BG2HOFS_copy2;
-    } else if (BYTE(overlay_index) == 0x97 || BYTE(overlay_index) == 0x9d) {
+    } else if ((*(uint8*)(g_ram+(0x8C))) == 0x97 || (*(uint8*)(g_ram+(0x8C))) == 0x9d) {
       uint32 tmp = BG1VOFS_subpixel | BG1VOFS_copy2 << 16;
       tmp += 0x2000;
       BG1VOFS_subpixel = (uint16)(tmp), BG1VOFS_copy2 = (uint16)(tmp >> 16);
@@ -1633,24 +1633,24 @@ void Overworld_OperateCameraScroll() {  // 82bb90
 int OverworldCameraBoundaryCheck(int xa, int ya, int vd, int r8) {  // 82bd62
   ya >>= 1, r8 >>= 1;
 
-  uint16 *xp = (xa ? &BG2VOFS_copy2 : &BG2HOFS_copy2);
-  uint16 *yp = &(&ow_scroll_vars0.ystart)[ya];
+  uint16 *xp = (xa ? (g_ram+0xE8) : (g_ram+0xE2));
+  uint16 *yp = ((zle16_t*)((uint8*)&ow_scroll_vars0 + offsetof(OwScrollVars, ystart)) + (ya));
   if (*xp == *yp) {
-    (&overworld_unk1)[ya] = 0;
-    (&overworld_unk1)[ya ^ 1] = 0;
+    ((g_ram+0x624))[ya] = 0;
+    ((g_ram+0x624))[ya ^ 1] = 0;
     return 0;
   }
   *xp += vd;
 
-  int tt = vd + (&camera_y_coord_scroll_hi)[r8];
-  (&camera_y_coord_scroll_hi)[r8] = tt;
-  (&camera_y_coord_scroll_low)[r8] = tt + 2;
-  uint16 *op = (&overworld_unk1) + ya;
+  int tt = vd + ((g_ram+0x61A))[r8];
+  ((g_ram+0x61A))[r8] = tt;
+  ((g_ram+0x618))[r8] = tt + 2;
+  uint16 *op = ((g_ram+0x624)) + ya;
   if (!sign16(++(*op) - 0x10)) {
     (*op) -= 0x10;
     overworld_screen_trans_dir_bits2 |= kOverworld_Func2_Tab[ya];
   }
-  (&overworld_unk1)[ya ^ 1] = -(&overworld_unk1)[ya];
+  ((g_ram+0x624))[ya ^ 1] = -((g_ram+0x624))[ya];
   return vd;
 }
 
@@ -1661,11 +1661,11 @@ int OverworldScrollTransition() {  // 82c001
   if (y < 2) {
     byte_7E069E[0] = d;
     rv = (BG2VOFS_copy2 += d);
-    if (BYTE(overworld_screen_index) != 0x1b && BYTE(overworld_screen_index) != 0x5b)
+    if ((*(uint8*)(g_ram+(0x8A))) != 0x1b && (*(uint8*)(g_ram+(0x8A))) != 0x5b)
       BG1VOFS_copy2 = BG2VOFS_copy2;
     if (transition_counter >= kOverworld_Func6B_Tab2[y])
       link_y_coord += d;
-    if (rv != (&up_down_scroll_target)[y])
+    if (rv != ((g_ram+0x610))[y])
       return rv;
     if (y == 0)
       BG2VOFS_copy2 -= 2;
@@ -1676,11 +1676,11 @@ int OverworldScrollTransition() {  // 82c001
   } else {
     byte_7E069E[1] = d;
     rv = (BG2HOFS_copy2 += d);
-    if (BYTE(overworld_screen_index) != 0x1b && BYTE(overworld_screen_index) != 0x5b)
+    if ((*(uint8*)(g_ram+(0x8A))) != 0x1b && (*(uint8*)(g_ram+(0x8A))) != 0x5b)
       BG1HOFS_copy2 = BG2HOFS_copy2;
     if (transition_counter >= kOverworld_Func6B_Tab2[y])
       link_x_coord += d;
-    if (rv != (&up_down_scroll_target)[y])
+    if (rv != ((g_ram+0x610))[y])
       return rv;
     link_x_coord &= ~7;
     camera_x_coord_scroll_hi = link_x_coord + kOverworld_Func6B_Tab3[y] + 11;
@@ -1718,13 +1718,13 @@ void Overworld_FinalizeEntryOntoScreen() {  // 82c242
   if ((d & 0xfe) == kOverworld_Func8_tab[byte_7E069C]) {
     submodule_index = 0;
     subsubmodule_index = 0;
-    uint8 m = overworld_music[BYTE(overworld_screen_index)];
+    uint8 m = overworld_music[(*(uint8*)(g_ram+(0x8A)))];
     sound_effect_ambient = m >> 4;
     if (music_unk1 == 0xf1)
       music_control = m & 0xf;
   }
   Overworld_OperateCameraScroll();
-  if (BYTE(overworld_screen_trans_dir_bits2))
+  if ((*(uint8*)(g_ram+(0x416))))
     OverworldHandleMapScroll();
 }
 
@@ -1813,7 +1813,7 @@ void LoadOverworldFromDungeon() {  // 82e4a3
 void Overworld_LoadNewScreenProperties() {  // 82e58b
   tilemap_location_calc_mask = ~7;
   Overworld_LoadGFXAndScreenSize();
-  BYTE(overworld_right_bottom_bound_for_scroll) = 0xe4;
+  (*(uint8*)(g_ram+(0x716))) = 0xe4;
   overworld_area_is_big &= 0xff;
   Overworld_SetCameraBoundaries(overworld_area_is_big != 0, overworld_screen_index & 0x3f);
   link_quadrant_x = 0;
@@ -1822,13 +1822,13 @@ void Overworld_LoadNewScreenProperties() {  // 82e58b
   quadrant_fullsize_y = 2;
   player_oam_x_offset = player_oam_y_offset = 0x80;
   link_direction_mask_a = link_direction_mask_b = 0xf;
-  BYTE(link_z_coord) = 0xff;
+  (*(uint8*)(g_ram+(0x24))) = 0xff;
   link_actual_vel_z = 0xff;
 }
 
 void LoadCachedEntranceProperties() {  // 82e5d4
   overworld_area_index = overworld_area_index_exit;
-  WORD(TM_copy) = WORD(TM_copy_exit);
+  WORD(TM_copy) = TM_copy_exit;
   BG2VOFS_copy2 = BG2VOFS_copy = BG1VOFS_copy2 = BG1VOFS_copy = BG2VOFS_copy2_exit;
   BG2HOFS_copy2 = BG2HOFS_copy = BG1HOFS_copy2 = BG1HOFS_copy = BG2HOFS_copy2_exit;
   link_x_coord = link_x_coord_exit;
@@ -1900,7 +1900,7 @@ void Overworld_EnterSpecialArea() {  // 82e851
     dungeon_room_index = 0x182;
 
   uint8 roombak = dungeon_room_index;
-  int i = (BYTE(dungeon_room_index) -= 0x80);
+  int i = ((*(uint8*)(g_ram+(0xA0))) -= 0x80);
   link_direction_facing = kSpExit_Dir[i];
   incremental_counter_for_vram = 0;
   sprite_graphics_index = kSpExit_SprGfx[i];
@@ -1923,7 +1923,7 @@ void Overworld_EnterSpecialArea() {  // 82e851
   left_right_scroll_target = kSpExit_Tab6[k];
   left_right_scroll_target_end = kSpExit_Tab7[k];
 
-  BYTE(dungeon_room_index) = roombak;
+  (*(uint8*)(g_ram+(0xA0))) = roombak;
   Palette_SpecialOw();
 }
 
@@ -1968,11 +1968,11 @@ void LoadOverworldFromSpecialOverworld() {  // 82e9bc
   quadrant_fullsize_y = 2;
   player_oam_x_offset = player_oam_y_offset = 0x80;
   link_direction_mask_a = link_direction_mask_b = 0xf;
-  BYTE(link_z_coord) = 0xff;
+  (*(uint8*)(g_ram+(0x24))) = 0xff;
   link_actual_vel_z = 0xff;
   Link_ResetSwimmingState();
   Overworld_LoadGFXAndScreenSize();
-  BYTE(overworld_right_bottom_bound_for_scroll) = 228;
+  (*(uint8*)(g_ram+(0x716))) = 228;
   overworld_area_is_big &= 0xff;
 }
 
@@ -2019,7 +2019,7 @@ void FluteMenu_LoadSelectedScreenPalettes() {  // 82ecdd
 }
 
 void FindPartnerWhirlpoolExit() {  // 82ed08
-  int j = FindInWordArray(kWhirlpoolAreas, overworld_screen_index, kWhirlpoolAreas_SIZE / 2);
+  int j = FindInWordArray(RAM16P(g_asset_ptrs[123]), overworld_screen_index, kWhirlpoolAreas_SIZE / 2);
   if (j >= 0) {
     num_memorized_tiles = 0;
     Overworld_LoadBirdTravelPos(j + 9);
@@ -2031,7 +2031,7 @@ void Overworld_LoadAmbientOverlay(bool load_map_data) {  // 82ed25
   uint16 bak2 = map16_load_dst_off;
   uint16 bak3 = map16_load_var2;
 
-  if (kOverworldMapIsSmall[BYTE(overworld_screen_index)]) {
+  if (kOverworldMapIsSmall[(*(uint8*)(g_ram+(0x8A)))]) {
     map16_load_src_off = 0x390;
     map16_load_var2 = (0x390 - 0x400 & 0xf80) >> 7;
     map16_load_dst_off = (0x390 - 0x10 & 0x3e) >> 1;
@@ -2094,9 +2094,9 @@ void Overworld_HandleOverlaysAndBombDoors() {  // 82ef29
     dung_bg2[340] = 0x20f;
   else if (overworld_screen_index == 0x2f)
     dung_bg2[1497] = 0x20f;
-  if (BYTE(overworld_screen_index) < 0x80 && save_ow_event_info[BYTE(overworld_screen_index)] & 0x20)
+  if ((*(uint8*)(g_ram+(0x8A))) < 0x80 && save_ow_event_info[(*(uint8*)(g_ram+(0x8A)))] & 0x20)
     Overworld_LoadEventOverlay();
-  if (save_ow_event_info[BYTE(overworld_screen_index)] & 2) {
+  if (save_ow_event_info[(*(uint8*)(g_ram+(0x8A)))] & 2) {
     int pos = kSecondaryOverlayPerOw[overworld_screen_index] >> 1;
     dung_bg2[pos + 0] = 0xdb4;
     dung_bg2[pos + 1] = 0xdb5;
@@ -2104,7 +2104,7 @@ void Overworld_HandleOverlaysAndBombDoors() {  // 82ef29
 }
 
 void TriggerAndFinishMapLoadStripe_Y(int n) {  // 82ef7a
-  BYTE(overworld_screen_trans_dir_bits2) = 8;
+  (*(uint8*)(g_ram+(0x416))) = 8;
   nmi_subroutine_index = 3;
   uint16 *dst = uvram.data;
   *dst++ = 0x80;
@@ -2117,7 +2117,7 @@ void TriggerAndFinishMapLoadStripe_Y(int n) {  // 82ef7a
 }
 
 void TriggerAndFinishMapLoadStripe_X(int n) {  // 82efb3
-  BYTE(overworld_screen_trans_dir_bits2) = 2;
+  (*(uint8*)(g_ram+(0x416))) = 2;
   nmi_subroutine_index = 3;
   uint16 *dst = uvram.data;
   *dst++ = 0x8040;
@@ -2138,8 +2138,8 @@ void SomeTileMapChange() {  // 82efe8
 }
 
 void CreateInitialNewScreenMapToScroll() {  // 82f031
-  if (!kOverworldMapIsSmall[BYTE(overworld_screen_index)]) {
-    switch (BYTE(overworld_screen_trans_dir_bits2)) {
+  if (!kOverworldMapIsSmall[(*(uint8*)(g_ram+(0x8A)))]) {
+    switch ((*(uint8*)(g_ram+(0x416)))) {
     case 1: CreateInitialOWScreenView_Big_East(); break;
     case 2: CreateInitialOWScreenView_Big_West(); break;
     case 4: CreateInitialOWScreenView_Big_South(); break;
@@ -2149,7 +2149,7 @@ void CreateInitialNewScreenMapToScroll() {  // 82f031
       submodule_index = 0;
     }
   } else {
-    switch (BYTE(overworld_screen_trans_dir_bits2)) {
+    switch ((*(uint8*)(g_ram+(0x416)))) {
     case 1: CreateInitialOWScreenView_Small_East(); break;
     case 2: CreateInitialOWScreenView_Small_West(); break;
     case 4: CreateInitialOWScreenView_Small_South(); break;
@@ -2203,7 +2203,7 @@ void CreateInitialOWScreenView_Small_North() {  // 82f10f
 }
 
 void CreateInitialOWScreenView_Small_South() {  // 82f141
-  orange_blue_barrier_state = BYTE(map16_load_src_off);
+  orange_blue_barrier_state = (*(uint8*)(g_ram+(0x84)));
   word_7EC174 = map16_load_dst_off;
   word_7EC176 = 24;
   map16_load_src_off = 0x790;
@@ -2238,7 +2238,7 @@ void CreateInitialOWScreenView_Small_East() {  // 82f1b7
 
 void OverworldTransitionScrollAndLoadMap() {  // 82f20e
   uint16 *dst = uvram.data;
-  switch (BYTE(overworld_screen_trans_dir_bits2)) {
+  switch ((*(uint8*)(g_ram+(0x416)))) {
   case 1: dst = BuildFullStripeDuringTransition_East(dst); break;
   case 2: dst = BuildFullStripeDuringTransition_West(dst); break;
   case 4: dst = BuildFullStripeDuringTransition_South(dst); break;
@@ -2286,32 +2286,32 @@ uint16 *BuildFullStripeDuringTransition_East(uint16 *dst) {  // 82f24a
 
 void OverworldHandleMapScroll() {  // 82f273
   uint16 *dst = uvram.data;
-  switch (BYTE(overworld_screen_trans_dir_bits2)) {
+  switch ((*(uint8*)(g_ram+(0x416)))) {
   case 1:
     dst = CheckForNewlyLoadedMapAreas_East(dst);
-    BYTE(overworld_screen_trans_dir_bits2) = 0;
+    (*(uint8*)(g_ram+(0x416))) = 0;
     break;
   case 2:
     dst = CheckForNewlyLoadedMapAreas_West(dst);
-    BYTE(overworld_screen_trans_dir_bits2) = 0;
+    (*(uint8*)(g_ram+(0x416))) = 0;
     break;
   case 4:
     dst = CheckForNewlyLoadedMapAreas_South(dst);
-    BYTE(overworld_screen_trans_dir_bits2) = 0;
+    (*(uint8*)(g_ram+(0x416))) = 0;
     break;
   case 5:
   case 6:
     dst = CheckForNewlyLoadedMapAreas_South(dst);
-    BYTE(overworld_screen_trans_dir_bits2) &= 3;
+    (*(uint8*)(g_ram+(0x416))) &= 3;
     break;
   case 8:
     dst = CheckForNewlyLoadedMapAreas_North(dst);
-    BYTE(overworld_screen_trans_dir_bits2) = 0;
+    (*(uint8*)(g_ram+(0x416))) = 0;
     break;
   case 9:
   case 10:
     dst = CheckForNewlyLoadedMapAreas_North(dst);
-    BYTE(overworld_screen_trans_dir_bits2) &= 3;
+    (*(uint8*)(g_ram+(0x416))) &= 3;
     break;
   default:
     assert(0);
@@ -2380,7 +2380,7 @@ uint16 *CheckForNewlyLoadedMapAreas_East(uint16 *dst) {  // 82f37f
 uint16 *BufferAndBuildMap16Stripes_X(uint16 *dst) {  // 82f3b9
   uint16 pos = map16_load_src_off - kOverworld_DrawStrip_Tab[overworld_screen_trans_dir_bits2 >> 1 & 1];
   int d = map16_load_var2;
-  uint16 *tmp = dung_replacement_tile_state;
+  uint16 *tmp = RAM16P(g_ram+0x500);
   for (int i = 0; i < 32; i++) {
     tmp[d] = (pos >= 0x2000) ? 0 : dung_bg2[pos >> 1];
     d = (d + 1) & 0x1f, pos += 128;
@@ -2412,7 +2412,7 @@ uint16 *BufferAndBuildMap16Stripes_X(uint16 *dst) {  // 82f3b9
 uint16 *BufferAndBuildMap16Stripes_Y(uint16 *dst) {  // 82f482
   uint16 pos = map16_load_src_off - kOverworld_DrawStrip_Tab[1 + (overworld_screen_trans_dir_bits2 >> 2 & 1)];
   int d = map16_load_dst_off;
-  uint16 *tmp = dung_replacement_tile_state;
+  uint16 *tmp = RAM16P(g_ram+0x500);
   for (int i = 0; i < 32; i++) {
     tmp[d] = (pos >= 0x2000) ? 0 : dung_bg2[pos >> 1]; // fixed bug warning. can go negative
     pos += 2;
@@ -2442,10 +2442,10 @@ uint16 *BufferAndBuildMap16Stripes_Y(uint16 *dst) {  // 82f482
 
 void Overworld_DecompressAndDrawAllQuadrants() {  // 82f54a
   int si = overworld_screen_index;
-  Overworld_DecompressAndDrawOneQuadrant((uint16 *)&g_ram[0x2000], si + 0);
-  Overworld_DecompressAndDrawOneQuadrant((uint16 *)&g_ram[0x2040], si + 1);
-  Overworld_DecompressAndDrawOneQuadrant((uint16 *)&g_ram[0x3000], si + 8);
-  Overworld_DecompressAndDrawOneQuadrant((uint16 *)&g_ram[0x3040], si + 9);
+  Overworld_DecompressAndDrawOneQuadrant((zle16_t *)&g_ram[0x2000], si + 0);
+  Overworld_DecompressAndDrawOneQuadrant((zle16_t *)&g_ram[0x2040], si + 1);
+  Overworld_DecompressAndDrawOneQuadrant((zle16_t *)&g_ram[0x3000], si + 8);
+  Overworld_DecompressAndDrawOneQuadrant((zle16_t *)&g_ram[0x3040], si + 9);
 }
 
 static const uint8 *GetOverworldHibytes(int i) {
@@ -2468,7 +2468,7 @@ void Overworld_DecompressAndDrawOneQuadrant(uint16 *dst, int screen) {  // 82f59
 
   map16_decode_last = 0xffff;
 
-  uint16 *src = (uint16 *)&g_ram[0x14000];
+  uint16 *src = (zle16_t *)&g_ram[0x14000];
   for (int j = 0; j < 16; j++) {
     for (int i = 0; i < 16; i++) {
       Overworld_ParseMap32Definition(dst, *src++ * 2);
@@ -2531,7 +2531,7 @@ void Overworld_ParseMap32Definition(uint16 *dst, uint16 input) {  // 82f691
 
 void OverworldLoad_LoadSubOverlayMap32() {  // 82f7cb
   int si = overworld_screen_index;
-  Overworld_DecompressAndDrawOneQuadrant((uint16 *)&g_ram[0x4000], si);
+  Overworld_DecompressAndDrawOneQuadrant((zle16_t *)&g_ram[0x4000], si);
 }
 
 void LoadOverworldOverlay() {  // 82fd0d
@@ -2545,7 +2545,7 @@ void Map16ToMap8(const uint8 *src, int r20) {  // 82fd46
   map16_load_src_off += 0x1000;
   int n = 32;
   int r14 = 0;
-  uint16 *r10 = &word_7F4000;
+  uint16 *r10 = (g_ram+0x14000);
   do {
     OverworldCopyMap16ToBuffer(src, r20, r14, r10);
     r14 += 0x100, r10 += 2;
@@ -2559,7 +2559,7 @@ void OverworldCopyMap16ToBuffer(const uint8 *src, uint16 r20, int r14, uint16 *r
 
   int yr = map16_load_src_off - 0x410 & 0x1fff;
   int xr = map16_load_dst_off;
-  uint16 *tmp = (uint16 *)(g_ram + 0x500);
+  uint16 *tmp = (zle16_t *)(g_ram + 0x500);
   int n = 32;
   do {
     WORD(tmp[xr]) = WORD(src[yr]);
@@ -2715,7 +2715,7 @@ void Overworld_SetFixedColAndScroll() {  // 8bfe70
     }
   } else {
     if ((si & 0x3f) == 0x1b) {
-      BG1HOFS_copy2 = (BYTE(overworld_screen_trans_dir_bits) != 8) ? 0x838 : BG2HOFS_copy2;
+      BG1HOFS_copy2 = ((*(uint8*)(g_ram+(0x410))) != 8) ? 0x838 : BG2HOFS_copy2;
       BG1VOFS_copy2 = 0x6c0;
     }
   }
@@ -2785,7 +2785,7 @@ void Overworld_CheckSpecialSwitchArea() {  // 8ede49
   for (int i = 3; i >= 0; i--) {
     if (kSpecialSwitchArea_Map8[i] == a && kSpecialSwitchArea_Screen[i] == overworld_screen_index) {
       dungeon_room_index = kSpecialSwitchArea_Exit[i];
-      BYTE(overworld_screen_trans_dir_bits) = BYTE(overworld_screen_trans_dir_bits2) = link_direction = kSpecialSwitchArea_Direction[i];
+      (*(uint8*)(g_ram+(0x410))) = (*(uint8*)(g_ram+(0x416))) = link_direction = kSpecialSwitchArea_Direction[i];
       WORD(byte_7E069C) = WORD(overworld_screen_transition) = DirToEnum(link_direction);
       submodule_index = 23;
       main_module_index = 11;
@@ -2820,7 +2820,7 @@ void Palette_AnimGetMasterSword() {  // 8ef400
 }
 
 void Palette_AnimGetMasterSword2() {  // 8ef404
-  memcpy(mapbak_palette, aux_palette_buffer, 512);
+  memcpy(RAM16P(g_ram+0x1DD80), RAM16P(g_ram+0xC300), 512);
   for (int i = 0; i < 256; i++)
     aux_palette_buffer[i] = 0x7fff;
   main_palette_buffer[32] = main_palette_buffer[0];
@@ -2832,7 +2832,7 @@ void Palette_AnimGetMasterSword2() {  // 8ef404
 void Palette_AnimGetMasterSword3() {  // 8ef48c
   if (darkening_or_lightening_screen != 0 || palette_filter_countdown != 31)
     return;
-  memcpy(aux_palette_buffer, mapbak_palette, 512);
+  memcpy(RAM16P(g_ram+0xC300), RAM16P(g_ram+0x1DD80), 512);
   TS_copy = 0;
 }
 
@@ -2875,7 +2875,7 @@ void Overworld_DwDeathMountainPaletteAnimation() {  // 8ef582
 
 void Overworld_LoadEventOverlay() {  // 8ef652
   int x;
-  uint16 *dst = dung_bg2;
+  uint16 *dst = RAM16P(g_ram+0x2000);
   switch (overworld_screen_index) {
   case 0: case 1: case 2:
     dst[XY(11, 16)] = 0xe32;
@@ -3182,7 +3182,7 @@ loc_8EF7B4:
 }
 
 void Ancilla_TerminateWaterfallSplashes() {  // 8ffd3c
-  uint8 t = BYTE(overworld_screen_index);
+  uint8 t = (*(uint8*)(g_ram+(0x8A)));
   if (t == 0xf) {
     for (int i = 4; i >= 0; i--) {
       if (ancilla_type[i] == 0x41)
@@ -3200,7 +3200,7 @@ void Overworld_GetPitDestination() {  // 9bb860
 
   int i = 36 / 2;
   for (;;) {
-    if (kFallHole_Pos[i] == pos && kFallHole_Area[i] == overworld_area_index)
+    if (kFallHole_Pos[i] == pos &(RAM16P(g_asset_ptrs[127]) + (i)) == overworld_area_index)
       break;
     if (--i < 0) {
       savegame_is_darkworld = 0;
@@ -3254,7 +3254,7 @@ is_149_or_169:
       big_rock_starting_address = pos - 0x80;
       sound_effect_2 = 21;
       subsubmodule_index = 0;
-      BYTE(door_animation_step_indicator) = 0;
+      (*(uint8*)(g_ram+(0x690))) = 0;
       submodule_index = 12;
       return;
     }
@@ -3434,12 +3434,12 @@ uint8 SmashRockPile_fromLift(uint16 a, uint16 pos, uint16 y, Point16U pt) {  // 
   big_rock_starting_address = pos;
   door_open_closed_counter = 40;
 
-  *(uint16 *)&g_ram[0] = pt.y;
-  *(uint16 *)&g_ram[2] = pt.x;
+  RAM16(&g_ram[0]) = pt.y;
+  RAM16(&g_ram[2]) = pt.x;
 
   uint16 secret = Overworld_RevealSecret(pos);
-  pt.y = *(uint16 *)&g_ram[0];
-  pt.x = *(uint16 *)&g_ram[2];
+  pt.y = RAM16(&g_ram[0]);
+  pt.x = RAM16(&g_ram[2]);
 
   if (secret == 0xffff) {
     save_ow_event_info[overworld_screen_index] |= 0x20;
@@ -3554,7 +3554,7 @@ void CreatePyramidHole() {  // 9bc2a7
 
 // Strange return value in Carry/R14
 uint16 Overworld_RevealSecret(uint16 pos) {  // 9bc8a4
-  BYTE(dung_secrets_unk1) = 0;
+  (*(uint8*)(g_ram+(0xB9C))) = 0;
 
   if (overworld_screen_index >= 0x80) {
 fail:
@@ -3573,13 +3573,13 @@ fail:
   }
   uint8 data = ptr[2];
   if (data && data < 0x80)
-    BYTE(dung_secrets_unk1) |= data;
+    (*(uint8*)(g_ram+(0xB9C))) |= data;
   if (data < 0x80) {
     AdjustSecretForPowder();
     return 0; // carry set
   }
 
-  BYTE(dung_secrets_unk1) = 0xff;
+  (*(uint8*)(g_ram+(0xB9C))) = 0xff;
   if (data != 0x84 && !(save_ow_event_info[overworld_screen_index] & 2)) {
     if (overworld_screen_index == 0x5b && follower_indicator != 13)
       goto fail;
@@ -3606,7 +3606,7 @@ void Overworld_DrawMap16_Persist(uint16 pos, uint16 value) {  // 9bc97c
 
 void Overworld_DrawMap16(uint16 pos, uint16 value) {  // 9bc980
   pos = Overworld_FindMap16VRAMAddress(pos);
-  uint16 *dst = &vram_upload_data[vram_upload_offset >> 1];
+  uint16 *dst = (RAM16P(g_ram+0x1002) + (vram_upload_offset >> 1));
   const uint16 *src = GetMap16toMap8Table() + value * 4;
   dst[0] = swap16(pos);
   dst[1] = 0x300;
@@ -3623,7 +3623,7 @@ void Overworld_DrawMap16(uint16 pos, uint16 value) {  // 9bc980
 void Overworld_AlterTileHardcore(uint16 pos, uint16 value) {  // 9bc9de
   dung_bg2[pos >> 1] = value;
   pos = Overworld_FindMap16VRAMAddress(pos);
-  uint16 *dst = &vram_upload_data[vram_upload_offset >> 1];
+  uint16 *dst = (RAM16P(g_ram+0x1002) + (vram_upload_offset >> 1));
   const uint16 *src = GetMap16toMap8Table() + value * 4;
   dst[0] = swap16(pos);
   dst[1] = 0x300;
@@ -3706,7 +3706,7 @@ void Overworld_AnimateEntrance_Skull() {  // 9bcba6
     subsubmodule_index++;
     Overworld_DrawMap16_Persist(0x409 * 2, 0xe06);
     Overworld_DrawMap16_Persist(0x40a * 2, 0xe06);
-    save_ow_event_info[BYTE(overworld_screen_index)] |= 0x20;
+    save_ow_event_info[(*(uint8*)(g_ram+(0x8A)))] |= 0x20;
     nmi_load_bg_from_vram = 1;
     sound_effect_2 = 0x16;
     break;
@@ -3798,7 +3798,7 @@ void Overworld_AnimateEntrance_Mire() {  // 9bccd4
     if (j != 72)
       break;
     OverworldEntrance_AdvanceAndBoom();
-    save_ow_event_info[BYTE(overworld_screen_index)] |= 0x20;
+    save_ow_event_info[(*(uint8*)(g_ram+(0x8A)))] |= 0x20;
     j = 0xe48;
 draw_misery_2:
     Overworld_DrawMap16_Persist(0x622, j++);
@@ -3857,7 +3857,7 @@ void Overworld_AnimateEntrance_TurtleRock() {  // 9bce28
 common:
     vram_upload_data[1] = 0xfe47;
     vram_upload_data[2] = 0x1e3;
-    BYTE(vram_upload_data[3]) = 0xff;
+    (*(uint8*)(g_ram+0x1002+2*(3))) = 0xff;
     subsubmodule_index++;
     nmi_load_bg_from_vram = 1;
     break;
@@ -3883,7 +3883,7 @@ common:
     TS_copy = 1;
     CGWSEL_copy = 2;
     CGADSUB_copy = 0x22;
-    uint16 *vram = vram_upload_data, *vram_end = vram + (vram_upload_offset >> 1);
+    uint16 *vram = RAM16P(g_ram+0x1002), *vram_end = vram + (vram_upload_offset >> 1);
     do {
       vram[0] |= 0x10;
       if (vram[2] == 0x8aa)
@@ -3967,7 +3967,7 @@ void Overworld_AnimateEntrance_GanonsTower() {  // 9bcfd9
   switch (subsubmodule_index) {
   case 0:
   case 1:
-    save_ow_event_info[BYTE(overworld_screen_index)] |= 0x20;
+    save_ow_event_info[(*(uint8*)(g_ram+(0x8A)))] |= 0x20;
     GanonTowerEntrance_Func1();
     break;
   case 2:

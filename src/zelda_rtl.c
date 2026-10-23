@@ -82,9 +82,9 @@ static const uint8 *SimpleHdma_GetPtr(uint32 p) {
   case 0xABDDD: return kAttractIndirectHdmaTab;   // mode7
   case 0x2c80c: return kHdmaTableForPrayingScene;
 
-  case 0x1b00: return (uint8 *)hdma_table_dynamic;
-  case 0x1be0: return (uint8 *)hdma_table_dynamic + 0xe0;
-  case 0x1bf0: return (uint8 *)hdma_table_dynamic + 0xf0;
+  case 0x1b00: return (uint8 *)RAM16P(g_ram+0x1DBA0);
+  case 0x1be0: return (uint8 *)RAM16P(g_ram+0x1DBA0) + 0xe0;
+  case 0x1bf0: return (uint8 *)RAM16P(g_ram+0x1DBA0) + 0xf0;
   case 0xadd27: return (uint8*)kMapMode_Zooms1;
   case 0xade07: return (uint8*)kMapMode_Zooms1 + 0xe0;
   case 0xadee7: return (uint8*)kMapMode_Zooms2;
@@ -720,8 +720,8 @@ bool ZeldaRunFrame(int inputs) {
 
       if (enhanced_features0 != g_wanted_zelda_features) {
         enhanced_features0 = g_wanted_zelda_features;
-        EmuSyncMemoryRegion(&enhanced_features0, sizeof(enhanced_features0));
-        StateRecorder_RecordPatchByte(&state_recorder, kRam_Features0, (uint8 *)&enhanced_features0, 4);
+        EmuSyncMemoryRegion((g_ram+0x64c), sizeof(enhanced_features0));
+        StateRecorder_RecordPatchByte(&state_recorder, kRam_Features0, (g_ram+0x64c), 4);
       }
     }
   }

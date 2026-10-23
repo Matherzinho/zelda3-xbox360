@@ -23,7 +23,7 @@ bool Intro_CheckCksum(const uint8 *s) {
 
 uint16 *SelectFile_Func1() {
   static const uint16 kSelectFile_Func1_Tab[4] = {0x3581, 0x3582, 0x3591, 0x3592};
-  uint16 *dst = (uint16 *)&g_ram[0x1002];
+  uint16 *dst = (zle16_t *)&g_ram[0x1002];
   *dst++ = 0x10;
   *dst++ = 0xff07;
   for (int i = 0; i < 1024; i++)
@@ -94,7 +94,7 @@ void SelectFile_Func17(int k) {
   static const uint16 kSelectFile_DrawName_HealthVramOffs[3] = {0x16, 0x6a, 0xbe};
   uint8 *sram = g_zenv.sram + 0x500 * k;
   uint16 *name = (uint16 *)(sram + kSrmOffs_Name);
-  uint16 *dst = vram_upload_data + kSelectFile_DrawName_VramOffs[k] / 2;
+  uint16 *dst = RAM16P(g_ram+0x1002) + kSelectFile_DrawName_VramOffs[k] / 2;
   for (int i = 5; i >= 0; i--) {
     uint16 t = *name++ + 0x1800;
     dst[0] = t;
@@ -102,7 +102,7 @@ void SelectFile_Func17(int k) {
     dst++;
   }
   int health = sram[kSrmOffs_Health] >> 3;
-  dst = vram_upload_data + kSelectFile_DrawName_HealthVramOffs[k] / 2;
+  dst = RAM16P(g_ram+0x1002) + kSelectFile_DrawName_HealthVramOffs[k] / 2;
   uint16 *dst_org = dst;
   int row = 10;
   do {
@@ -229,7 +229,7 @@ void Module_SelectFile_0() {  // 8ccd9d
 }
 
 void FileSelect_ReInitSaveFlagsAndEraseTriforce() {  // 8ccdf2
-  memset(selectfile_arr1, 0, 6);
+  memset(RAM16P(g_ram+0xBF), 0, 6);
   FileSelect_EraseTriforce();
 }
 
@@ -299,7 +299,7 @@ void FileSelect_TriggerNameStripesAndAdvance() {  // 8cceb1
     0xa9, 0x18, 0xa9, 0x18, 0xa9, 0x18, 0xa9, 0x18, 0xa9, 0x18, 0xa9, 0x18, 0xa9, 0x18, 0xa9, 0x18,
     0xa9, 0x18, 0xa9, 0x18, 0xa9, 0x18, 0xa9, 0x18, 0xa9, 0x18, 0xa9, 0x18, 0xff,
   };
-  memcpy(vram_upload_data, kSelectFile_Func3_Data, 253);
+  memcpy(RAM16P(g_ram+0x1002), kSelectFile_Func3_Data, 253);
   INIDISP_copy = 0xf;
   nmi_disable_core_updates = 0;
   submodule_index++;
@@ -406,7 +406,7 @@ void CopyFile_ConfirmSelection() {  // 8cd0b9
 void FilePicker_DeleteHeaderStripe() {  // 8cd0c6
   static const uint16 kFilePicker_DeleteHeaderStripe_Dst[2] = {4, 0x1e};
   for (int j = 1; j >= 0; j--) {
-    uint16 *dst = vram_upload_data + kFilePicker_DeleteHeaderStripe_Dst[j] / 2;
+    uint16 *dst = RAM16P(g_ram+0x1002) + kFilePicker_DeleteHeaderStripe_Dst[j] / 2;
     for (int i = 0; i != 11; i++)
       dst[i] = 0xa9;
   }
@@ -438,12 +438,12 @@ void CopyFile_SelectionAndBlinker() {  // 8cd13f
   static const uint8 kCopyFile_SelectionAndBlinker_FaerieY[4] = {87, 111, 135, 191};
 
   vram_upload_offset = 0xac;
-  memcpy(vram_upload_data, kCopyFile_SelectionAndBlinker_Tab, 173);
+  memcpy(RAM16P(g_ram+0x1002), kCopyFile_SelectionAndBlinker_Tab, 173);
 
   for (int k = 0; k != 3; k++) {
     if (selectfile_arr1[k] & 1) {
       const uint16 *name = (uint16 *)(g_zenv.sram + 0x500 * k + kSrmOffs_Name);
-      uint16 *dst = vram_upload_data + kCopyFile_SelectionAndBlinker_Dst[k] / 2;
+      uint16 *dst = RAM16P(g_ram+0x1002) + kCopyFile_SelectionAndBlinker_Dst[k] / 2;
       for (int i = 0; i != 6; i++) {
         uint16 t = *name++ + 0x1800;
         dst[0] = t;
@@ -480,9 +480,9 @@ void CopyFile_SelectionAndBlinker() {  // 8cd13f
       return;
     }
     selectfile_R20 = selectfile_R16 * 2;
-    memcpy(vram_upload_data + 26, kCopyFile_SelectionAndBlinker_Tab1, 73);
+    memcpy(RAM16P(g_ram+0x1002) + 26, kCopyFile_SelectionAndBlinker_Tab1, 73);
     if (selectfile_R16 != 2) {
-      uint16 *dst = vram_upload_data + selectfile_R16 * 6;
+      uint16 *dst = RAM16P(g_ram+0x1002) + selectfile_R16 * 6;
       dst[26] = 0x2762;
       dst[29] = 0x4762;
     }
@@ -528,13 +528,13 @@ void CopyFile_TargetSelectionAndBlink() {  // 8cd27b
   static const uint8 kCopyFile_TargetSelectionAndBlink_FaerieY[3] = {0x67, 0x7f, 0xbf};
   static const uint16 kCopyFile_TargetSelectionAndBlink_Dst[2] = {0x38, 0x60};
   static const uint16 kCopyFile_TargetSelectionAndBlink_Tab1[3] = {0x18e7, 0x18e8, 0x18e9};
-  memcpy(vram_upload_data, kCopyFile_TargetSelectionAndBlink_Tab0, 133);
+  memcpy(RAM16P(g_ram+0x1002), kCopyFile_TargetSelectionAndBlink_Tab0, 133);
 
   for (int k = 0, j = 0; k != 3; k++) {
     if (k * 2 == selectfile_R20)
       continue;
 
-    uint16 *dst = vram_upload_data + kCopyFile_TargetSelectionAndBlink_Dst[j++] / 2;
+    uint16 *dst = RAM16P(g_ram+0x1002) + kCopyFile_TargetSelectionAndBlink_Dst[j++] / 2;
     uint16 t = kCopyFile_TargetSelectionAndBlink_Tab1[k];
     dst[0] = t;
     dst[10] = t + 0x10;
@@ -574,9 +574,9 @@ void CopyFile_TargetSelectionAndBlink() {  // 8cd27b
       return;
     }
     selectfile_R18 = selectfile_arr2[selectfile_R16];
-    memcpy(vram_upload_data + 26, kCopyFile_TargetSelectionAndBlink_Tab2, 49);
+    memcpy(RAM16P(g_ram+0x1002) + 26, kCopyFile_TargetSelectionAndBlink_Tab2, 49);
     if (selectfile_R16 == 0) {
-      uint16 *dst = vram_upload_data;
+      uint16 *dst = RAM16P(g_ram+0x1002);
       dst[26] = 0x1462;
       dst[29] = 0x3462;
     }
@@ -673,7 +673,7 @@ void KILLFile_ChooseTarget() {  // 8cd4ba
   };
   static const uint8 kKILLFile_ChooseTarget_FaerieX[4] = {36, 36, 36, 28};
   static const uint8 kKILLFile_ChooseTarget_FaerieY[4] = {103, 127, 151, 191};
-  memcpy(vram_upload_data, kKILLFile_ChooseTarget_Tab, 253);
+  memcpy(RAM16P(g_ram+0x1002), kKILLFile_ChooseTarget_Tab, 253);
   for (int k = 0; k < 3; k++) {
     if (selectfile_arr1[k])
       SelectFile_Func17(k);
@@ -709,10 +709,10 @@ void KILLFile_ChooseTarget() {  // 8cd4ba
       return;
     }
 
-    memcpy(vram_upload_data, kKILLFile_ChooseTarget_Tab2, 101);
+    memcpy(RAM16P(g_ram+0x1002), kKILLFile_ChooseTarget_Tab2, 101);
     submodule_index++;
     if (selectfile_R16 != 2) {
-      uint16 *dst = vram_upload_data + selectfile_R16 * 6;
+      uint16 *dst = RAM16P(g_ram+0x1002) + selectfile_R16 * 6;
       dst[0] = 0x6762;
       dst[3] = 0x8762;
     }
@@ -915,7 +915,7 @@ void NameFile_CheckForScrollInputY() {  // 8cdcbf
 
 void NameFile_DrawSelectedCharacter(int k, uint16 chr) {  // 8cdd30
   static const uint16 kNameFile_DrawSelectedCharacter_Tab[6] = {0x84, 0x86, 0x88, 0x8a, 0x8c, 0x8e};
-  uint16 *dst = vram_upload_data;
+  uint16 *dst = RAM16P(g_ram+0x1002);
   uint16 a = kNameFile_DrawSelectedCharacter_Tab[k] | 0x6100;
   dst[0] = swap16(a);
   dst[1] = 0x100;

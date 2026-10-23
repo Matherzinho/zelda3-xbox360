@@ -196,7 +196,7 @@ void NMI_DoUpdates() {  // 8089e0
     memcpy(&g_zenv.vram[0x4320], &g_ram[dma_source_addr_19], 0x40);
     memcpy(&g_zenv.vram[0x4340], &g_ram[0xbd80], 0x40);
 
-    if (BYTE(flag_travel_bird)) {
+    if ((*(uint8*)(g_ram+(0xAF4)))) {
       memcpy(&g_zenv.vram[0x40e0], &g_ram[dma_source_addr_20], 0x40);
       memcpy(&g_zenv.vram[0x41e0], &g_ram[dma_source_addr_21], 0x40);
     }
@@ -205,11 +205,11 @@ void NMI_DoUpdates() {  // 8089e0
   }
 
   if (flag_update_hud_in_nmi) {
-    memcpy(&g_zenv.vram[word_7E0219], hud_tile_indices_buffer, 165 * sizeof(uint16));
+    memcpy(&g_zenv.vram[word_7E0219], RAM16P(g_ram+0xC700), 165 * sizeof(uint16));
   }
 
   if (flag_update_cgram_in_nmi) {
-    memcpy(g_zenv.ppu->cgram, main_palette_buffer, 0x200);
+    memcpy(g_zenv.ppu->cgram, RAM16P(g_ram+0xC500), 0x200);
   }
 
   flag_update_hud_in_nmi = 0;
@@ -273,9 +273,9 @@ void NMI_DoUpdates() {  // 8089e0
 }
 
 void NMI_UploadTilemap() {  // 808cb0
-  memcpy(&g_zenv.vram[kNmiVramAddrs[BYTE(nmi_load_target_addr)] << 8], &g_ram[0x1000], 0x800);
+  memcpy(&g_zenv.vram[kNmiVramAddrs[(*(uint8*)(g_ram+(0x116)))] << 8], &g_ram[0x1000], 0x800);
 
-  *(uint16 *)&g_ram[0x1000] = 0;
+  RAM16(&g_ram[0x1000]) = 0;
   nmi_disable_core_updates = 0;
 }
 
@@ -307,7 +307,7 @@ void NMI_UpdateSubscreenOverlay() {  // 808d62
 }
 
 void NMI_HandleArbitraryTileMap(const uint8 *src, int i, int i_end) {  // 808dae
-  uint16 *r10 = &word_7F4000;
+  uint16 *r10 = (g_ram+0x14000);
   do {
     memcpy(&g_zenv.vram[r10[i >> 1]], src, 0x80);
     src += 0x80;
@@ -353,7 +353,7 @@ void NMI_UpdateBGChar5and6() {  // 808f16
 }
 
 void NMI_UpdateBGCharHalf() {  // 808f45
-  memcpy(&g_zenv.vram[BYTE(nmi_load_target_addr) * 256], &g_ram[0x11000], 0x400);
+  memcpy(&g_zenv.vram[(*(uint8*)(g_ram+(0x116))) * 256], &g_ram[0x11000], 0x400);
 }
 
 void NMI_UpdateBGChar0() {  // 808f72

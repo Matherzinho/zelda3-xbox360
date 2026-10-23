@@ -416,14 +416,14 @@ static void DecompAndUpload2bpp(uint16 *vram_ptr, uint8 pack) {
 }
 
 void RecoverPegGFXFromMapping() {
-  if (BYTE(orange_blue_barrier_state))
+  if ((*(uint8*)(g_ram+(0xC172))))
     Dungeon_UpdatePegGFXBuffer(0x180, 0x0);
   else
     Dungeon_UpdatePegGFXBuffer(0x0, 0x180);
 }
 
 void LoadOverworldMapPalette() {
-  memcpy(main_palette_buffer, &kOverworldMapPaletteData[overworld_screen_index & 0x40 ? 0x80 : 0], 256);
+  memcpy(RAM16P(g_ram+0xC500), (RAM16P(g_asset_ptrs[93]) + (overworld_screen_index & 0x40 ? 0x80 : 0)), 256);
 }
 
 void EraseTileMaps_triforce() {  // 808333
@@ -688,7 +688,7 @@ void AnimateMirrorWarp() {  // 80d864
     break;
   case 5:
     PreOverworld_LoadOverlays();
-    if (BYTE(overworld_screen_index) == 27 || BYTE(overworld_screen_index) == 91)
+    if ((*(uint8*)(g_ram+(0x8A))) == 27 || (*(uint8*)(g_ram+(0x8A))) == 91)
       TS_copy = 1;
     submodule_index--;
     nmi_subroutine_index = nmi_disable_core_updates = 12;
@@ -847,7 +847,7 @@ void LoadDefaultGraphics() {  // 80e2d0
   const uint8 *src = GetCompSpritePtr(0);
 
   uint16 *vram_ptr = &g_zenv.vram[0x4000];
-  uint16 *tmp = (uint16 *)&g_ram[0xbf];
+  uint16 *tmp = (zle16_t *)&g_ram[0xbf];
   int num = 64;
   do {
     for (int i = 7; i >= 0; i--, src += 2) {
@@ -902,7 +902,7 @@ void Graphics_LoadChrHalfSlot() {  // 80e3fa
         flag_custom_spell_anim_active = 0;
     }
   }
-  BYTE(nmi_load_target_addr) = tilebytes;
+  (*(uint8*)(g_ram+(0x116))) = tilebytes;
   nmi_subroutine_index = 11;
 
   k = kGraphicsHalfSlotPacks[k - 1];
@@ -937,7 +937,7 @@ void TransferFontToVRAM() {  // 80e556
 
 void Do3To4High(uint16 *vram_ptr, const uint8 *decomp_addr) {  // 80e5af
   for (int j = 0; j < 64; j++) {
-    uint16 *t = (uint16 *)&dung_line_ptrs_row0;
+    uint16 *t = (zle16_t *)(g_ram+0xbf);
     for (int i = 7; i >= 0; i--, decomp_addr += 2) {
       uint16 d = *(uint16 *)decomp_addr;
       t[i] = (d | (d >> 8)) & 0xff;
@@ -1106,7 +1106,7 @@ void PaletteFilter_SP5F() {  // 80ec0d
 void KholdstareShell_PaletteFiltering() {  // 80ec79
   int t = (enhanced_features0 & kFeatures0_MiscBugFixes) ? 0x50 : 0x40;
   if (subsubmodule_index == 0) {
-    memcpy(main_palette_buffer + t, aux_palette_buffer + t, 8 * sizeof(uint16));
+    memcpy(RAM16P(g_ram+0xC500) + t, RAM16P(g_ram+0xC300) + t, 8 * sizeof(uint16));
     palette_filter_countdown = 0;
     darkening_or_lightening_screen = 0;
     flag_update_cgram_in_nmi++;
@@ -1143,14 +1143,14 @@ void AgahnimWarpShadowFilter(int k) {  // 80ecca
 void Palette_FadeIntroOneStep() {  // 80ed7c
   PaletteFilter_RestoreAdditive(0x100, 0x1a0);
   PaletteFilter_RestoreAdditive(0xc0, 0x100);
-  BYTE(palette_filter_countdown) -= 1;
+  (*(uint8*)(g_ram+(0xC007))) -= 1;
   flag_update_cgram_in_nmi++;
 }
 
 void Palette_FadeIntro2() {  // 80ed8f
   PaletteFilter_RestoreAdditive(0x40, 0xc0);
   PaletteFilter_RestoreAdditive(0x40, 0xc0);
-  BYTE(palette_filter_countdown) -= 1;
+  (*(uint8*)(g_ram+(0xC007))) -= 1;
   flag_update_cgram_in_nmi++;
 }
 
@@ -1476,7 +1476,7 @@ void IrisSpotlight_ConfigureTable() {  // 80f312
   for (int i = 224; i < 240; i++)
     hdma_table_dynamic[i] = 0;
 
-  memcpy(hdma_table_unused, hdma_table_dynamic, 224  * sizeof(uint16));
+  memcpy(RAM16P(g_ram+0x17000), RAM16P(g_ram+0x1DBA0), 224  * sizeof(uint16));
 
   spotlight_var1 += kSpotlight_delta_size[spotlight_var2 >> 1];
 
@@ -1493,7 +1493,7 @@ void IrisSpotlight_ConfigureTable() {  // 80f312
 
   if (main_module_index == 7 || main_module_index == 16) {
     if (!player_is_indoors)
-      sound_effect_ambient = overworld_music[BYTE(overworld_screen_index)] >> 4;
+      sound_effect_ambient = overworld_music[(*(uint8*)(g_ram+(0x8A)))] >> 4;
     if (queued_music_control != 0xff)
       music_control = queued_music_control;
   }
@@ -1603,7 +1603,7 @@ void Dungeon_RestoreStarTileChr() {  // 80fda7
   int xx = 0, yy = 32;
   if (byte_7E04BC)
     xx = 32, yy = 0;
-  uint16 *p = messaging_buf;
+  uint16 *p = RAM16P(g_ram+0x10000);
   memcpy(p, g_ram + 0xbdc0 + xx, 32);
   memcpy(p + 16, g_ram + 0xbdc0 + yy, 32);
   nmi_subroutine_index = 0x18;
@@ -1633,21 +1633,21 @@ void Player_SetCustomMosaicLevel(uint8 a) {  // 81fef0
 }
 
 void Module07_16_UpdatePegs_Step1() {  // 829739
-  if (BYTE(orange_blue_barrier_state))
+  if ((*(uint8*)(g_ram+(0xC172))))
     Dungeon_UpdatePegGFXBuffer(0x80, 0x100);
   else
     Dungeon_UpdatePegGFXBuffer(0x100, 0x80);
 }
 
 void Module07_16_UpdatePegs_Step2() {  // 82974d
-  if (BYTE(orange_blue_barrier_state))
+  if ((*(uint8*)(g_ram+(0xC172))))
     Dungeon_UpdatePegGFXBuffer(0x100, 0x80);
   else
     Dungeon_UpdatePegGFXBuffer(0x80, 0x100);
 }
 
 void Dungeon_UpdatePegGFXBuffer(int x, int y) {  // 829773
-  uint16 *src = (uint16 *)&g_ram[0xb340];
+  uint16 *src = (zle16_t *)&g_ram[0xb340];
   for (int i = 0; i < 64; i++)
     messaging_buf[i] = src[(x >> 1) + i];
   for (int i = 0; i < 64; i++)
@@ -1670,7 +1670,7 @@ void Dungeon_HandleTranslucencyAndPalette() {  // 82a1e9
         (a = 0x62, dung_hdr_bg2_properties != 4) &&
         (a = 0x20, dung_hdr_bg2_properties == 2)) {
       Palette_AssertTranslucencySwap();
-      if (BYTE(dungeon_room_index) == 13) {
+      if ((*(uint8*)(g_ram+(0xA0))) == 13) {
         agahnim_pal_setting[0] = 0;
         agahnim_pal_setting[1] = 0;
         agahnim_pal_setting[2] = 0;
@@ -1697,8 +1697,8 @@ void Dungeon_HandleTranslucencyAndPalette() {  // 82a1e9
 }
 
 void Overworld_LoadAllPalettes() {  // 82c5b2
-  memset(aux_palette_buffer + 0x180 / 2, 0, 128);
-  memset(main_palette_buffer, 0, 512);
+  memset(RAM16P(g_ram+0xC300) + 0x180 / 2, 0, 128);
+  memset(RAM16P(g_ram+0xC500), 0, 512);
 
   overworld_palette_mode = 5;
   overworld_palette_aux1_bp2to4_hi = 3;
@@ -1790,7 +1790,7 @@ void SpecialOverworld_CopyPalettesToCache() {  // 82c6eb
 }
 
 void Overworld_CopyPalettesToCache() {  // 82c769
-  memcpy(main_palette_buffer, aux_palette_buffer, 512);
+  memcpy(RAM16P(g_ram+0xC500), RAM16P(g_ram+0xC300), 512);
   flag_update_cgram_in_nmi += 1;
 }
 
@@ -1899,20 +1899,20 @@ void LoadGearPalettes_bunny() {  // 8ed6dd
 }
 
 void LoadGearPalettes(uint8 sword, uint8 shield, uint8 armor) {  // 8ed6e8
-  const uint16 *src = kPalette_Sword + (sword && sword != 255 ? sword - 1 : 0) * 3;
+  const uint16 *src = RAM16P(g_asset_ptrs[82]) + (sword && sword != 255 ? sword - 1 : 0) * 3;
   Palette_LoadMultiple_Arbitrary(src, 0x1b2, 2);
 
-  src = kPalette_Shield + (shield ? shield - 1 : 0) * 4;
+  src = RAM16P(g_asset_ptrs[83]) + (shield ? shield - 1 : 0) * 4;
   Palette_LoadMultiple_Arbitrary(src, 0x1b8, 3);
 
-  src = kPalette_ArmorAndGloves + armor * 15;
+  src = RAM16P(g_asset_ptrs[81]) + armor * 15;
   Palette_LoadMultiple_Arbitrary(src, 0x1e2, 14);
   flag_update_cgram_in_nmi++;
 }
 
 void LoadGearPalette(int dst, const uint16 *src, int n) {  // 8ed741
-  memcpy(&aux_palette_buffer[dst >> 1], src, sizeof(uint16) * n);
-  memcpy(&main_palette_buffer[dst >> 1], src, sizeof(uint16) * n);
+  memcpy((RAM16P(g_ram+0xC300) + (dst >> 1)), src, sizeof(uint16) * n);
+  memcpy((RAM16P(g_ram+0xC500) + (dst >> 1)), src, sizeof(uint16) * n);
 }
 
 void Filter_Majorly_Whiten_Bg() {  // 8ed757
@@ -1942,7 +1942,7 @@ void Palette_Restore_BG_From_Flash() {  // 8ed83a
 void Palette_Restore_Coldata() {  // 8ed8ae
   if (!player_is_indoors) {
     uint32 rgb;
-    switch (BYTE(overworld_screen_index)) {
+    switch ((*(uint8*)(g_ram+(0x8A)))) {
     case 3: case 5: case 7:
       rgb = 0x8c4c26;
       break;
@@ -1962,7 +1962,7 @@ void Palette_Restore_Coldata() {  // 8ed8ae
 }
 
 void Palette_Restore_BG_And_HUD() {  // 8ed8fb
-  memcpy(main_palette_buffer, aux_palette_buffer, 256);
+  memcpy(RAM16P(g_ram+0xC500), RAM16P(g_ram+0xC300), 256);
   flag_update_cgram_in_nmi++;
   Palette_Restore_Coldata();
 }
@@ -1997,33 +1997,33 @@ enum {
 };
 
 void Palette_Load_Sp0L() {  // 9bec77
-  const uint16 *src = kPalette_SpriteAux3 + palette_sp0l * 7;
+  const uint16 *src = RAM16P(g_asset_ptrs[84]) + palette_sp0l * 7;
   Palette_LoadSingle(src, palette_swap_flag ? kPal_sp7l : kPal_sp0l, 6);
 }
 
 void Palette_Load_SpriteMain() {  // 9bec9e
-  const uint16 *src = kPalette_MainSpr + (overworld_screen_index & 0x40 ? 60 : 0);
+  const uint16 *src = RAM16P(g_asset_ptrs[80]) + (overworld_screen_index & 0x40 ? 60 : 0);
   Palette_LoadMultiple(src, kPal_sp1to4, 14, 3);
 }
 
 void Palette_Load_Sp5L() {  // 9becc5
-  const uint16 *src = kPalette_SpriteAux1 + (palette_sp5l) * 7;
+  const uint16 *src = RAM16P(g_asset_ptrs[86]) + (palette_sp5l) * 7;
   Palette_LoadSingle(src, kPal_sp5l, 6);
 }
 
 void Palette_Load_Sp6L() {  // 9bece4
-  const uint16 *src = kPalette_SpriteAux1 + (palette_sp6l) * 7;
+  const uint16 *src = RAM16P(g_asset_ptrs[86]) + (palette_sp6l) * 7;
   Palette_LoadSingle(src, kPal_sp6l, 6);
 }
 
 void Palette_Load_Sword() {  // 9bed03
-  const uint16 *src = kPalette_Sword + ((int8)link_sword_type > 0 ? link_sword_type - 1 : 0) * 3;  // wtf: zelda reads offset 0xff
+  const uint16 *src = RAM16P(g_asset_ptrs[82]) + ((int8)link_sword_type > 0 ? link_sword_type - 1 : 0) * 3;  // wtf: zelda reads offset 0xff
   Palette_LoadMultiple_Arbitrary(src, kPal_Sword, 2);
   flag_update_cgram_in_nmi += 1;
 }
 
 void Palette_Load_Shield() {  // 9bed29
-  const uint16 *src = kPalette_Shield + (link_shield_type ? link_shield_type - 1 : 0) * 4;
+  const uint16 *src = RAM16P(g_asset_ptrs[83]) + (link_shield_type ? link_shield_type - 1 : 0) * 4;
   Palette_LoadMultiple_Arbitrary(src, kPal_Shield, 3);
   flag_update_cgram_in_nmi += 1;
 }
@@ -2051,11 +2051,11 @@ void Palette_MiscSprite_Outdoors() {  // 9bed91
 }
 
 void Palette_Load_DungeonMapSprite() {  // 9beddd
-  Palette_LoadMultiple(kPalette_PalaceMapSpr, kPal_PalaceMap, 6, 2);
+  Palette_LoadMultiple(RAM16P(g_asset_ptrs[91]), kPal_PalaceMap, 6, 2);
 }
 
 void Palette_Load_LinkArmorAndGloves() {  // 9bedf9
-  const uint16 *src = kPalette_ArmorAndGloves + link_armor * 15;
+  const uint16 *src = RAM16P(g_asset_ptrs[81]) + link_armor * 15;
   Palette_LoadMultiple_Arbitrary(src, kPal_ArmorGloves, 14);
   Palette_UpdateGlovesColor();
 }
@@ -2067,56 +2067,56 @@ void Palette_UpdateGlovesColor() {  // 9bee1b
 }
 
 void Palette_Load_DungeonMapBG() {  // 9bee3a
-  Palette_LoadMultiple(kPalette_PalaceMapBg, 0x40, 15, 5);
+  Palette_LoadMultiple(RAM16P(g_asset_ptrs[90]), 0x40, 15, 5);
 }
 
 void Palette_Load_HUD() {  // 9bee52
-  const uint16 *src = kHudPalData + hud_palette * 32;
+  const uint16 *src = RAM16P(g_asset_ptrs[92]) + hud_palette * 32;
   Palette_LoadMultiple(src, 0x0, 15, 1);
 }
 
 void Palette_Load_DungeonSet() {  // 9bee74
-  const uint16 *src = kPalette_DungBgMain + (palette_main_indoors >> 1) * 90;
+  const uint16 *src = RAM16P(g_asset_ptrs[79]) + (palette_main_indoors >> 1) * 90;
   Palette_LoadMultiple(src, 0x42, 14, 5);
   Palette_LoadSingle(src, palette_swap_flag ? kPal_sp7r : kPal_sp0r, 6);
 }
 
 void Palette_Load_OWBG3() {  // 9beea8
-  const uint16 *src = kPalette_OverworldBgAux3 + overworld_palette_aux3_bp7_lo * 7;
+  const uint16 *src = RAM16P(g_asset_ptrs[89]) + overworld_palette_aux3_bp7_lo * 7;
   Palette_LoadSingle(src, 0xE2, 6);
 }
 
 void Palette_Load_OWBGMain() {  // 9beec7
-  const uint16 *src = kPalette_OverworldBgMain + overworld_palette_mode * 35;
+  const uint16 *src = RAM16P(g_asset_ptrs[87]) + overworld_palette_mode * 35;
   Palette_LoadMultiple(src, 0x42, 6, 4);
 }
 
 void Palette_Load_OWBG1() {  // 9beee8
-  const uint16 *src = kPalette_OverworldBgAux12 + overworld_palette_aux1_bp2to4_hi * 21;
+  const uint16 *src = RAM16P(g_asset_ptrs[88]) + overworld_palette_aux1_bp2to4_hi * 21;
   Palette_LoadMultiple(src, 0x52, 6, 2);
 }
 
 void Palette_Load_OWBG2() {  // 9bef0c
-  const uint16 *src = kPalette_OverworldBgAux12 + overworld_palette_aux2_bp5to7_hi * 21;
+  const uint16 *src = RAM16P(g_asset_ptrs[88]) + overworld_palette_aux2_bp5to7_hi * 21;
   Palette_LoadMultiple(src, 0xB2, 6, 2);
 }
 
 void Palette_LoadSingle(const uint16 *src, int dst, int x_ents) {  // 9bef30
-  memcpy(&aux_palette_buffer[(dst + overworld_palette_aux_or_main) >> 1], src, sizeof(uint16) * (x_ents + 1));
+  memcpy((RAM16P(g_ram+0xC300) + ((dst + overworld_palette_aux_or_main) >> 1)), src, sizeof(uint16) * (x_ents + 1));
 }
 
 void Palette_LoadMultiple(const uint16 *src, int dst, int x_ents, int y_pals) {  // 9bef4b
   x_ents++;
   do {
-    memcpy(&aux_palette_buffer[(dst + overworld_palette_aux_or_main) >> 1], src, sizeof(uint16) * x_ents);
+    memcpy((RAM16P(g_ram+0xC300) + ((dst + overworld_palette_aux_or_main) >> 1)), src, sizeof(uint16) * x_ents);
     src += x_ents;
     dst += 32;
   } while (--y_pals >= 0);
 }
 
 void Palette_LoadMultiple_Arbitrary(const uint16 *src, int dst, int x_ents) {  // 9bef7b
-  memcpy(&aux_palette_buffer[dst >> 1], src, sizeof(uint16) * (x_ents + 1));
-  memcpy(&main_palette_buffer[dst >> 1], src, sizeof(uint16) * (x_ents + 1));
+  memcpy((RAM16P(g_ram+0xC300) + (dst >> 1)), src, sizeof(uint16) * (x_ents + 1));
+  memcpy((RAM16P(g_ram+0xC500) + (dst >> 1)), src, sizeof(uint16) * (x_ents + 1));
 }
 
 void Palette_LoadForFileSelect() {  // 9bef96
@@ -2134,7 +2134,7 @@ void Palette_LoadForFileSelect() {  // 9bef96
 }
 
 void Palette_LoadForFileSelect_Armor(int k, uint8 armor, uint8 gloves) {  // 9bf032
-  const uint16 *pal = kPalette_ArmorAndGloves + armor * 15;
+  const uint16 *pal = RAM16P(g_asset_ptrs[81]) + armor * 15;
   for (int i = 0; i != 15; i++)
     aux_palette_buffer[k + 0x81 + i] = main_palette_buffer[k + 0x81 + i] = pal[i];
   if (gloves)
@@ -2142,23 +2142,23 @@ void Palette_LoadForFileSelect_Armor(int k, uint8 armor, uint8 gloves) {  // 9bf
 }
 
 void Palette_LoadForFileSelect_Sword(int k, uint8 sword) {  // 9bf072
-  const uint16 *src = kPalette_Sword + (sword ? sword - 1 : 0) * 3;
+  const uint16 *src = RAM16P(g_asset_ptrs[82]) + (sword ? sword - 1 : 0) * 3;
   for (int i = 0; i != 3; i++)
     aux_palette_buffer[k + 0x99 + i] = main_palette_buffer[k + 0x99 + i] = src[i];
 }
 
 void Palette_LoadForFileSelect_Shield(int k, uint8 shield) {  // 9bf09a
-  const uint16 *src = kPalette_Shield + (shield ? shield - 1 : 0) * 4;
+  const uint16 *src = RAM16P(g_asset_ptrs[83]) + (shield ? shield - 1 : 0) * 4;
   for (int i = 0; i != 4; i++)
     aux_palette_buffer[k + 0x9c + i] = main_palette_buffer[k + 0x9c + i] = src[i];
 }
 
 void Palette_LoadAgahnim() {  // 9bf0c2
-  const uint16 *src = kPalette_SpriteAux1 + 14 * 7;
+  const uint16 *src = RAM16P(g_asset_ptrs[86]) + 14 * 7;
   Palette_LoadMultiple_Arbitrary(src, 0x162, 6);
   Palette_LoadMultiple_Arbitrary(src, 0x182, 6);
   Palette_LoadMultiple_Arbitrary(src, 0x1a2, 6);
-  src = kPalette_SpriteAux1 + 21 * 7;
+  src = RAM16P(g_asset_ptrs[86]) + 21 * 7;
   Palette_LoadMultiple_Arbitrary(src, 0x1c2, 6);
   flag_update_cgram_in_nmi++;
 }

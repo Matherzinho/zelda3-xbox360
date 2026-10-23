@@ -919,7 +919,7 @@ continue_after_set:
   if (yt != 5)
     oam_priority_value_2 = oam_priority_value;
 
-  BYTE(index_of_interacting_tile) = rt;
+  (*(uint8*)(g_ram+(0x76))) = rt;
 
   int dir = link_direction_facing >> 1;
 
@@ -938,7 +938,7 @@ continue_after_set:
       if (bank1 != 0xff) {
         link_dma_var1 = bank1 * 2;
         int oam_pos = ((scratch_0_var ? kPlayerOam_Tab19B : kPlayerOam_Tab19A)[r4loc] + sort_sprites_offset_into_oam_buffer) >> 2;
-        uint8 zt = ((int16)link_z_coord >= 0 || BYTE(link_z_coord) < 0xf0) ? BYTE(link_z_coord) : 0;
+        uint8 zt = ((int16)link_z_coord >= 0 || (*(uint8*)(g_ram+(0x24))) < 0xf0) ? (*(uint8*)(g_ram+(0x24))) : 0;
         oam_buf[oam_pos].y = kPlayerOam_Spr1Y[j] + ycoord - zt;
         oam_buf[oam_pos].x = kPlayerOam_Spr1X[j] + xcoord;
         uint16 q = WORD(kPlayerOam_Prio[bank1 >> 1]);
@@ -952,7 +952,7 @@ continue_after_set:
     if (bank2 != 0xff) {
       link_dma_var2 = bank2 * 2;
       int oam_pos = ((scratch_0_var ? kPlayerOam_Tab20B : kPlayerOam_Tab20A)[r4loc] + sort_sprites_offset_into_oam_buffer) >> 2;
-      uint8 zt = ((int16)link_z_coord >= 0 || BYTE(link_z_coord) < 0xf0) ? BYTE(link_z_coord) : 0;
+      uint8 zt = ((int16)link_z_coord >= 0 || (*(uint8*)(g_ram+(0x24))) < 0xf0) ? (*(uint8*)(g_ram+(0x24))) : 0;
       oam_buf[oam_pos].y = kPlayerOam_Spr2Y[j] + ycoord - zt;
       oam_buf[oam_pos].x = kPlayerOam_Spr2X[j] + xcoord;
       uint16 q = WORD(kPlayerOam_Prio[bank2 >> 1]);
@@ -966,7 +966,7 @@ continue_after_set:
   if (link_picking_throw_state & 4) {
     LinkOam_UnusedWeaponSettings(r4loc, xcoord, ycoord);
   } else if (PlayerOam_WantInvokeSword() && !LinkOam_SetWeaponVRAMOffsets(r2, &sr)) {
-    uint8 zcoord = ((int16)link_z_coord >= 0 || BYTE(link_z_coord) < 0xf0) ? BYTE(link_z_coord) : 0;
+    uint8 zcoord = ((int16)link_z_coord >= 0 || (*(uint8*)(g_ram+(0x24))) < 0xf0) ? (*(uint8*)(g_ram+(0x24))) : 0;
     uint8 oam_y = kDrawSword_y[r2] + ycoord - zcoord;
     uint8 oam_x = kDrawSword_x[r2] + xcoord;
 
@@ -1010,7 +1010,7 @@ continue_after_set:
 
   //SwordStuff_fail
   if (link_shield_type && sram_progress_indicator && !LinkOam_SetEquipmentVRAMOffsets(r2, &sr)) {
-    uint8 zcoord = ((int16)link_z_coord >= 0 || BYTE(link_z_coord) < 0xf0) ? BYTE(link_z_coord) : 0;
+    uint8 zcoord = ((int16)link_z_coord >= 0 || (*(uint8*)(g_ram+(0x24))) < 0xf0) ? (*(uint8*)(g_ram+(0x24))) : 0;
     uint8 oam_y = kShieldStuff_y[r2] + ycoord - 1 - zcoord;
     uint8 oam_x = kShieldStuff_x[r2] + xcoord;
 
@@ -1073,7 +1073,7 @@ continue_after_set:
     link_dma_graphics_index = j * 2;
 
     if (link_visibility_status != 12) {
-      uint8 zcoord = ((int16)link_z_coord >= 0 || BYTE(link_z_coord) < 0xf0) ? BYTE(link_z_coord) : 0;
+      uint8 zcoord = ((int16)link_z_coord >= 0 || (*(uint8*)(g_ram+(0x24))) < 0xf0) ? (*(uint8*)(g_ram+(0x24))) : 0;
 
       const LinkSpriteBody *sp = &kLinkSpriteBodys[j];
 
@@ -1254,10 +1254,10 @@ void LinkOam_DrawFootObject(int r4loc, uint8 oam_x, uint8 oam_y) {  // 8daed1
   uint8 yv;
   if (draw_water_ripples_or_grass == 2) {
     yv = (link_animation_steps >= 3 ? link_animation_steps - 3 : link_animation_steps);
-    ((uint8 *)&overlay_index)[1] = yv * 4;
+    (*(uint8*)(g_ram+0x8C+1)) = yv * 4;
     yv = (8 + yv);
   } else {
-    ((uint8 *)&overlay_index)[1] = secondary_water_grass_timer * 4;
+    (*(uint8*)(g_ram+0x8C+1)) = secondary_water_grass_timer * 4;
     yv = (5 + secondary_water_grass_timer);
   }
 

@@ -484,12 +484,12 @@ void Hud_Module_Run() {  // 8ddd36
 }
 
 void Hud_ClearTileMap() {  // 8ddd5a
-  uint16 *target = (uint16 *)&g_ram[0x1000];
+  uint16 *target = (zle16_t *)&g_ram[0x1000];
   for (int i = 0; i < 1024; i++)
     target[i] = 0x207f;
   sound_effect_2 = 17;
   nmi_subroutine_index = 1;
-  BYTE(nmi_load_target_addr) = 0x22;
+  (*(uint8*)(g_ram+(0x116))) = 0x22;
   overworld_map_state++;
 }
 
@@ -526,7 +526,7 @@ void Hud_Init() {  // 8dddab
 
   timer_for_flashing_circle = 16;
   nmi_subroutine_index = 1;
-  BYTE(nmi_load_target_addr) = 0x22;
+  (*(uint8*)(g_ram+(0x116))) = 0x22;
   overworld_map_state++;
 }
 
@@ -539,7 +539,7 @@ void Hud_BringMenuDown() {  // 8dde59
 void Hud_ChooseNextMode() {  // 8dde6e
   if (Hud_HaveAnyItems()) {
     nmi_subroutine_index = 1;
-    BYTE(nmi_load_target_addr) = 0x22;
+    (*(uint8*)(g_ram+(0x116))) = 0x22;
 
     Hud_DrawSelectedYButtonItem();
 
@@ -612,7 +612,7 @@ uint8 *GetCurrentItemButtonPtr(int i) {
 void Hud_NormalMenu() {  // 8ddf15
   timer_for_flashing_circle++;
   if (!BYTE(joypad1H_last))
-    BYTE(hud_tmp1) = 0;
+    (*(uint8*)(g_ram+(0xBD))) = 0;
 
   if (filtered_joypad_H & kJoypadH_Start) {
     overworld_map_state = 5;
@@ -638,7 +638,7 @@ void Hud_NormalMenu() {  // 8ddf15
     } else if (filtered_joypad_H & kJoypadH_Right) {
       Hud_ReorderItem(1);
     }
-  } else if (!BYTE(hud_tmp1)) {
+  } else if (!(*(uint8*)(g_ram+(0xBD)))) {
     // If Special Key button is down, then move their circle
     int btn_index = GetCurrentItemButtonIndex();
     uint8 *item_p = GetCurrentItemButtonPtr(btn_index);
@@ -652,7 +652,7 @@ void Hud_NormalMenu() {  // 8ddf15
     } else if (filtered_joypad_H & kJoypadH_Right) {
       Hud_EquipNextItem(item_p);
     }
-    BYTE(hud_tmp1) = filtered_joypad_H;
+    (*(uint8*)(g_ram+(0xBD))) = filtered_joypad_H;
     if (*item_p != old_item) {
       timer_for_flashing_circle = 16;
       sound_effect_2 = 32;
@@ -664,7 +664,7 @@ void Hud_NormalMenu() {  // 8ddf15
     overworld_map_state = 7;
 
   nmi_subroutine_index = 1;
-  BYTE(nmi_load_target_addr) = 0x22;
+  (*(uint8*)(g_ram+(0x116))) = 0x22;
   //g_ram[0x15d0] = 0;
 }
 
@@ -736,7 +736,7 @@ void Hud_InitBottleMenu() {  // 8de002
     bottle_menu_expand_row = 17;
   }
   nmi_subroutine_index = 1;
-  BYTE(nmi_load_target_addr) = 0x22;
+  (*(uint8*)(g_ram+(0x116))) = 0x22;
 }
 
 void Hud_ExpandBottleMenu() {  // 8de08c
@@ -753,7 +753,7 @@ void Hud_ExpandBottleMenu() {  // 8de08c
   if (sign8(--bottle_menu_expand_row))
     overworld_map_state++;
   nmi_subroutine_index = 1;
-  BYTE(nmi_load_target_addr) = 0x22;
+  (*(uint8*)(g_ram+(0x116))) = 0x22;
 }
 
 void Hud_BottleMenu() {  // 8de0df
@@ -877,7 +877,7 @@ void Hud_DrawBottleMenu_Update() {  // 8de17f
   Hud_DrawSelectedYButtonItem();
 
   nmi_subroutine_index = 1;
-  BYTE(nmi_load_target_addr) = 0x22;
+  (*(uint8*)(g_ram+(0x116))) = 0x22;
 }
 
 void Hud_EraseBottleMenu() {  // 8de2fd
@@ -888,7 +888,7 @@ void Hud_EraseBottleMenu() {  // 8de2fd
   if (++bottle_menu_expand_row == 19)
     overworld_map_state++;
   nmi_subroutine_index = 1;
-  BYTE(nmi_load_target_addr) = 0x22;
+  (*(uint8*)(g_ram+(0x116))) = 0x22;
 }
 
 void Hud_RestoreNormalMenu() {  // 8de346
@@ -896,7 +896,7 @@ void Hud_RestoreNormalMenu() {  // 8de346
   Hud_DrawEquipmentBox();
   overworld_map_state = 4;
   nmi_subroutine_index = 1;
-  BYTE(nmi_load_target_addr) = 0x22;
+  (*(uint8*)(g_ram+(0x116))) = 0x22;
 }
 
 void Hud_SearchForEquippedItem() {  // 8de399
@@ -1315,7 +1315,7 @@ void Hud_AnimateHeartRefill() {  // 8df14f
   if (--animate_heart_refill_countdown)
     return;
   uint16 n = ((uint16)((link_health_current & ~7) - 1) >> 3) << 1;
-  uint16 *p = hud_tile_indices_buffer + HUDXY(20, 1);
+  uint16 *p = RAM16P(g_ram+0xC700) + HUDXY(20, 1);
   if (n >= 20) {
     n -= 20;
     p += 0x20;
@@ -1358,7 +1358,7 @@ void Hud_RebuildIndoor() {  // 8dfa60
 static void Hud_UpdateItemBox() {  // 8dfafd
   // Update r
   if (hud_cur_item)
-    Hud_DrawItem(&hud_tile_indices_buffer[HUDXY(5, 1)], Hud_GetIconForItem(hud_cur_item));
+    Hud_DrawItem((RAM16P(g_ram+0xC700) + (HUDXY(5, 1))), Hud_GetIconForItem(hud_cur_item));
 }
 
 static void Hud_UpdateHearts_Inner(uint16 *dst, const uint16 *src, int n) {  // 8dfdab
@@ -1384,12 +1384,12 @@ static void Hud_Update_Hearts() {  // 8dfb94
   static const uint16 kHudItemBoxTab1[] = { 0x24A2, 0x24A2, 0x24A2 };
   static const uint16 kHudItemBoxTab2[] = { 0x24A2, 0x24A1, 0x24A0 };
   // The life meter
-  Hud_UpdateHearts_Inner(&hud_tile_indices_buffer[HUDXY(20, 1)], kHudItemBoxTab1, link_health_capacity);
-  Hud_UpdateHearts_Inner(&hud_tile_indices_buffer[HUDXY(20, 1)], kHudItemBoxTab2, (link_health_current + 3) & ~3);
+  Hud_UpdateHearts_Inner((RAM16P(g_ram+0xC700) + (HUDXY(20, 1))), kHudItemBoxTab1, link_health_capacity);
+  Hud_UpdateHearts_Inner((RAM16P(g_ram+0xC700) + (HUDXY(20, 1))), kHudItemBoxTab2, (link_health_current + 3) & ~3);
 }
 
 static void Hud_Update_Magic() {  // 8dfc09
-  uint16 *dst = &hud_tile_indices_buffer[HUDXY(2, 0)];
+  uint16 *dst = (RAM16P(g_ram+0xC700) + (HUDXY(2, 0)));
   if (link_magic_consumption >= 1) {
     dst[HUDXY(0, 0)] = 0x28F7;
     dst[HUDXY(1, 0)] = 0x2851;
@@ -1418,7 +1418,7 @@ static void Hud_Update_Inventory() {  // 8dfc09
     0x207f, 0x207f, 0x207f, 0x207f, 0x207f, 0x207f, 0x207f, 0x207f, 0x207f, 0x207f, 0x207f, 0x207f, 0x207f,
   };
 
-  uint16 *dst = &hud_tile_indices_buffer[HUDXY(8, 0)];
+  uint16 *dst = (RAM16P(g_ram+0xC700) + (HUDXY(8, 0)));
   memcpy(dst + HUDXY(0, 0), kHudInventoryBg +  0 + inv_offs, 12 * sizeof(uint16));
   memcpy(dst + HUDXY(0, 1), kHudInventoryBg + 13 + inv_offs, 12 * sizeof(uint16));
 
@@ -1479,7 +1479,7 @@ void Hud_Rebuild() {  // 8dfa70
     0x207f, 0x207f, 0x2854, 0x305e, 0x6854, 0x207f, 0x207f, 0x207f,
     0x207f, 0x207f, 0xa850, 0x2856, 0xe850, 
   };
-  DrawHudComponents(hud_tile_indices_buffer, kHudTilemapLeftPart, 8, 6);
+  DrawHudComponents(RAM16P(g_ram+0xC700), kHudTilemapLeftPart, 8, 6);
 
   static const uint16 kHudTilemapRightPart[12 * 5] = {
     0x207f, 0x207f, 0x288b, 0x288f, 0x24ab, 0x24ac, 0x688f, 0x688b, 0x207f, 0x207f, 0x207f, 0x207f,
@@ -1488,7 +1488,7 @@ void Hud_Rebuild() {  // 8dfa70
     0x207f, 0x207f, 0x207f, 0x207f, 0x207f, 0x207f, 0x207f, 0x207f, 0x207f, 0x207f, 0x207f, 0x207f,
     0x207f, 0x207f, 0x207f, 0x207f, 0x207f, 0x207f, 0x207f, 0x207f, 0x207f, 0x207f, 0x207f, 0x207f,
   };
-  DrawHudComponents(&hud_tile_indices_buffer[HUDXY(20, 0)], kHudTilemapRightPart, 12, 5);
+  DrawHudComponents((RAM16P(g_ram+0xC700) + (HUDXY(20, 0))), kHudTilemapRightPart, 12, 5);
 
 
   Hud_Update_Hearts();

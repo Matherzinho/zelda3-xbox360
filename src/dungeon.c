@@ -124,8 +124,8 @@ static const int8 kDungeon_QueryIfTileLiftable_x[4] = { 7, 7, -3, 16 };
 static const int8 kDungeon_QueryIfTileLiftable_y[4] = { 3, 24, 14, 14 };
 static const uint16 kDungeon_QueryIfTileLiftable_rv[16] = { 0x5252, 0x5050, 0x5454, 0x0, 0x2323 };
 static const uint16 kDoor_BlastWallUp_Dsts[] = { 0xd8a, 0xdaa, 0xdca, 0x2b6, 0xab6, 0x12b6 };
-#define adjacent_doors_flags (*(uint16*)(g_ram+0x1100))
-#define adjacent_doors ((uint16*)(g_ram+0x1110))
+#define adjacent_doors_flags RAM16(g_ram+0x1100)
+#define adjacent_doors RAM16A(g_ram+0x1110)
 static const DungPalInfo kDungPalinfos[41] = {
   { 0,  0,  3,  1},
   { 2,  0,  3,  1},
@@ -431,81 +431,81 @@ const uint8 kDungAnimatedTiles[24] = {
   0x5d, 0x5d, 0x5d, 0x5d, 0x5d, 0x5d, 0x5d, 0x5f, 0x5d, 0x5f, 0x5f, 0x5e, 0x5f, 0x5e, 0x5e, 0x5d,
   0x5d, 0x5e, 0x5d, 0x5d, 0x5d, 0x5d, 0x5d, 0x5d,
 };
-uint16 *DstoPtr(uint16 d) {
-  return (uint16 *)&(g_ram[dung_line_ptrs_row0 + d * 2]);
+zle16_t *DstoPtr(uint16 d) {
+  return (zle16_t *)&(g_ram[dung_line_ptrs_row0 + d * 2]);
 }
 
-void Object_Fill_Nx1(int n, const uint16 *src, uint16 *dst) {
-  int t = src[0];
-  do *dst++ = t; while (--n);
+void Object_Fill_Nx1(int n, const zle16_t *src, zle16_t *dst) {
+  int t = src[0].v;
+  do (dst++)->v = t; while (--n);
 }
 
-void Object_Draw_5x4(const uint16 *src, uint16 *dst) {
+void Object_Draw_5x4(const zle16_t *src, zle16_t *dst) {
   int n = 5;
   do {
-    dst[XY(0, 0)] = src[0];
-    dst[XY(1, 0)] = src[1];
-    dst[XY(2, 0)] = src[2];
-    dst[XY(3, 0)] = src[3];
+    dst[XY(0, 0)].v = src[0].v;
+    dst[XY(1, 0)].v = src[1].v;
+    dst[XY(2, 0)].v = src[2].v;
+    dst[XY(3, 0)].v = src[3].v;
     dst += XY(0, 1), src += 4;
   } while (--n);
 }
 
-void Object_Draw_4x2_BothBgs(const uint16 *src, uint16 dsto) {
-  dung_bg1[dsto + XY(0, 0)] = dung_bg2[dsto + XY(0, 0)] = src[0];
-  dung_bg1[dsto + XY(1, 0)] = dung_bg2[dsto + XY(1, 0)] = src[1];
-  dung_bg1[dsto + XY(2, 0)] = dung_bg2[dsto + XY(2, 0)] = src[2];
-  dung_bg1[dsto + XY(3, 0)] = dung_bg2[dsto + XY(3, 0)] = src[3];
-  dung_bg1[dsto + XY(0, 1)] = dung_bg2[dsto + XY(0, 1)] = src[4];
-  dung_bg1[dsto + XY(1, 1)] = dung_bg2[dsto + XY(1, 1)] = src[5];
-  dung_bg1[dsto + XY(2, 1)] = dung_bg2[dsto + XY(2, 1)] = src[6];
-  dung_bg1[dsto + XY(3, 1)] = dung_bg2[dsto + XY(3, 1)] = src[7];
+void Object_Draw_4x2_BothBgs(const zle16_t *src, uint16 dsto) {
+  dung_bg1[dsto + XY(0, 0)] = dung_bg2[dsto + XY(0, 0)] = src[0].v;
+  dung_bg1[dsto + XY(1, 0)] = dung_bg2[dsto + XY(1, 0)] = src[1].v;
+  dung_bg1[dsto + XY(2, 0)] = dung_bg2[dsto + XY(2, 0)] = src[2].v;
+  dung_bg1[dsto + XY(3, 0)] = dung_bg2[dsto + XY(3, 0)] = src[3].v;
+  dung_bg1[dsto + XY(0, 1)] = dung_bg2[dsto + XY(0, 1)] = src[4].v;
+  dung_bg1[dsto + XY(1, 1)] = dung_bg2[dsto + XY(1, 1)] = src[5].v;
+  dung_bg1[dsto + XY(2, 1)] = dung_bg2[dsto + XY(2, 1)] = src[6].v;
+  dung_bg1[dsto + XY(3, 1)] = dung_bg2[dsto + XY(3, 1)] = src[7].v;
 }
 
-void Object_ChestPlatform_Helper(const uint16 *src, int dsto) {
-  dung_bg2[dsto] = src[0];
-  int n = src[3];
+void Object_ChestPlatform_Helper(const zle16_t *src, int dsto) {
+  dung_bg2[dsto] = src[0].v;
+  int n = src[3].v;
   for (int i = dung_draw_width_indicator; i--; dsto++)
     dung_bg2[1 + dsto] = n;
 
-  dung_bg2[1 + dsto] = src[6];
-  dung_bg2[2 + dsto] = dung_bg2[3 + dsto] = dung_bg2[4 + dsto] = dung_bg2[5 + dsto] = src[9];
+  dung_bg2[1 + dsto] = src[6].v;
+  dung_bg2[2 + dsto] = dung_bg2[3 + dsto] = dung_bg2[4 + dsto] = dung_bg2[5 + dsto] = src[9].v;
 
-  dung_bg2[6 + dsto] = src[12];
-  n = src[15];
+  dung_bg2[6 + dsto] = src[12].v;
+  n = src[15].v;
   for (int i = dung_draw_width_indicator; i--; dsto++)
     dung_bg2[7 + dsto] = n;
 
-  dung_bg2[7 + dsto] = src[18];
+  dung_bg2[7 + dsto] = src[18].v;
 }
 
-void Object_Hole(const uint16 *src, uint16 *dst) {
+void Object_Hole(const zle16_t *src, zle16_t *dst) {
   Object_SizeAtoAplus15(4);
   int w = dung_draw_width_indicator;
   for (int i = 0; i < w; i++)
     Object_Fill_Nx1(w, src, dst + XY(0, i));
   // fill top/bottom
   src = SrcPtr(0x63c);
-  dst[XY(0, 0)] = src[0];
+  dst[XY(0, 0)].v = src[0].v;
   Object_Fill_Nx1(w - 2, src + 1, dst + XY(1, 0));
-  dst[XY(w - 1, 0)] = src[2];
+  dst[XY(w - 1, 0)].v = src[2].v;
 
-  dst[XY(0, w - 1)] = src[3];
+  dst[XY(0, w - 1)].v = src[3].v;
   Object_Fill_Nx1(w - 2, src + 4, dst + XY(1, w - 1));
-  dst[XY(w - 1, w - 1)] = src[5];
+  dst[XY(w - 1, w - 1)].v = src[5].v;
 
   // fill left/right edge
   src = SrcPtr(0x648);
   for (int i = 1; i < w - 1; i++) {
-    dst[XY(0, i)] = src[0];
-    dst[XY(w - 1, i)] = src[1];
+    dst[XY(0, i)].v = src[0].v;
+    dst[XY(w - 1, i)].v = src[1].v;
   }
 }
 
 // dsto is half the value of Y
-void LoadType1ObjectSubtype1(uint8 idx, uint16 *dst, uint16 dsto) {
+void LoadType1ObjectSubtype1(uint8 idx, zle16_t *dst, uint16 dsto) {
   uint16 param1 = kObjectSubtype1Params[idx];
-  const uint16 *src = SrcPtr(param1);
+  const zle16_t *src = SrcPtr(param1);
   int n;
 
   switch (idx) {
@@ -527,14 +527,14 @@ void LoadType1ObjectSubtype1(uint8 idx, uint16 *dst, uint16 dsto) {
   case 0x3: case 0x4:  // RoomDraw_Rightwards2x4spaced4_1to16 - 03 -  [N]Wall Horz: (LOW) [L-R]
     RoomDraw_GetObjectSize_1to16();
     do {
-      dung_bg1[dsto + XY(0, 0)] = dung_bg2[dsto + XY(0, 0)] = src[0];
-      dung_bg1[dsto + XY(0, 1)] = dung_bg2[dsto + XY(0, 1)] = src[1];
-      dung_bg1[dsto + XY(0, 2)] = dung_bg2[dsto + XY(0, 2)] = src[2];
-      dung_bg1[dsto + XY(0, 3)] = dung_bg2[dsto + XY(0, 3)] = src[3];
-      dung_bg1[dsto + XY(1, 0)] = dung_bg2[dsto + XY(1, 0)] = src[4];
-      dung_bg1[dsto + XY(1, 1)] = dung_bg2[dsto + XY(1, 1)] = src[5];
-      dung_bg1[dsto + XY(1, 2)] = dung_bg2[dsto + XY(1, 2)] = src[6];
-      dung_bg1[dsto + XY(1, 3)] = dung_bg2[dsto + XY(1, 3)] = src[7];
+      dung_bg1[dsto + XY(0, 0)] = dung_bg2[dsto + XY(0, 0)] = src[0].v;
+      dung_bg1[dsto + XY(0, 1)] = dung_bg2[dsto + XY(0, 1)] = src[1].v;
+      dung_bg1[dsto + XY(0, 2)] = dung_bg2[dsto + XY(0, 2)] = src[2].v;
+      dung_bg1[dsto + XY(0, 3)] = dung_bg2[dsto + XY(0, 3)] = src[3].v;
+      dung_bg1[dsto + XY(1, 0)] = dung_bg2[dsto + XY(1, 0)] = src[4].v;
+      dung_bg1[dsto + XY(1, 1)] = dung_bg2[dsto + XY(1, 1)] = src[5].v;
+      dung_bg1[dsto + XY(1, 2)] = dung_bg2[dsto + XY(1, 2)] = src[6].v;
+      dung_bg1[dsto + XY(1, 3)] = dung_bg2[dsto + XY(1, 3)] = src[7].v;
       dsto += XY(2, 0);
     } while (--dung_draw_width_indicator);
     break;
@@ -570,11 +570,11 @@ void LoadType1ObjectSubtype1(uint8 idx, uint16 *dst, uint16 dsto) {
   case 0x15: case 0x18: case 0x19: case 0x1C: case 0x1D: case 0x20:  // 15 -  / Wall Tile Top (LOW)[NW]
     Object_SizeAtoAplus15(6);
     do {
-      dung_bg1[dsto + XY(0, 0)] = dung_bg2[dsto + XY(0, 0)] = src[0];
-      dung_bg1[dsto + XY(0, 1)] = dung_bg2[dsto + XY(0, 1)] = src[1];
-      dung_bg1[dsto + XY(0, 2)] = dung_bg2[dsto + XY(0, 2)] = src[2];
-      dung_bg1[dsto + XY(0, 3)] = dung_bg2[dsto + XY(0, 3)] = src[3];
-      dung_bg1[dsto + XY(0, 4)] = dung_bg2[dsto + XY(0, 4)] = src[4];
+      dung_bg1[dsto + XY(0, 0)] = dung_bg2[dsto + XY(0, 0)] = src[0].v;
+      dung_bg1[dsto + XY(0, 1)] = dung_bg2[dsto + XY(0, 1)] = src[1].v;
+      dung_bg1[dsto + XY(0, 2)] = dung_bg2[dsto + XY(0, 2)] = src[2].v;
+      dung_bg1[dsto + XY(0, 3)] = dung_bg2[dsto + XY(0, 3)] = src[3].v;
+      dung_bg1[dsto + XY(0, 4)] = dung_bg2[dsto + XY(0, 4)] = src[4].v;
       dsto -= 63;
     } while (--dung_draw_width_indicator);
     break;
@@ -582,11 +582,11 @@ void LoadType1ObjectSubtype1(uint8 idx, uint16 *dst, uint16 dsto) {
   case 0x16: case 0x17: case 0x1A: case 0x1B: case 0x1E: case 0x1F:  // 16 -  \ Wall Tile Top (LOW)[SW]
     Object_SizeAtoAplus15(6);
     do {
-      dung_bg1[dsto + XY(0, 0)] = dung_bg2[dsto + XY(0, 0)] = src[0];
-      dung_bg1[dsto + XY(0, 1)] = dung_bg2[dsto + XY(0, 1)] = src[1];
-      dung_bg1[dsto + XY(0, 2)] = dung_bg2[dsto + XY(0, 2)] = src[2];
-      dung_bg1[dsto + XY(0, 3)] = dung_bg2[dsto + XY(0, 3)] = src[3];
-      dung_bg1[dsto + XY(0, 4)] = dung_bg2[dsto + XY(0, 4)] = src[4];
+      dung_bg1[dsto + XY(0, 0)] = dung_bg2[dsto + XY(0, 0)] = src[0].v;
+      dung_bg1[dsto + XY(0, 1)] = dung_bg2[dsto + XY(0, 1)] = src[1].v;
+      dung_bg1[dsto + XY(0, 2)] = dung_bg2[dsto + XY(0, 2)] = src[2].v;
+      dung_bg1[dsto + XY(0, 3)] = dung_bg2[dsto + XY(0, 3)] = src[3].v;
+      dung_bg1[dsto + XY(0, 4)] = dung_bg2[dsto + XY(0, 4)] = src[4].v;
       dsto += 65;
     } while (--dung_draw_width_indicator);
     break;
@@ -602,11 +602,11 @@ void LoadType1ObjectSubtype1(uint8 idx, uint16 *dst, uint16 dsto) {
 
   case 0x22: { // 22 -  Horz: Rail Thin [L-R]
     Object_SizeAtoAplus15(2);
-    if ((dst[0] & 0x3ff) != 0xe2)
-      dst[0] = src[0];
-    n = src[1];
-    do *++dst = n; while (--dung_draw_width_indicator);
-    dst[1] = src[2];
+    if ((dst[0].v & 0x3ff) != 0xe2)
+      dst[0].v = src[0].v;
+    n = src[1].v;
+    do (++dst)->v = n; while (--dung_draw_width_indicator);
+    dst[1].v = src[2].v;
     break;
   }
   case 0x23: case 0x24: case 0x25: case 0x26: case 0x27: case 0x28:
@@ -614,52 +614,52 @@ void LoadType1ObjectSubtype1(uint8 idx, uint16 *dst, uint16 dsto) {
   case 0x3f: case 0x40: case 0x41: case 0x42: case 0x43: case 0x44:  // 3F -  Water Edge [L-R]
   case 0x45: case 0x46: case 0xb3: case 0xb4:
     RoomDraw_GetObjectSize_1to16();
-    n = dst[0] & 0x3ff;
+    n = dst[0].v & 0x3ff;
     if (n != 0x1db && n != 0x1a6 && n != 0x1dd && n != 0x1fc)
-      dst[0] = src[0];
-    n = src[1];
-    do *++dst = n; while (--dung_draw_width_indicator);
-    dst[1] = src[2];
+      dst[0].v = src[0].v;
+    n = src[1].v;
+    do (++dst)->v = n; while (--dung_draw_width_indicator);
+    dst[1].v = src[2].v;
     break;
 
   case 0x2f: // 2F -  Rail Wall [L-R]
     Object_SizeAtoAplus15(10);
-    n = *src++;
-    if ((dst[0] & 0x3ff) != 0xe2) {
-      dst[XY(0, 0)] = src[0];
-      dst[XY(1, 0)] = src[1];
-      dst[XY(1, 1)] = dst[XY(0, 1)] = n;
+    n = (src++)->v;
+    if ((dst[0].v & 0x3ff) != 0xe2) {
+      dst[XY(0, 0)].v = src[0].v;
+      dst[XY(1, 0)].v = src[1].v;
+      dst[XY(1, 1)].v = dst[XY(0, 1)].v = n;
       dst += 2;
     }
     src += 2;
     do {
-      dst[XY(0, 0)] = src[0];
-      dst[XY(0, 1)] = n;
+      dst[XY(0, 0)].v = src[0].v;
+      dst[XY(0, 1)].v = n;
     } while (dst++, --dung_draw_width_indicator);
     src++;
-    dst[XY(0, 0)] = src[0];
-    dst[XY(1, 0)] = src[1];
-    dst[XY(1, 1)] = dst[XY(0, 1)] = n;
+    dst[XY(0, 0)].v = src[0].v;
+    dst[XY(1, 0)].v = src[1].v;
+    dst[XY(1, 1)].v = dst[XY(0, 1)].v = n;
     break;
 
   case 0x30:  // 30 -  Rail Wall [L-R]
     Object_SizeAtoAplus15(10);
-    n = *src++;
-    if ((dst[XY(0, 1)] & 0x3ff) != 0xe2) {
-      dst[XY(0, 0)] = dst[XY(1, 0)] = n;
-      dst[XY(0, 1)] = src[0];
-      dst[XY(1, 1)] = src[1];
+    n = (src++)->v;
+    if ((dst[XY(0, 1)].v & 0x3ff) != 0xe2) {
+      dst[XY(0, 0)].v = dst[XY(1, 0)].v = n;
+      dst[XY(0, 1)].v = src[0].v;
+      dst[XY(1, 1)].v = src[1].v;
       dst += 2;
     }
     src += 2;
     do {
-      dst[XY(0, 0)] = n;
-      dst[XY(0, 1)] = src[0];
+      dst[XY(0, 0)].v = n;
+      dst[XY(0, 1)].v = src[0].v;
     } while (dst++, --dung_draw_width_indicator);
     src++;
-    dst[XY(0, 0)] = dst[XY(1, 0)] = n;
-    dst[XY(0, 1)] = src[0];
-    dst[XY(1, 1)] = src[1];
+    dst[XY(0, 0)].v = dst[XY(1, 0)].v = n;
+    dst[XY(0, 1)].v = src[0].v;
+    dst[XY(1, 1)].v = src[1].v;
     break;
   case 0x31: case 0x32:  // 31 -  Unused -empty
   case 0x35: case 0x54: case 0x57:case 0x58:case 0x59:case 0x5A:
@@ -673,8 +673,8 @@ void LoadType1ObjectSubtype1(uint8 idx, uint16 *dst, uint16 dsto) {
     break;
   case 0x34:  // 34 -  Red Carpet Floor Trim [L-R]
     Object_SizeAtoAplus15(4);
-    n = src[0];
-    do *dst++ = n; while (--dung_draw_width_indicator);
+    n = src[0].v;
+    do (dst++)->v = n; while (--dung_draw_width_indicator);
     break;
   case 0x36: case 0x37: // 36 -  [N]Curtain [L-R]
     RoomDraw_GetObjectSize_1to16();
@@ -704,7 +704,7 @@ void LoadType1ObjectSubtype1(uint8 idx, uint16 *dst, uint16 dsto) {
   case 0x3c:  // 3C -  Double Chair [L-R]
     RoomDraw_GetObjectSize_1to16();
     do {
-      const uint16 *src = SrcPtr(0x8ca);
+      const zle16_t *src = SrcPtr(0x8ca);
       RoomDraw_Rightwards2x2(src + 0, dst);
       RoomDraw_Rightwards2x2(src + 4, dst + XY(0, 6));
       dst += 4;
@@ -730,9 +730,9 @@ void LoadType1ObjectSubtype1(uint8 idx, uint16 *dst, uint16 dsto) {
     dung_draw_width_indicator <<= 1;
     RoomDraw_1x3_rightwards(1, src, dst), dst += XY(1, 0);
     do {
-      dst[XY(0, 0)] = src[3];
-      dst[XY(0, 1)] = src[4];
-      dst[XY(0, 2)] = src[5];
+      dst[XY(0, 0)].v = src[3].v;
+      dst[XY(0, 1)].v = src[4].v;
+      dst[XY(0, 2)].v = src[5].v;
     } while (dst++, --dung_draw_width_indicator);
     RoomDraw_1x3_rightwards(1, src + 6, dst);
     break;
@@ -761,8 +761,8 @@ void LoadType1ObjectSubtype1(uint8 idx, uint16 *dst, uint16 dsto) {
 
   case 0x50:   // 50 -  Cane Ride [L-R]
     Object_SizeAtoAplus15(2);
-    n = src[0];
-    do *dst++ = n; while (--dung_draw_width_indicator);
+    n = src[0].v;
+    do (dst++)->v = n; while (--dung_draw_width_indicator);
     break;
 
   case 0x51: case 0x52: // 51 -  [N]Canon Hole [L-R]
@@ -799,11 +799,11 @@ void LoadType1ObjectSubtype1(uint8 idx, uint16 *dst, uint16 dsto) {
 
   case 0x5f: { // 5F -  Long Horz: Rail [L-R]
     Object_SizeAtoAplus15(21);
-    if ((dst[0] & 0x3ff) != 0xe2)
-      dst[0] = src[0];
-    n = src[1];
-    do *++dst = n; while (--dung_draw_width_indicator);
-    dst[1] = src[2];
+    if ((dst[0].v & 0x3ff) != 0xe2)
+      dst[0].v = src[0].v;
+    n = src[1].v;
+    do (++dst)->v = n; while (--dung_draw_width_indicator);
+    dst[1].v = src[2].v;
     break;
   }
 
@@ -824,14 +824,14 @@ void LoadType1ObjectSubtype1(uint8 idx, uint16 *dst, uint16 dsto) {
   case 0x64:  // RoomDraw_Downwards4x2_1to16_BothBG - 63 -  [W]Wall Vert: (LOW) [U-D]
     RoomDraw_GetObjectSize_1to16();
     do {
-      dung_bg1[dsto + XY(0, 0)] = dung_bg2[dsto + XY(0, 0)] = src[0];
-      dung_bg1[dsto + XY(1, 0)] = dung_bg2[dsto + XY(1, 0)] = src[1];
-      dung_bg1[dsto + XY(2, 0)] = dung_bg2[dsto + XY(2, 0)] = src[2];
-      dung_bg1[dsto + XY(3, 0)] = dung_bg2[dsto + XY(3, 0)] = src[3];
-      dung_bg1[dsto + XY(0, 1)] = dung_bg2[dsto + XY(0, 1)] = src[4];
-      dung_bg1[dsto + XY(1, 1)] = dung_bg2[dsto + XY(1, 1)] = src[5];
-      dung_bg1[dsto + XY(2, 1)] = dung_bg2[dsto + XY(2, 1)] = src[6];
-      dung_bg1[dsto + XY(3, 1)] = dung_bg2[dsto + XY(3, 1)] = src[7];
+      dung_bg1[dsto + XY(0, 0)] = dung_bg2[dsto + XY(0, 0)] = src[0].v;
+      dung_bg1[dsto + XY(1, 0)] = dung_bg2[dsto + XY(1, 0)] = src[1].v;
+      dung_bg1[dsto + XY(2, 0)] = dung_bg2[dsto + XY(2, 0)] = src[2].v;
+      dung_bg1[dsto + XY(3, 0)] = dung_bg2[dsto + XY(3, 0)] = src[3].v;
+      dung_bg1[dsto + XY(0, 1)] = dung_bg2[dsto + XY(0, 1)] = src[4].v;
+      dung_bg1[dsto + XY(1, 1)] = dung_bg2[dsto + XY(1, 1)] = src[5].v;
+      dung_bg1[dsto + XY(2, 1)] = dung_bg2[dsto + XY(2, 1)] = src[6].v;
+      dung_bg1[dsto + XY(3, 1)] = dung_bg2[dsto + XY(3, 1)] = src[7].v;
       dsto += XY(0, 2);
     } while (--dung_draw_width_indicator);
     break;
@@ -850,59 +850,59 @@ void LoadType1ObjectSubtype1(uint8 idx, uint16 *dst, uint16 dsto) {
     break;
   case 0x69:  // 69 -  Vert: Rail Thin [U-D]
     Object_SizeAtoAplus15(2);
-    if ((dst[0] & 0x3ff) != 0xe3)
-      dst[0] = src[0];
-    n = src[1];
-    do { dst += 64; *dst = n; } while (--dung_draw_width_indicator);
-    dst[64] = src[2];
+    if ((dst[0].v & 0x3ff) != 0xe3)
+      dst[0].v = src[0].v;
+    n = src[1].v;
+    do { dst += 64; dst->v = n; } while (--dung_draw_width_indicator);
+    dst[64].v = src[2].v;
     break;
   case 0x6a: case 0x6b: // 6A -  [W]Pit Edge [U-D]
   case 0x79: case 0x7a: // 79 -  Water Edge [U-D]
   case 0x8d: case 0x8e: // 8D -  [W]Edge [U-D]
     RoomDraw_GetObjectSize_1to16();
     do {
-      dst[0] = src[0], dst += XY(0, 1);
+      dst[0].v = src[0].v, dst += XY(0, 1);
     } while (--dung_draw_width_indicator);
     break;
   case 0x6c: // 6C -  [W]Rail Wall [U-D]
     Object_SizeAtoAplus15(10);
-    n = *src++;
-    if ((dst[0] & 0x3ff) != 0xe3) {
-      dst[XY(0, 0)] = src[0];
-      dst[XY(0, 1)] = src[1];
-      dst[XY(1, 0)] = dst[XY(1, 1)] = n;
+    n = (src++)->v;
+    if ((dst[0].v & 0x3ff) != 0xe3) {
+      dst[XY(0, 0)].v = src[0].v;
+      dst[XY(0, 1)].v = src[1].v;
+      dst[XY(1, 0)].v = dst[XY(1, 1)].v = n;
       dst += XY(0, 2);
     }
     src += 2;
     do {
-      dst[XY(0, 0)] = src[0];
-      dst[XY(1, 0)] = n;
+      dst[XY(0, 0)].v = src[0].v;
+      dst[XY(1, 0)].v = n;
       dst += XY(0, 1);
     } while (--dung_draw_width_indicator);
     src += 1;
-    dst[XY(0, 0)] = src[0];
-    dst[XY(0, 1)] = src[1];
-    dst[XY(1, 0)] = dst[XY(1, 1)] = n;
+    dst[XY(0, 0)].v = src[0].v;
+    dst[XY(0, 1)].v = src[1].v;
+    dst[XY(1, 0)].v = dst[XY(1, 1)].v = n;
     break;
   case 0x6d:   // 6D -  [E]Rail Wall [U-D]
     Object_SizeAtoAplus15(10);
-    n = *src++;
-    if ((dst[XY(1, 0)] & 0x3ff) != 0xe3) {
-      dst[XY(0, 0)] = dst[XY(0, 1)] = n;
-      dst[XY(1, 0)] = src[0];
-      dst[XY(1, 1)] = src[1];
+    n = (src++)->v;
+    if ((dst[XY(1, 0)].v & 0x3ff) != 0xe3) {
+      dst[XY(0, 0)].v = dst[XY(0, 1)].v = n;
+      dst[XY(1, 0)].v = src[0].v;
+      dst[XY(1, 1)].v = src[1].v;
       dst += XY(0, 2);
     }
     src += 2;
     do {
-      dst[XY(0, 0)] = n;
-      dst[XY(1, 0)] = src[0];
+      dst[XY(0, 0)].v = n;
+      dst[XY(1, 0)].v = src[0].v;
       dst += XY(0, 1);
     } while (--dung_draw_width_indicator);
     src += 1;
-    dst[XY(0, 0)] = dst[XY(0, 1)] = n;
-    dst[XY(1, 0)] = src[0];
-    dst[XY(1, 1)] = src[1];
+    dst[XY(0, 0)].v = dst[XY(0, 1)].v = n;
+    dst[XY(1, 0)].v = src[0].v;
+    dst[XY(1, 1)].v = src[1].v;
     break;
   case 0x6e: case 0x6f: // unused
   case 0x72: case 0x7e:
@@ -916,7 +916,7 @@ void LoadType1ObjectSubtype1(uint8 idx, uint16 *dst, uint16 dsto) {
   case 0x71:  // 71 -  Red Carpet Floor Trim [U-D]
     Object_SizeAtoAplus15(4);
     do {
-      *dst = src[0], dst += XY(0, 1);
+      dst->v = src[0].v, dst += XY(0, 1);
     } while (--dung_draw_width_indicator);
     break;
   case 0x73: case 0x74:  // 73 -  [W]Curtain [U-D]
@@ -947,7 +947,7 @@ void LoadType1ObjectSubtype1(uint8 idx, uint16 *dst, uint16 dsto) {
     RoomDraw_GetObjectSize_1to16();
     dung_draw_width_indicator += 1;
     do {
-      dst[0] = src[0], dst += XY(0, 1);
+      dst[0].v = src[0].v, dst += XY(0, 1);
     } while (--dung_draw_width_indicator);
     break;
   case 0x7f: case 0x80:  // 7F -  [W]Wall Torches [U-D]
@@ -973,8 +973,8 @@ void LoadType1ObjectSubtype1(uint8 idx, uint16 *dst, uint16 dsto) {
     RoomDraw_GetObjectSize_1to16();
     RoomDraw_Rightwards2x2(src, dst), dst += XY(0, 2), src += 4;
     do {
-      dst[XY(0, 0)] = src[0];
-      dst[XY(1, 0)] = src[1];
+      dst[XY(0, 0)].v = src[0].v;
+      dst[XY(1, 0)].v = src[1].v;
       dst += XY(0, 1);
     } while (--dung_draw_width_indicator);
     RoomDraw_1x3_rightwards(2, src + 2, dst);
@@ -987,24 +987,24 @@ void LoadType1ObjectSubtype1(uint8 idx, uint16 *dst, uint16 dsto) {
     break;
   case 0x8a: // 8A -  Long Vert: Rail [U-D]
     Object_SizeAtoAplus15(21);
-    if ((dst[0] & 0x3ff) != 0xe3)
-      dst[0] = src[0];
-    n = src[1];
-    do { dst += XY(0, 1); *dst = n; } while (--dung_draw_width_indicator);
-    dst[XY(0, 1)] = src[2];
+    if ((dst[0].v & 0x3ff) != 0xe3)
+      dst[0].v = src[0].v;
+    n = src[1].v;
+    do { dst += XY(0, 1); dst->v = n; } while (--dung_draw_width_indicator);
+    dst[XY(0, 1)].v = src[2].v;
     break;
   case 0x8b: case 0x8c: // 8B -  [W]Vert: Jump Edge [U-D]
     Object_SizeAtoAplus15(8);
     do {
-      dst[0] = src[0], dst += XY(0, 1);
+      dst[0].v = src[0].v, dst += XY(0, 1);
     } while (--dung_draw_width_indicator);
     break;
   case 0x8f: // 8F -  N/A
     Object_SizeAtoAplus15(2);
     dung_draw_width_indicator <<= 1;
-    dst[XY(0, 0)] = src[0], dst[XY(1, 0)] = src[1];
+    dst[XY(0, 0)].v = src[0].v, dst[XY(1, 0)].v = src[1].v;
     do {
-      dst[XY(0, 1)] = src[2], dst[XY(1, 1)] = src[3], dst += XY(0, 1);
+      dst[XY(0, 1)].v = src[2].v, dst[XY(1, 1)].v = src[3].v, dst += XY(0, 1);
     } while (--dung_draw_width_indicator);
     break;
   case 0x95:  // 95 -  Fake Pot [U-D]
@@ -1083,14 +1083,14 @@ void LoadType1ObjectSubtype1(uint8 idx, uint16 *dst, uint16 dsto) {
     } while (--dung_draw_width_indicator);
     break;
   case 0xc0: case 0xc2: // C0 -  Ceiling Large [4-way]
-    n = src[0];
+    n = src[0].v;
     for (int y = dung_draw_height_indicator; y-- >= 0; ) {
-      uint16 *dst_org = dst;
+      zle16_t *dst_org = dst;
       for (int x = dung_draw_width_indicator; x-- >= 0; dst += XY(4, 0)) {
-        dst[XY(0, 0)] = dst[XY(1, 0)] = dst[XY(2, 0)] = dst[XY(3, 0)] = n;
-        dst[XY(0, 1)] = dst[XY(1, 1)] = dst[XY(2, 1)] = dst[XY(3, 1)] = n;
-        dst[XY(0, 2)] = dst[XY(1, 2)] = dst[XY(2, 2)] = dst[XY(3, 2)] = n;
-        dst[XY(0, 3)] = dst[XY(1, 3)] = dst[XY(2, 3)] = dst[XY(3, 3)] = n;
+        dst[XY(0, 0)].v = dst[XY(1, 0)].v = dst[XY(2, 0)].v = dst[XY(3, 0)].v = n;
+        dst[XY(0, 1)].v = dst[XY(1, 1)].v = dst[XY(2, 1)].v = dst[XY(3, 1)].v = n;
+        dst[XY(0, 2)].v = dst[XY(1, 2)].v = dst[XY(2, 2)].v = dst[XY(3, 2)].v = n;
+        dst[XY(0, 3)].v = dst[XY(1, 3)].v = dst[XY(2, 3)].v = dst[XY(3, 3)].v = n;
       }
       dst = dst_org + XY(0, 4);
     }
@@ -1099,7 +1099,7 @@ void LoadType1ObjectSubtype1(uint8 idx, uint16 *dst, uint16 dsto) {
     dung_draw_width_indicator += 4;
     dung_draw_height_indicator += 1;
     // draw upper part
-    uint16 *dsto = dst;
+    zle16_t *dsto = dst;
     RoomDraw_1x3_rightwards(3, src, dst), src += 9, dst += XY(3, 0);
     for (int i = dung_draw_width_indicator; i--; )
       RoomDraw_1x3_rightwards(2, src, dst), dst += XY(2, 0);
@@ -1107,7 +1107,7 @@ void LoadType1ObjectSubtype1(uint8 idx, uint16 *dst, uint16 dsto) {
     // draw center part
     dst = dsto + XY(0, 3);
     for (int i = dung_draw_height_indicator; i--; ) {
-      uint16 *dt = dst;
+      zle16_t *dt = dst;
       Object_Draw_3x2(src, dt), dt += XY(3, 0);
       for (int j = dung_draw_width_indicator; j--; )
         RoomDraw_Rightwards2x2(src + 6, dt), dt += XY(2, 0);
@@ -1129,13 +1129,13 @@ void LoadType1ObjectSubtype1(uint8 idx, uint16 *dst, uint16 dsto) {
   case 0xd7:  // D7 -  overlay tile? [4-way]
     dung_draw_width_indicator++;
     dung_draw_height_indicator++;
-    n = *src;
+    n = src->v;
     do {
-      uint16 *d = dst;
+      zle16_t *d = dst;
       for (int i = dung_draw_width_indicator; i--; d += XY(3, 0)) {
-        d[XY(0, 0)] = d[XY(1, 0)] = d[XY(2, 0)] = n;
-        d[XY(0, 1)] = d[XY(1, 1)] = d[XY(2, 1)] = n;
-        d[XY(0, 2)] = d[XY(1, 2)] = d[XY(2, 2)] = n;
+        d[XY(0, 0)].v = d[XY(1, 0)].v = d[XY(2, 0)].v = n;
+        d[XY(0, 1)].v = d[XY(1, 1)].v = d[XY(2, 1)].v = n;
+        d[XY(0, 2)].v = d[XY(1, 2)].v = d[XY(2, 2)].v = n;
       }
       dst += XY(0, 3);
     } while (--dung_draw_height_indicator);
@@ -1171,16 +1171,16 @@ fill_floor:
     MovingWall_FillReplacementBuffer(dsto - size1 - 1);
     moving_wall_var2 = dung_draw_height_indicator * 2;
     src = SrcPtr(0x3d8);
-    uint16 *dst1 = dst - size1;
+    zle16_t *dst1 = dst - size1;
     do {
-      uint16 *dst2 = dst1;
-      dst2[XY(0, 0)] = src[0];
+      zle16_t *dst2 = dst1;
+      dst2[XY(0, 0)].v = src[0].v;
       int n1 = size0 * 2 + 4;
       do {
-        dst2[XY(0, 1)] = src[1];
+        dst2[XY(0, 1)].v = src[1].v;
         dst2 += XY(0, 1);
       } while (--n1);
-      dst2[XY(0, 1)] = src[2];
+      dst2[XY(0, 1)].v = src[2].v;
       dst1++;
     } while (--size1);
     src = SrcPtr(0x72a);
@@ -1202,7 +1202,7 @@ fill_floor:
     int size0 = kMovingWall_Sizes0[dung_draw_width_indicator];
     moving_wall_var2 = dung_draw_height_indicator * 2;
     MovingWall_FillReplacementBuffer(dsto + 3 + size1);
-    uint16 *dst1 = dst;
+    zle16_t *dst1 = dst;
     RoomDraw_1x3_rightwards(3, src, dst1);
     dst1 += XY(0, 3);
     int n = size0;
@@ -1214,14 +1214,14 @@ fill_floor:
     src = SrcPtr(0x3d8);
     dst1 = dst + XY(3, 0);
     do {
-      uint16 *dst2 = dst1;
-      dst2[XY(0, 0)] = src[0];
+      zle16_t *dst2 = dst1;
+      dst2[XY(0, 0)].v = src[0].v;
       int n1 = size0 * 2 + 4;
       do {
-        dst2[XY(0, 1)] = src[1];
+        dst2[XY(0, 1)].v = src[1].v;
         dst2 += XY(0, 1);
       } while (--n1);
-      dst2[XY(0, 1)] = src[2];
+      dst2[XY(0, 1)].v = src[2].v;
       dst1++;
     } while (--size1);
     break;
@@ -1249,7 +1249,7 @@ fill_floor:
       dung_num_inroom_upsouth_stairs_water = 0;
       dsto += (dung_draw_width_indicator - 1) << 1;
       dsto += (dung_draw_height_indicator - 1) << 7;
-      DrawWaterThing(&dung_bg2[dsto], SrcPtr(0x1438));
+      DrawWaterThing((RAM16P(g_ram+0x2000) + (dsto)), SrcPtr(0x1438));
     } else {
       src = SrcPtr(0x110);
       do {
@@ -1287,17 +1287,17 @@ fill_floor:
     int n = dung_draw_height_indicator * 2 - 1;
     src = SrcPtr(0x110);
     do {
-      uint16 *dst2 = dst;
+      zle16_t *dst2 = dst;
       int j = dung_draw_width_indicator;
       do {
-        dst[XY(0, 0)] = src[0];
-        dst[XY(1, 0)] = src[1];
-        dst[XY(2, 0)] = src[2];
-        dst[XY(3, 0)] = src[3];
-        dst[XY(0, 1)] = src[4];
-        dst[XY(1, 1)] = src[5];
-        dst[XY(2, 1)] = src[6];
-        dst[XY(3, 1)] = src[7];
+        dst[XY(0, 0)].v = src[0].v;
+        dst[XY(1, 0)].v = src[1].v;
+        dst[XY(2, 0)].v = src[2].v;
+        dst[XY(3, 0)].v = src[3].v;
+        dst[XY(0, 1)].v = src[4].v;
+        dst[XY(1, 1)].v = src[5].v;
+        dst[XY(2, 1)].v = src[6].v;
+        dst[XY(3, 1)].v = src[7].v;
         dst += 4;
       } while (--j);
       dst = dst2 + XY(0, 2);
@@ -1333,7 +1333,7 @@ fill_floor:
     dung_draw_height_indicator++;
     do {
       int n = dung_draw_width_indicator;
-      uint16 *dst1 = dst;
+      zle16_t *dst1 = dst;
       do {
         RoomDraw_Rightwards2x2(src, dst1), dst1 += XY(2, 0);
       } while (--n);
@@ -1352,18 +1352,18 @@ fill_floor:
   }
 }
 
-void Object_DrawNx3_BothBgs(int n, const uint16 *src, int dsto) {
+void Object_DrawNx3_BothBgs(int n, const zle16_t *src, int dsto) {
   do {
-    dung_bg1[dsto + XY(0, 0)] = dung_bg2[dsto + XY(0, 0)] = src[0];
-    dung_bg1[dsto + XY(0, 1)] = dung_bg2[dsto + XY(0, 1)] = src[1];
-    dung_bg1[dsto + XY(0, 2)] = dung_bg2[dsto + XY(0, 2)] = src[2];
+    dung_bg1[dsto + XY(0, 0)] = dung_bg2[dsto + XY(0, 0)] = src[0].v;
+    dung_bg1[dsto + XY(0, 1)] = dung_bg2[dsto + XY(0, 1)] = src[1].v;
+    dung_bg1[dsto + XY(0, 2)] = dung_bg2[dsto + XY(0, 2)] = src[2].v;
     src += 3, dsto += 1;
   } while (--n);
 }
 
-void LoadType1ObjectSubtype2(uint8 idx, uint16 *dst, uint16 dsto) {
+void LoadType1ObjectSubtype2(uint8 idx, zle16_t *dst, uint16 dsto) {
   uint16 params = kObjectSubtype2Params[idx];
-  const uint16 *src = SrcPtr(params);
+  const zle16_t *src = SrcPtr(params);
   int i;
   switch (idx) {
   case 0x00: case 0x01: case 0x02: case 0x03:
@@ -1559,11 +1559,11 @@ inactive_water_ladder:
   case 0x3c:  // 3C -  Sanctuary Wall
     for (int i = 0; i < 6; i++) {
       dung_bg2[dsto + 0] = dung_bg2[dsto + 4] = dung_bg2[dsto + 8] =
-        dung_bg2[dsto + 14] = dung_bg2[dsto + 18] = dung_bg2[dsto + 22] = src[0];
+        dung_bg2[dsto + 14] = dung_bg2[dsto + 18] = dung_bg2[dsto + 22] = src[0].v;
       dung_bg2[dsto + 1] = dung_bg2[dsto + 5] = dung_bg2[dsto + 9] =
-        dung_bg2[dsto + 15] = dung_bg2[dsto + 19] = dung_bg2[dsto + 23] = src[0] | 0x4000;
-      dung_bg2[dsto + 2] = dung_bg2[dsto + 6] = dung_bg2[dsto + 16] = dung_bg2[dsto + 20] = src[6];
-      dung_bg2[dsto + 3] = dung_bg2[dsto + 7] = dung_bg2[dsto + 17] = dung_bg2[dsto + 21] = src[6] | 0x4000;
+        dung_bg2[dsto + 15] = dung_bg2[dsto + 19] = dung_bg2[dsto + 23] = src[0].v | 0x4000;
+      dung_bg2[dsto + 2] = dung_bg2[dsto + 6] = dung_bg2[dsto + 16] = dung_bg2[dsto + 20] = src[6].v;
+      dung_bg2[dsto + 3] = dung_bg2[dsto + 7] = dung_bg2[dsto + 17] = dung_bg2[dsto + 21] = src[6].v | 0x4000;
       dsto += XY(0, 1);
       src++;
     }
@@ -1574,15 +1574,15 @@ inactive_water_ladder:
     break;
   case 0x3f: { // 3F - used in hole at the smithy dwarves
     dsto |= (dung_line_ptrs_row0 != 0x4000 ? 0 : 0x1000);
-    dst = &dung_bg2[dsto];
+    dst = (RAM16P(g_ram+0x2000) + (dsto));
     for (int i = 0; i < 8; i++) {
-      dst[XY(0, 0)] = src[0];
-      dst[XY(0, 1)] = src[1];
-      dst[XY(0, 2)] = src[2];
-      dst[XY(0, 3)] = src[3];
-      dst[XY(0, 4)] = src[4];
-      dst[XY(0, 5)] = src[5];
-      dst[XY(0, 6)] = src[6];
+      dst[XY(0, 0)].v = src[0].v;
+      dst[XY(0, 1)].v = src[1].v;
+      dst[XY(0, 2)].v = src[2].v;
+      dst[XY(0, 3)].v = src[3].v;
+      dst[XY(0, 4)].v = src[4].v;
+      dst[XY(0, 5)].v = src[5].v;
+      dst[XY(0, 6)].v = src[6].v;
       dst += XY(1, 0);
       src += 7;
     }
@@ -1594,22 +1594,22 @@ inactive_water_ladder:
   }
 }
 
-void Object_BombableFloorHelper(uint16 a, const uint16 *src, const uint16 *src_below, uint16 *dst, uint16 dsto) {
+void Object_BombableFloorHelper(uint16 a, const zle16_t *src, const zle16_t *src_below, zle16_t *dst, uint16 dsto) {
   int i = dung_misc_objs_index >> 1;
   dung_replacement_tile_state[i] = a;
   dung_misc_objs_index += 2;
   dung_object_pos_in_objdata[i] = dung_load_ptr_offs;
   dung_object_tilemap_pos[i] = dsto * 2 | (dung_line_ptrs_row0 != 0x4000 ? 0 : 0x2000);
-  replacement_tilemap_UL[i] = src_below[0];
-  replacement_tilemap_LL[i] = src_below[1];
-  replacement_tilemap_UR[i] = src_below[2];
-  replacement_tilemap_LR[i] = src_below[3];
+  replacement_tilemap_UL[i] = src_below[0].v;
+  replacement_tilemap_LL[i] = src_below[1].v;
+  replacement_tilemap_UR[i] = src_below[2].v;
+  replacement_tilemap_LR[i] = src_below[3].v;
   RoomDraw_Rightwards2x2(src, dst);
 }
 
-void LoadType1ObjectSubtype3(uint8 idx, uint16 *dst, uint16 dsto) {
+void LoadType1ObjectSubtype3(uint8 idx, zle16_t *dst, uint16 dsto) {
   uint16 params = kObjectSubtype3Params[idx];
-  const uint16 *src = SrcPtr(params);
+  const zle16_t *src = SrcPtr(params);
   int i;
 
   switch (idx) {
@@ -1633,30 +1633,30 @@ water_face_open:
     break;
   case 0x03: case 0x0e:  // 03 -  Cane Ride Spawn [?]Block
     dung_unk6++;
-    dst[0] = src[0];
+    dst[0].v = src[0].v;
     break;
   case 0x04: case 0x05: case 0x06: case 0x07:  // 04 -  Cane Ride Node [4-way]
   case 0x08: case 0x09: case 0x0a: case 0x0b: case 0x0c: case 0x0f:
-    dst[0] = src[0];
+    dst[0].v = src[0].v;
     break;
   case 0x0d: case 0x17: { // 0D -  Prison Cell
     src = SrcPtr(0x1488);
     dsto |= (dung_line_ptrs_row0 != 0x4000 ? 0 : 0x1000);
-    uint16 *d = &dung_bg2[dsto], *dd = d;
+    zle16_t *d = (RAM16P(g_ram+0x2000) + (dsto)), *dd = d;
     for (int i = 0; i < 5; i++, d++) {
-      d[XY(2, 0)] = d[XY(9, 0)] = src[1];
-      d[XY(2, 1)] = src[2];
-      d[XY(9, 1)] = src[2] | 0x4000;
-      d[XY(2, 2)] = src[4];
-      d[XY(9, 2)] = src[4] | 0x4000;
-      d[XY(2, 3)] = src[5];
-      d[XY(9, 3)] = src[5] | 0x4000;
+      d[XY(2, 0)].v = d[XY(9, 0)].v = src[1].v;
+      d[XY(2, 1)].v = src[2].v;
+      d[XY(9, 1)].v = src[2].v | 0x4000;
+      d[XY(2, 2)].v = src[4].v;
+      d[XY(9, 2)].v = src[4].v | 0x4000;
+      d[XY(2, 3)].v = src[5].v;
+      d[XY(9, 3)].v = src[5].v | 0x4000;
     }
-    dd[XY(0, 0)] = src[0];
-    dd[XY(15, 0)] = src[0] | 0x4000;
-    dd[XY(1, 0)] = dd[XY(7, 0)] = dd[XY(8, 0)] = dd[XY(14, 0)] = src[1];
-    dd[XY(1, 2)] = src[3];
-    dd[XY(14, 2)] = src[3] | 0x4000;
+    dd[XY(0, 0)].v = src[0].v;
+    dd[XY(15, 0)].v = src[0].v | 0x4000;
+    dd[XY(1, 0)].v = dd[XY(7, 0)].v = dd[XY(8, 0)].v = dd[XY(14, 0)].v = src[1].v;
+    dd[XY(1, 2)].v = src[3].v;
+    dd[XY(14, 2)].v = src[3].v | 0x4000;
     break;
   }
   case 0x10: case 0x11: case 0x13: case 0x1a: case 0x22: case 0x23:
@@ -1673,10 +1673,10 @@ water_face_open:
     if (dung_savegame_state_bits & 0x1000)
       return;
     src = SrcPtr(0x1dd6);
-    dst = &dung_bg2[dsto | (dung_line_ptrs_row0 != 0x4000 ? 0 : 0x1000)];
+    dst = (RAM16P(g_ram+0x2000) + (dsto | (dung_line_ptrs_row0 != 0x4000 ? 0 : 0x1000)));
     for (int i = 0; i < 3; i++) {
-      dst[XY(0, 0)] = dst[XY(0, 3)] = dst[XY(0, 6)] = src[0];
-      dst[XY(0, 1)] = dst[XY(0, 4)] = dst[XY(0, 7)] = src[1];
+      dst[XY(0, 0)].v = dst[XY(0, 3)].v = dst[XY(0, 6)].v = src[0].v;
+      dst[XY(0, 1)].v = dst[XY(0, 4)].v = dst[XY(0, 7)].v = src[1].v;
       dst += 2;
     }
     break;
@@ -1738,10 +1738,10 @@ water_face_open:
     dung_num_stairs_1 += 2;
 stair1b:
     for (int i = 0; i < 4; i++) {
-      dung_bg1[dsto + XY(0, 0)] = dung_bg2[dsto + XY(0, 0)] = src[0];
-      dung_bg1[dsto + XY(0, 1)] = dung_bg2[dsto + XY(0, 1)] = src[1];
-      dung_bg1[dsto + XY(0, 2)] = dung_bg2[dsto + XY(0, 2)] = src[2];
-      dung_bg1[dsto + XY(0, 3)] = dung_bg2[dsto + XY(0, 3)] = src[3];
+      dung_bg1[dsto + XY(0, 0)] = dung_bg2[dsto + XY(0, 0)] = src[0].v;
+      dung_bg1[dsto + XY(0, 1)] = dung_bg2[dsto + XY(0, 1)] = src[1].v;
+      dung_bg1[dsto + XY(0, 2)] = dung_bg2[dsto + XY(0, 2)] = src[2].v;
+      dung_bg1[dsto + XY(0, 3)] = dung_bg2[dsto + XY(0, 3)] = src[3].v;
       src += 4, dsto += 1;
     }
     break;
@@ -1799,10 +1799,10 @@ stairs_wet:
       dung_num_inter_room_downsouth_straight_stairs = dung_num_inter_room_upnorth_straight_stairs + 2;
 door26:
     for (int i = 0; i < 4; i++) {
-      dung_bg1[dsto] = dung_bg2[dsto] = src[0];
-      dung_bg1[dsto + XY(0, 1)] = src[1];
-      dung_bg1[dsto + XY(0, 2)] = src[2];
-      dung_bg1[dsto + XY(0, 3)] = src[3];
+      dung_bg1[dsto] = dung_bg2[dsto] = src[0].v;
+      dung_bg1[dsto + XY(0, 1)] = src[1].v;
+      dung_bg1[dsto + XY(0, 2)] = src[2].v;
+      dung_bg1[dsto + XY(0, 3)] = src[3].v;
       src += 4, dsto++;
     }
     dsto += XY(-4, -4);
@@ -1831,10 +1831,10 @@ copy_door_bg2:
       dung_num_inter_room_upsouth_straight_stairs + 2;
 door28:
     for (int i = 0; i < 4; i++) {
-      dung_bg1[dsto + XY(0, 0)] = src[0];
-      dung_bg1[dsto + XY(0, 1)] = src[1];
-      dung_bg1[dsto + XY(0, 2)] = src[2];
-      dung_bg1[dsto + XY(0, 3)] = dung_bg2[dsto + XY(0, 3)] = src[3];
+      dung_bg1[dsto + XY(0, 0)] = src[0].v;
+      dung_bg1[dsto + XY(0, 1)] = src[1].v;
+      dung_bg1[dsto + XY(0, 2)] = src[2].v;
+      dung_bg1[dsto + XY(0, 3)] = dung_bg2[dsto + XY(0, 3)] = src[3].v;
       src += 4, dsto++;
     }
     dsto += XY(-4, 4);
@@ -1862,14 +1862,14 @@ door28:
     break;
   case 0x2d: { // 2D -  Agahnim Altar
     src = SrcPtr(0x1b4a);
-    uint16 *d = &dung_bg2[dsto];
+    zle16_t *d = (RAM16P(g_ram+0x2000) + (dsto));
     for (int j = 0; j < 14; j++) {
-      i = src[0], d[0] = i, d[13] = i | 0x4000;
-      i = src[14], d[1] = d[2] = i, d[11] = d[12] = i ^ 0x4000;
-      i = src[28], d[3] = i, d[10] = i ^ 0x4000;
-      i = src[42], d[4] = i, d[9] = i ^ 0x4000;
-      i = src[56], d[5] = i, d[8] = i ^ 0x4000;
-      i = src[70], d[6] = i, d[7] = i ^ 0x4000;
+      i = src[0].v, d[0].v = i, d[13].v = i | 0x4000;
+      i = src[14].v, d[1].v = d[2].v = i, d[11].v = d[12].v = i ^ 0x4000;
+      i = src[28].v, d[3].v = i, d[10].v = i ^ 0x4000;
+      i = src[42].v, d[4].v = i, d[9].v = i ^ 0x4000;
+      i = src[56].v, d[5].v = i, d[8].v = i ^ 0x4000;
+      i = src[70].v, d[6].v = i, d[7].v = i ^ 0x4000;
       src++, d += 64;
     }
     break;
@@ -1941,18 +1941,18 @@ door28:
     break;
   case 0x55:
   case 0x5b:  // 5B -  Water Troof
-    dst[XY(0, 0)] = src[0];
-    dst[XY(1, 0)] = src[1];
-    dst[XY(2, 0)] = src[2];
+    dst[XY(0, 0)].v = src[0].v;
+    dst[XY(1, 0)].v = src[1].v;
+    dst[XY(2, 0)].v = src[2].v;
     for (int i = 0; i < 3; i++) {
-      dst[XY(0, 1)] = src[3];
-      dst[XY(1, 1)] = src[4];
-      dst[XY(2, 1)] = src[5];
+      dst[XY(0, 1)].v = src[3].v;
+      dst[XY(1, 1)].v = src[4].v;
+      dst[XY(2, 1)].v = src[5].v;
       dst += XY(0, 1);
     }
-    dst[XY(0, 1)] = src[6];
-    dst[XY(1, 1)] = src[7];
-    dst[XY(2, 1)] = src[8];
+    dst[XY(0, 1)].v = src[6].v;
+    dst[XY(1, 1)].v = src[7].v;
+    dst[XY(2, 1)].v = src[8].v;
     break;
 
   case 0x5a:  // 5A -  Plate on Table
@@ -1966,26 +1966,26 @@ door28:
 
   case 0x62: {  // 62 ??
     src = SrcPtr(0x20f6);
-    uint16 *d = &dung_bg1[dsto];
+    zle16_t *d = (RAM16P(g_ram+0x4000) + (dsto));
     for (int i = 0; i < 22; i++) {
-      d[XY(0, 0)] = src[0];
-      d[XY(0, 1)] = src[1];
-      d[XY(0, 2)] = src[2];
-      d[XY(0, 3)] = src[3];
-      d[XY(0, 4)] = src[4];
-      d[XY(0, 5)] = src[5];
-      d[XY(0, 6)] = src[6];
-      d[XY(0, 7)] = src[7];
-      d[XY(0, 8)] = src[8];
-      d[XY(0, 9)] = src[9];
-      d[XY(0, 10)] = src[10];
+      d[XY(0, 0)].v = src[0].v;
+      d[XY(0, 1)].v = src[1].v;
+      d[XY(0, 2)].v = src[2].v;
+      d[XY(0, 3)].v = src[3].v;
+      d[XY(0, 4)].v = src[4].v;
+      d[XY(0, 5)].v = src[5].v;
+      d[XY(0, 6)].v = src[6].v;
+      d[XY(0, 7)].v = src[7].v;
+      d[XY(0, 8)].v = src[8].v;
+      d[XY(0, 9)].v = src[9].v;
+      d[XY(0, 10)].v = src[10].v;
       d += XY(1, 0), src += 11;
     }
     d -= XY(1, 0) * 22;
     src = SrcPtr(0x22da);
     for (int i = 0; i < 3; i++) {
-      d[XY(9, 11)] = src[0];
-      d[XY(9, 12)] = src[3];
+      d[XY(9, 11)].v = src[0].v;
+      d[XY(9, 12)].v = src[3].v;
       d += XY(1, 0), src += 1;
     }
     break;
@@ -2062,13 +2062,13 @@ void Dungeon_StartInterRoomTrans_Left() {
   submodule_index = 1;
   if (link_quadrant_x) {
     RoomBounds_SubB(&room_bounds_x);
-    BYTE(dungeon_room_index_prev) = dungeon_room_index;
+    (*(uint8*)(g_ram+(0xA2))) = dungeon_room_index;
     if ((link_tile_below & 0xcf) == 0x89) {
       dungeon_room_index = dung_hdr_travel_destinations[3];
       Dungeon_AdjustForTeleportDoors(dungeon_room_index + 1, 0xff);
     } else {
       if ((uint8)dungeon_room_index != (uint8)dungeon_room_index2) {
-        BYTE(dungeon_room_index_prev) = dungeon_room_index2;
+        (*(uint8*)(g_ram+(0xA2))) = dungeon_room_index2;
         Dungeon_AdjustAfterSpiralStairs();
       }
       dungeon_room_index--;
@@ -2102,7 +2102,7 @@ void Dungeon_StartInterRoomTrans_Up() {
   submodule_index = 1;
   if (link_quadrant_y) {
     RoomBounds_SubB(&room_bounds_y);
-    BYTE(dungeon_room_index_prev) = dungeon_room_index;
+    (*(uint8*)(g_ram+(0xA2))) = dungeon_room_index;
     if (link_tile_below == 0x8e) {
       Dung_HandleExitToOverworld();
       return;
@@ -2116,11 +2116,11 @@ void Dungeon_StartInterRoomTrans_Up() {
       return;
     }
 
-    if (BYTE(dungeon_room_index2) == BYTE(dungeon_room_index)) {
-      BYTE(dungeon_room_index_prev) = BYTE(dungeon_room_index2);
+    if ((*(uint8*)(g_ram+(0x48E))) == (*(uint8*)(g_ram+(0xA0)))) {
+      (*(uint8*)(g_ram+(0xA2))) = (*(uint8*)(g_ram+(0x48E)));
       Dungeon_AdjustAfterSpiralStairs();
     }
-    BYTE(dungeon_room_index) -= 0x10;
+    (*(uint8*)(g_ram+(0xA0))) -= 0x10;
     submodule_index = 2;
     if (room_transitioning_flags & 1) {
       link_is_on_lower_level ^= 1;
@@ -2145,17 +2145,17 @@ void Dungeon_StartInterRoomTrans_Down() {
   submodule_index = 1;
   if (!link_quadrant_y) {
     RoomBounds_AddB(&room_bounds_y);
-    BYTE(dungeon_room_index_prev) = dungeon_room_index;
+    (*(uint8*)(g_ram+(0xA2))) = dungeon_room_index;
     if (link_tile_below == 0x8e) {
       Dung_HandleExitToOverworld();
       return;
     }
 
     if ((uint8)dungeon_room_index != (uint8)dungeon_room_index2) {
-      BYTE(dungeon_room_index_prev) = dungeon_room_index2;
+      (*(uint8*)(g_ram+(0xA2))) = dungeon_room_index2;
       Dungeon_AdjustAfterSpiralStairs();
     }
-    BYTE(dungeon_room_index) += 16;
+    (*(uint8*)(g_ram+(0xA0))) += 16;
     submodule_index = 2;
     if (room_transitioning_flags & 1) {
       link_is_on_lower_level ^= 1;
@@ -2170,11 +2170,11 @@ void Dungeon_StartInterRoomTrans_Down() {
 }
 
 void Dungeon_Store2x2(uint16 pos, uint16 t0, uint16 t1, uint16 t2, uint16 t3, uint8 attr) {
-  uint16 *dst = &vram_upload_data[vram_upload_offset >> 1];
-  dst[2] = t0;
-  dst[5] = t1;
-  dst[8] = t2;
-  dst[11] = t3;
+  zle16_t *dst = (RAM16P(g_ram+0x1002) + (vram_upload_offset >> 1));
+  dst[2].v = t0;
+  dst[5].v = t1;
+  dst[8].v = t2;
+  dst[11].v = t3;
   overworld_tileattr[pos] = t0;
   overworld_tileattr[pos + 64] = t1;
   overworld_tileattr[pos + 1] = t2;
@@ -2185,17 +2185,17 @@ void Dungeon_Store2x2(uint16 pos, uint16 t0, uint16 t1, uint16 t2, uint16 t3, ui
   dung_bg2_attr_table[pos + 1] = attr;
   dung_bg2_attr_table[pos + 65] = attr;
 
-  dst[0] = Dungeon_MapVramAddr(pos + 0);
-  dst[3] = Dungeon_MapVramAddr(pos + 64);
-  dst[6] = Dungeon_MapVramAddr(pos + 1);
-  dst[9] = Dungeon_MapVramAddr(pos + 65);
+  dst[0].v = Dungeon_MapVramAddr(pos + 0);
+  dst[3].v = Dungeon_MapVramAddr(pos + 64);
+  dst[6].v = Dungeon_MapVramAddr(pos + 1);
+  dst[9].v = Dungeon_MapVramAddr(pos + 65);
 
-  dst[1] = 0x100;
-  dst[4] = 0x100;
-  dst[7] = 0x100;
-  dst[10] = 0x100;
+  dst[1].v = 0x100;
+  dst[4].v = 0x100;
+  dst[7].v = 0x100;
+  dst[10].v = 0x100;
 
-  dst[12] = 0xffff;
+  dst[12].v = 0xffff;
 
   vram_upload_offset += 24;
   nmi_load_bg_from_vram = 1;
@@ -2243,17 +2243,17 @@ void Door_Draw_Helper4(uint8 door_type, uint16 dsto) {
     t = new_type;
   }
 
-  const uint16 *src = SrcPtr(kDoorTypeSrcData2[t >> 1]);
-  uint16 *dst = DstoPtr(dsto);
+  const zle16_t *src = SrcPtr(kDoorTypeSrcData2[t >> 1]);
+  zle16_t *dst = DstoPtr(dsto);
   for (int i = 0; i < 4; i++) {
-    dst[XY(0, 1)] = src[0];
-    dst[XY(0, 2)] = src[1];
-    dst[XY(0, 3)] = src[2];
+    dst[XY(0, 1)].v = src[0].v;
+    dst[XY(0, 2)].v = src[1].v;
+    dst[XY(0, 3)].v = src[2].v;
     dst++, src += 3;
   }
 }
 
-const uint16 *GetRoomDoorInfo(int room) {
+const zle16_t *GetRoomDoorInfo(int room) {
   return (uint16 *)(kDungeonRoom + kDungeonRoomDoorOffs[room]);
 }
 
@@ -2310,25 +2310,25 @@ void Sprite_HandlePushedBlocks_One(int i) {
 }
 
 void Object_Draw_DoorLeft_3x4(uint16 src, int door) {
-  const uint16 *s = SrcPtr(src);
-  uint16 *dst = &dung_bg2[dung_door_tilemap_address[door] >> 1];
+  const zle16_t *s = SrcPtr(src);
+  zle16_t *dst = (RAM16P(g_ram+0x2000) + (dung_door_tilemap_address[door] >> 1));
   for (int i = 0; i < 3; i++) {
-    dst[XY(0, 0)] = s[0];
-    dst[XY(0, 1)] = s[1];
-    dst[XY(0, 2)] = s[2];
-    dst[XY(0, 3)] = s[3];
+    dst[XY(0, 0)].v = s[0].v;
+    dst[XY(0, 1)].v = s[1].v;
+    dst[XY(0, 2)].v = s[2].v;
+    dst[XY(0, 3)].v = s[3].v;
     dst += 1, s += 4;
   }
 }
 
 void Object_Draw_DoorRight_3x4(uint16 src, int door) {
-  const uint16 *s = SrcPtr(src);
-  uint16 *dst = &dung_bg2[dung_door_tilemap_address[door] >> 1];
+  const zle16_t *s = SrcPtr(src);
+  zle16_t *dst = (RAM16P(g_ram+0x2000) + (dung_door_tilemap_address[door] >> 1));
   for (int i = 0; i < 3; i++) {
-    dst[XY(1, 0)] = s[0];
-    dst[XY(1, 1)] = s[1];
-    dst[XY(1, 2)] = s[2];
-    dst[XY(1, 3)] = s[3];
+    dst[XY(1, 0)].v = s[0].v;
+    dst[XY(1, 1)].v = s[1].v;
+    dst[XY(1, 2)].v = s[2].v;
+    dst[XY(1, 3)].v = s[3].v;
     dst += 1, s += 4;
   }
 }
@@ -2392,19 +2392,19 @@ bool Dungeon_IsPitThatHurtsPlayer() {
 
 void Dungeon_PrepareNextRoomQuadrantUpload() {  // 80913f
   int ofs = (overworld_screen_transition & 0xf) + dung_cur_quadrant_upload;
-  uint16 *src = &dung_bg2[kUploadBgSrcs[ofs] / 2];
+  zle16_t *src = (RAM16P(g_ram+0x2000) + (kUploadBgSrcs[ofs] / 2));
   int p = 0;
   do {
     UploadVram_32x32 *d = (UploadVram_32x32 *)&g_ram[0x1000 + p * 2];
     do {
-      d->row[0].col[0] = src[XY(0, 0)];
-      d->row[0].col[1] = src[XY(1, 0)];
-      d->row[1].col[0] = src[XY(0, 1)];
-      d->row[1].col[1] = src[XY(1, 1)];
-      d->row[2].col[0] = src[XY(0, 2)];
-      d->row[2].col[1] = src[XY(1, 2)];
-      d->row[3].col[0] = src[XY(0, 3)];
-      d->row[3].col[1] = src[XY(1, 3)];
+      d->row[0].col[0] = src[XY(0, 0)].v;
+      d->row[0].col[1] = src[XY(1, 0)].v;
+      d->row[1].col[0] = src[XY(0, 1)].v;
+      d->row[1].col[1] = src[XY(1, 1)].v;
+      d->row[2].col[0] = src[XY(0, 2)].v;
+      d->row[2].col[1] = src[XY(1, 2)].v;
+      d->row[3].col[0] = src[XY(0, 3)].v;
+      d->row[3].col[1] = src[XY(1, 3)].v;
       d = (UploadVram_32x32 *)((uint16 *)d + 2);
       src += 2, p += 2;
     } while (p & 0x1f);
@@ -2412,7 +2412,7 @@ void Dungeon_PrepareNextRoomQuadrantUpload() {  // 80913f
     p += 128 - 32;
   } while (p != 0x400);
   dung_cur_quadrant_upload += 4;
-  BYTE(nmi_load_target_addr) = kUploadBgDsts[ofs];
+  (*(uint8*)(g_ram+(0x116))) = kUploadBgDsts[ofs];
   nmi_subroutine_index = 1;
   nmi_disable_core_updates = 1;
 }
@@ -2426,26 +2426,26 @@ void WaterFlood_BuildOneQuadrantForVRAM() {  // 8091c4
 
 void TileMapPrep_NotWaterOnTag() {  // 8091d3
   int ofs = (overworld_screen_transition & 0xf) + dung_cur_quadrant_upload;
-  uint16 *src = &dung_bg1[kUploadBgSrcs[ofs] / 2];
+  zle16_t *src = (RAM16P(g_ram+0x4000) + (kUploadBgSrcs[ofs] / 2));
   int p = 0;
   do {
     UploadVram_32x32 *d = (UploadVram_32x32 *)&g_ram[0x1000 + p * 2];
     do {
-      d->row[0].col[0] = src[XY(0, 0)];
-      d->row[0].col[1] = src[XY(1, 0)];
-      d->row[1].col[0] = src[XY(0, 1)];
-      d->row[1].col[1] = src[XY(1, 1)];
-      d->row[2].col[0] = src[XY(0, 2)];
-      d->row[2].col[1] = src[XY(1, 2)];
-      d->row[3].col[0] = src[XY(0, 3)];
-      d->row[3].col[1] = src[XY(1, 3)];
+      d->row[0].col[0] = src[XY(0, 0)].v;
+      d->row[0].col[1] = src[XY(1, 0)].v;
+      d->row[1].col[0] = src[XY(0, 1)].v;
+      d->row[1].col[1] = src[XY(1, 1)].v;
+      d->row[2].col[0] = src[XY(0, 2)].v;
+      d->row[2].col[1] = src[XY(1, 2)].v;
+      d->row[3].col[0] = src[XY(0, 3)].v;
+      d->row[3].col[1] = src[XY(1, 3)].v;
       d = (UploadVram_32x32 *)((uint16 *)d + 2);
       src += 2, p += 2;
     } while (p & 0x1f);
     src += 224;
     p += 128 - 32;
   } while (p != 0x400);
-  BYTE(nmi_load_target_addr) = kUploadBgDsts[ofs] + 0x10;
+  (*(uint8*)(g_ram+(0x116))) = kUploadBgDsts[ofs] + 0x10;
   nmi_subroutine_index = 1;
   nmi_disable_core_updates = 1;
 }
@@ -2497,10 +2497,10 @@ void PrepareDungeonExitFromBossFight() {  // 80f945
   dung_savegame_state_bits |= 0x8000;
   Dungeon_FlagRoomData_Quadrants();
 
-  int j = FindInByteArray(kDungeonExit_From, BYTE(dungeon_room_index), countof(kDungeonExit_From));
+  int j = FindInByteArray(kDungeonExit_From, (*(uint8*)(g_ram+(0xA0))), countof(kDungeonExit_From));
   assert(j >= 0);
-  BYTE(dungeon_room_index) = kDungeonExit_To[j];
-  if (BYTE(dungeon_room_index) == 0x20) {
+  (*(uint8*)(g_ram+(0xA0))) = kDungeonExit_To[j];
+  if ((*(uint8*)(g_ram+(0xA0))) == 0x20) {
     sram_progress_indicator = 3;
     save_ow_event_info[2] |= 0x20;
     savegame_is_darkworld ^= 0x40;
@@ -2515,7 +2515,7 @@ void PrepareDungeonExitFromBossFight() {  // 80f945
     main_module_index = 21;
     submodule_index = 0;
     subsubmodule_index = 0;
-  } else if (BYTE(dungeon_room_index) == 0xd) {
+  } else if ((*(uint8*)(g_ram+(0xA0))) == 0xd) {
     main_module_index = 24;
     submodule_index = 0;
     overworld_map_state = 0;
@@ -2535,7 +2535,7 @@ void PrepareDungeonExitFromBossFight() {  // 80f945
 }
 
 void SavePalaceDeaths() {  // 80f9dd
-  int j = BYTE(cur_palace_index_x2);
+  int j = (*(uint8*)(g_ram+(0x40C)));
   deaths_per_palace[j >> 1] = death_save_counter;
   if (j != 8)
     death_save_counter = 0;
@@ -2623,11 +2623,11 @@ void Dungeon_LoadRoom() {  // 81873a
   RoomDraw_DrawAllObjects(cur_p0);  // Draw Layer 1 objects to BG2
   dung_load_ptr_offs += 2;
 
-  memcpy(&dung_line_ptrs_row0, kDungeon_DrawObjectOffsets_BG2, 33);
+  memcpy((g_ram+0xbf), kDungeon_DrawObjectOffsets_BG2, 33);
   RoomDraw_DrawAllObjects(cur_p0);  // Draw Layer 2 objects to BG2
   dung_load_ptr_offs += 2;
 
-  memcpy(&dung_line_ptrs_row0, kDungeon_DrawObjectOffsets_BG1, 33);
+  memcpy((g_ram+0xbf), kDungeon_DrawObjectOffsets_BG1, 33);
   RoomDraw_DrawAllObjects(cur_p0);  // Draw Layer 3 objects to BG2
 
   for (dung_load_ptr_offs = 0; dung_load_ptr_offs != 0x18C; dung_load_ptr_offs += 4) {
@@ -2718,19 +2718,19 @@ void RoomData_DrawObject(uint16 r0, const uint8 *level_data) {  // 81893c
 }
 
 void RoomDraw_DrawFloors(const uint8 *level_data) {  // 8189dc
-  memcpy(&dung_line_ptrs_row0, kDungeon_DrawObjectOffsets_BG2, 33);
+  memcpy((g_ram+0xbf), kDungeon_DrawObjectOffsets_BG2, 33);
   uint8 ft = level_data[dung_load_ptr_offs++];
   dung_floor_1_filler_tiles = ft & 0xf0;
   RoomDraw_FloorChunks(SrcPtr(dung_floor_1_filler_tiles));
-  memcpy(&dung_line_ptrs_row0, kDungeon_DrawObjectOffsets_BG1, 33);
+  memcpy((g_ram+0xbf), kDungeon_DrawObjectOffsets_BG1, 33);
   dung_floor_2_filler_tiles = (ft & 0xf) << 4;
   RoomDraw_FloorChunks(SrcPtr(dung_floor_2_filler_tiles));
 }
 
-void RoomDraw_FloorChunks(const uint16 *src) {  // 818a1f
+void RoomDraw_FloorChunks(const zle16_t *src) {  // 818a1f
   static const uint16 kDungeon_QuadrantOffsets[] = { 0x0, 0x40, 0x1000, 0x1040 };
   for (int i = 0; i < 4; i++) {
-    uint16 *dst = DstoPtr(kDungeon_QuadrantOffsets[i] / 2);
+    zle16_t *dst = DstoPtr(kDungeon_QuadrantOffsets[i] / 2);
     for (int j = 0; j < 8; j++) {
       RoomDraw_A_Many32x32Blocks(8, src, dst);
       dst += XY(0, 4);
@@ -2738,29 +2738,29 @@ void RoomDraw_FloorChunks(const uint16 *src) {  // 818a1f
   }
 }
 
-void RoomDraw_A_Many32x32Blocks(int n, const uint16 *src, uint16 *dst) {  // 818a44
+void RoomDraw_A_Many32x32Blocks(int n, const zle16_t *src, zle16_t *dst) {  // 818a44
   do {
     // draw 4x2 twice
     for (int i = 0; i < 2; i++) {
-      dst[XY(0, 0)] = src[0];
-      dst[XY(1, 0)] = src[1];
-      dst[XY(2, 0)] = src[2];
-      dst[XY(3, 0)] = src[3];
-      dst[XY(0, 1)] = src[4];
-      dst[XY(1, 1)] = src[5];
-      dst[XY(2, 1)] = src[6];
-      dst[XY(3, 1)] = src[7];
+      dst[XY(0, 0)].v = src[0].v;
+      dst[XY(1, 0)].v = src[1].v;
+      dst[XY(2, 0)].v = src[2].v;
+      dst[XY(3, 0)].v = src[3].v;
+      dst[XY(0, 1)].v = src[4].v;
+      dst[XY(1, 1)].v = src[5].v;
+      dst[XY(2, 1)].v = src[6].v;
+      dst[XY(3, 1)].v = src[7].v;
       dst += XY(0, 2);
     }
     dst += XY(4, -4);
   } while (--n);
 }
 
-void RoomDraw_1x3_rightwards(int n, const uint16 *src, uint16 *dst) {  // 818d80
+void RoomDraw_1x3_rightwards(int n, const zle16_t *src, zle16_t *dst) {  // 818d80
   do {
-    dst[XY(0, 0)] = src[0];
-    dst[XY(0, 1)] = src[1];
-    dst[XY(0, 2)] = src[2];
+    dst[XY(0, 0)].v = src[0].v;
+    dst[XY(0, 1)].v = src[1].v;
+    dst[XY(0, 2)].v = src[2].v;
     dst++, src += 3;
   } while (--n);
 }
@@ -2787,218 +2787,218 @@ void MovingWall_FillReplacementBuffer(int dsto) {  // 8192d1
   moving_wall_var1 = (dsto & 0x1f) | (dsto & 0x20 ? 0x400 : 0) | 0x1000;
 }
 
-void Object_Table_Helper(const uint16 *src, uint16 *dst) {  // 8193f7
+void Object_Table_Helper(const zle16_t *src, zle16_t *dst) {  // 8193f7
   int n = dung_draw_width_indicator;
-  dst[0] = src[0];
+  dst[0].v = src[0].v;
   do {
-    dst[1] = src[1];
-    dst[2] = src[2];
+    dst[1].v = src[1].v;
+    dst[2].v = src[2].v;
     dst += 2;
   } while (--n);
-  dst[1] = src[3];
+  dst[1].v = src[3].v;
 }
 
-void DrawWaterThing(uint16 *dst, const uint16 *src) {  // 8195a0
+void DrawWaterThing(zle16_t *dst, const zle16_t *src) {  // 8195a0
   for (int i = 3; i >= 0; i--) {
-    dst[0] = src[0];
-    dst[1] = src[1];
-    dst[2] = src[2];
-    dst[3] = src[3];
+    dst[0].v = src[0].v;
+    dst[1].v = src[1].v;
+    dst[2].v = src[2].v;
+    dst[3].v = src[3].v;
     dst += XY(0, 1), src += 4;
   }
 }
 
-void RoomDraw_4x4(const uint16 *src, uint16 *dst) {  // 8197ed
+void RoomDraw_4x4(const zle16_t *src, zle16_t *dst) {  // 8197ed
   RoomDraw_Object_Nx4(4, src, dst);
 }
 
-void RoomDraw_Object_Nx4(int n, const uint16 *src, uint16 *dst) {  // 8197f0
+void RoomDraw_Object_Nx4(int n, const zle16_t *src, zle16_t *dst) {  // 8197f0
   do {
-    dst[XY(0, 0)] = src[0];
-    dst[XY(0, 1)] = src[1];
-    dst[XY(0, 2)] = src[2];
-    dst[XY(0, 3)] = src[3];
+    dst[XY(0, 0)].v = src[0].v;
+    dst[XY(0, 1)].v = src[1].v;
+    dst[XY(0, 2)].v = src[2].v;
+    dst[XY(0, 3)].v = src[3].v;
     src += 4;
     dst += XY(1, 0);
   } while (--n);
 }
 
-void Object_DrawNx4_BothBgs(int n, const uint16 *src, int dsto) {  // 819819
+void Object_DrawNx4_BothBgs(int n, const zle16_t *src, int dsto) {  // 819819
   do {
-    dung_bg1[dsto + XY(0, 0)] = dung_bg2[dsto + XY(0, 0)] = src[0];
-    dung_bg1[dsto + XY(0, 1)] = dung_bg2[dsto + XY(0, 1)] = src[1];
-    dung_bg1[dsto + XY(0, 2)] = dung_bg2[dsto + XY(0, 2)] = src[2];
-    dung_bg1[dsto + XY(0, 3)] = dung_bg2[dsto + XY(0, 3)] = src[3];
+    dung_bg1[dsto + XY(0, 0)] = dung_bg2[dsto + XY(0, 0)] = src[0].v;
+    dung_bg1[dsto + XY(0, 1)] = dung_bg2[dsto + XY(0, 1)] = src[1].v;
+    dung_bg1[dsto + XY(0, 2)] = dung_bg2[dsto + XY(0, 2)] = src[2].v;
+    dung_bg1[dsto + XY(0, 3)] = dung_bg2[dsto + XY(0, 3)] = src[3].v;
     src += 4, dsto += 1;
   } while (--n);
 }
 
-void RoomDraw_Rightwards2x2(const uint16 *src, uint16 *dst) {  // 819895
-  dst[XY(0, 0)] = src[0];
-  dst[XY(0, 1)] = src[1];
-  dst[XY(1, 0)] = src[2];
-  dst[XY(1, 1)] = src[3];
+void RoomDraw_Rightwards2x2(const zle16_t *src, zle16_t *dst) {  // 819895
+  dst[XY(0, 0)].v = src[0].v;
+  dst[XY(0, 1)].v = src[1].v;
+  dst[XY(1, 0)].v = src[2].v;
+  dst[XY(1, 1)].v = src[3].v;
 }
 
-void Object_Draw_3x2(const uint16 *src, uint16 *dst) {  // 819d04
-  dst[XY(0, 0)] = src[0];
-  dst[XY(1, 0)] = src[1];
-  dst[XY(2, 0)] = src[2];
-  dst[XY(0, 1)] = src[3];
-  dst[XY(1, 1)] = src[4];
-  dst[XY(2, 1)] = src[5];
+void Object_Draw_3x2(const zle16_t *src, zle16_t *dst) {  // 819d04
+  dst[XY(0, 0)].v = src[0].v;
+  dst[XY(1, 0)].v = src[1].v;
+  dst[XY(2, 0)].v = src[2].v;
+  dst[XY(0, 1)].v = src[3].v;
+  dst[XY(1, 1)].v = src[4].v;
+  dst[XY(2, 1)].v = src[5].v;
 }
 
-void RoomDraw_WaterHoldingObject(int n, const uint16 *src, uint16 *dst) {  // 819d6f
+void RoomDraw_WaterHoldingObject(int n, const zle16_t *src, zle16_t *dst) {  // 819d6f
   do {
-    dst[0] = src[0];
-    dst[1] = src[1];
-    dst[2] = src[2];
-    dst[3] = src[3];
+    dst[0].v = src[0].v;
+    dst[1].v = src[1].v;
+    dst[2].v = src[2].v;
+    dst[3].v = src[3].v;
     src += 4;
     dst += XY(0, 1);
   } while (--n);
 }
 
-void RoomDraw_SomeBigDecors(int n, const uint16 *src, uint16 dsto) {  // 819da2
-  uint16 *dst = &dung_bg2[dsto | (dung_line_ptrs_row0 != 0x4000 ? 0 : 0x1000)];
+void RoomDraw_SomeBigDecors(int n, const zle16_t *src, uint16 dsto) {  // 819da2
+  zle16_t *dst = (RAM16P(g_ram+0x2000) + (dsto | (dung_line_ptrs_row0 != 0x4000 ? 0 : 0x1000)));
   for (int i = 0; i < 8; i++) {
     for (int j = 0; j < n; j++)
-      dst[j] = src[j];
+      dst[j].v = src[j].v;
     dst += 64, src += n;
   }
 }
 
 void RoomDraw_SingleLampCone(uint16 a, uint16 y) {  // 819e06
-  const uint16 *src = SrcPtr(y);
-  uint16 *dst = &dung_bg1[a / 2];
+  const zle16_t *src = SrcPtr(y);
+  zle16_t *dst = (RAM16P(g_ram+0x4000) + (a / 2));
   for (int i = 0; i < 12; i++) {
     for (int j = 0; j < 12; j++)
-      *dst++ = *src++;
+      (dst++)->v = (src++)->v;
     dst += 64 - 12;
   }
 }
 
 void RoomDraw_AgahnimsWindows(uint16 dsto) {  // 819ea3
-  const uint16 *src;
+  const zle16_t *src;
 
-  uint16 *d = &dung_bg2[dsto];
+  zle16_t *d = (RAM16P(g_ram+0x2000) + (dsto));
   src = SrcPtr(0x1BF2);
   for (int i = 0; i < 6; i++) {
-    d[XY(7, 4)] = d[XY(13, 4)] = d[XY(19, 4)] = src[0];
-    d[XY(7, 5)] = d[XY(13, 5)] = d[XY(19, 5)] = src[1];
-    d[XY(7, 6)] = d[XY(13, 6)] = d[XY(19, 6)] = src[2];
-    d[XY(7, 7)] = d[XY(13, 7)] = d[XY(19, 7)] = src[3];
+    d[XY(7, 4)].v = d[XY(13, 4)].v = d[XY(19, 4)].v = src[0].v;
+    d[XY(7, 5)].v = d[XY(13, 5)].v = d[XY(19, 5)].v = src[1].v;
+    d[XY(7, 6)].v = d[XY(13, 6)].v = d[XY(19, 6)].v = src[2].v;
+    d[XY(7, 7)].v = d[XY(13, 7)].v = d[XY(19, 7)].v = src[3].v;
     src += 4, d += XY(1, 0);
   }
   d -= 6;
 
   src = SrcPtr(0x1c22);
   for (int i = 0; i < 5; i++) {
-    int j = src[0];
-    d[XY(2, 10)] = d[XY(3, 9)] = d[XY(4, 8)] = d[XY(5, 7)] = d[XY(6, 6)] = d[XY(7, 5)] = d[XY(8, 4)] = j;
-    d[XY(23, 4)] = d[XY(24, 5)] = d[XY(25, 6)] = d[XY(26, 7)] = d[XY(27, 8)] = d[XY(28, 9)] = d[XY(29, 10)] = j | 0x4000;
+    int j = src[0].v;
+    d[XY(2, 10)].v = d[XY(3, 9)].v = d[XY(4, 8)].v = d[XY(5, 7)].v = d[XY(6, 6)].v = d[XY(7, 5)].v = d[XY(8, 4)].v = j;
+    d[XY(23, 4)].v = d[XY(24, 5)].v = d[XY(25, 6)].v = d[XY(26, 7)].v = d[XY(27, 8)].v = d[XY(28, 9)].v = d[XY(29, 10)].v = j | 0x4000;
     src++, d += XY(0, 1);
   }
   d -= XY(0, 1) * 5;
 
   src = SrcPtr(0x1c2c);
   for (int i = 0; i < 6; i++) {
-    int j = src[0];
-    d[XY(2, 11)] = d[XY(2, 17)] = d[XY(2, 23)] = j;
-    d[XY(29, 11)] = d[XY(29, 17)] = d[XY(29, 23)] = j | 0x4000;
-    j = src[1];
-    d[XY(3, 11)] = d[XY(3, 17)] = d[XY(3, 23)] = j;
-    d[XY(28, 11)] = d[XY(28, 17)] = d[XY(28, 23)] = j | 0x4000;
-    j = src[2];
-    d[XY(4, 11)] = d[XY(4, 17)] = d[XY(4, 23)] = j;
-    d[XY(27, 11)] = d[XY(27, 17)] = d[XY(27, 23)] = j | 0x4000;
-    j = src[3];
-    d[XY(5, 11)] = d[XY(5, 17)] = d[XY(5, 23)] = j;
-    d[XY(26, 11)] = d[XY(26, 17)] = d[XY(26, 23)] = j | 0x4000;
+    int j = src[0].v;
+    d[XY(2, 11)].v = d[XY(2, 17)].v = d[XY(2, 23)].v = j;
+    d[XY(29, 11)].v = d[XY(29, 17)].v = d[XY(29, 23)].v = j | 0x4000;
+    j = src[1].v;
+    d[XY(3, 11)].v = d[XY(3, 17)].v = d[XY(3, 23)].v = j;
+    d[XY(28, 11)].v = d[XY(28, 17)].v = d[XY(28, 23)].v = j | 0x4000;
+    j = src[2].v;
+    d[XY(4, 11)].v = d[XY(4, 17)].v = d[XY(4, 23)].v = j;
+    d[XY(27, 11)].v = d[XY(27, 17)].v = d[XY(27, 23)].v = j | 0x4000;
+    j = src[3].v;
+    d[XY(5, 11)].v = d[XY(5, 17)].v = d[XY(5, 23)].v = j;
+    d[XY(26, 11)].v = d[XY(26, 17)].v = d[XY(26, 23)].v = j | 0x4000;
     src += 4, d += XY(0, 1);
   }
   d -= XY(0, 1) * 6;
 
   src = SrcPtr(0x1c5c);
   for (int i = 0; i < 6; i++) {
-    d[XY(12, 9)] = d[XY(18, 9)] = src[0];
-    d[XY(12, 10)] = d[XY(18, 10)] = src[6];
+    d[XY(12, 9)].v = d[XY(18, 9)].v = src[0].v;
+    d[XY(12, 10)].v = d[XY(18, 10)].v = src[6].v;
     src += 1, d += XY(1, 0);
   }
   d -= XY(1, 0) * 6;
 
   src = SrcPtr(0x1c74);
   for (int i = 0; i < 6; i++) {
-    d[XY(7, 14)] = d[XY(7, 20)] = src[0];
-    d[XY(8, 14)] = d[XY(8, 20)] = src[1];
+    d[XY(7, 14)].v = d[XY(7, 20)].v = src[0].v;
+    d[XY(8, 14)].v = d[XY(8, 20)].v = src[1].v;
     src += 2, d += XY(0, 1);
   }
   d -= XY(0, 1) * 6;
 
   src = SrcPtr(0x1c8c);
   for (int i = 0; i < 5; i++) {
-    d[XY(7, 9)] = src[0];
-    d[XY(7, 10)] = src[1];
-    d[XY(7, 11)] = src[2];
-    d[XY(7, 12)] = src[3];
-    d[XY(7, 13)] = src[4];
+    d[XY(7, 9)].v = src[0].v;
+    d[XY(7, 10)].v = src[1].v;
+    d[XY(7, 11)].v = src[2].v;
+    d[XY(7, 12)].v = src[3].v;
+    d[XY(7, 13)].v = src[4].v;
     src += 5, d += XY(1, 0);
   }
   d -= XY(1, 0) * 5;
 
   for (int i = 0; i < 4; i++) {
-    d[XY(14, 28)] |= 0x2000;
-    d[XY(14, 29)] |= 0x2000;
+    d[XY(14, 28)].v |= 0x2000;
+    d[XY(14, 29)].v |= 0x2000;
     d += XY(1, 0);
   }
 }
 
 void RoomDraw_FortuneTellerRoom(uint16 dsto) {  // 81a095
-  const uint16 *src = SrcPtr(0x202e), *src_org = src;
-  uint16 *d = &dung_bg2[dsto];
+  const zle16_t *src = SrcPtr(0x202e), *src_org = src;
+  zle16_t *d = (RAM16P(g_ram+0x2000) + (dsto));
   int j;
 
   for (int i = 0; i < 6; i++) {
-    d[XY(1, 0)] =
-      d[XY(2, 0)] =
-      d[XY(1, 1)] =
-      d[XY(2, 1)] = src[0];
-    d[XY(1, 2)] = (j = src[1]);
-    d[XY(2, 2)] = j | 0x4000;
+    d[XY(1, 0)].v =
+      d[XY(2, 0)].v =
+      d[XY(1, 1)].v =
+      d[XY(2, 1)].v = src[0].v;
+    d[XY(1, 2)].v = (j = src[1].v);
+    d[XY(2, 2)].v = j | 0x4000;
     d += XY(2, 0);
   }
   d -= XY(2, 0) * 6;
 
   for (int i = 0; i < 3; i++) {
-    d[XY(0, 3)] = d[XY(2, 3)] = d[XY(10, 3)] = d[XY(12, 3)] = (j = src[2]);
-    d[XY(1, 3)] = d[XY(3, 3)] = d[XY(11, 3)] = d[XY(13, 3)] = j | 0x4000;
-    d[XY(4, 3)] = d[XY(6, 3)] = d[XY(8, 3)] = (j = src[5]);
-    d[XY(5, 3)] = d[XY(7, 3)] = d[XY(9, 3)] = j | 0x4000;
+    d[XY(0, 3)].v = d[XY(2, 3)].v = d[XY(10, 3)].v = d[XY(12, 3)].v = (j = src[2].v);
+    d[XY(1, 3)].v = d[XY(3, 3)].v = d[XY(11, 3)].v = d[XY(13, 3)].v = j | 0x4000;
+    d[XY(4, 3)].v = d[XY(6, 3)].v = d[XY(8, 3)].v = (j = src[5].v);
+    d[XY(5, 3)].v = d[XY(7, 3)].v = d[XY(9, 3)].v = j | 0x4000;
     src++, d += XY(0, 1);
   }
   d -= XY(0, 1) * 3;
 
-  d[XY(0, 0)] = d[XY(0, 1)] = (j = src[5]);
-  d[XY(13, 0)] = d[XY(13, 1)] = j | 0x4000;
-  d[XY(0, 2)] = (j = src[6]);
-  d[XY(13, 2)] = j | 0x4000;
+  d[XY(0, 0)].v = d[XY(0, 1)].v = (j = src[5].v);
+  d[XY(13, 0)].v = d[XY(13, 1)].v = j | 0x4000;
+  d[XY(0, 2)].v = (j = src[6].v);
+  d[XY(13, 2)].v = j | 0x4000;
 
   src = src_org;
   for (int i = 0; i < 4; i++) {
-    d[XY(3, 10)] = (j = src[10]);
-    d[XY(10, 10)] = j ^ 0x4000;
-    d[XY(4, 10)] = (j = src[14]);
-    d[XY(9, 10)] = j ^ 0x4000;
-    d[XY(5, 10)] = (j = src[18]);
-    d[XY(8, 10)] = j ^ 0x4000;
-    d[XY(6, 10)] = (j = src[22]);
-    d[XY(7, 10)] = j ^ 0x4000;
+    d[XY(3, 10)].v = (j = src[10].v);
+    d[XY(10, 10)].v = j ^ 0x4000;
+    d[XY(4, 10)].v = (j = src[14].v);
+    d[XY(9, 10)].v = j ^ 0x4000;
+    d[XY(5, 10)].v = (j = src[18].v);
+    d[XY(8, 10)].v = j ^ 0x4000;
+    d[XY(6, 10)].v = (j = src[22].v);
+    d[XY(7, 10)].v = j ^ 0x4000;
     src++, d += XY(0, 1);
   }
 }
 
-void Object_Draw8x8(const uint16 *src, uint16 *dst) {  // 81a7dc
+void Object_Draw8x8(const zle16_t *src, zle16_t *dst) {  // 81a7dc
   RoomDraw_4x4(src, dst + XY(0, 0));
   RoomDraw_4x4(src + 16, dst + XY(4, 0));
   RoomDraw_4x4(src + 32, dst + XY(0, 4));
@@ -3051,11 +3051,11 @@ void Door_Up_StairMaskLocked(uint8 door_type, uint16 dsto) {  // 81a892
   }
 
   uint8 t = RoomDraw_FlagDoorsAndGetFinalType(0, door_type, dsto);
-  const uint16 *src = SrcPtr(kDoorTypeSrcData[t >> 1]);
+  const zle16_t *src = SrcPtr(kDoorTypeSrcData[t >> 1]);
   for (int i = 0; i < 4; i++) {
-    dung_bg1[dsto + XY(0, 0)] = src[0];
-    dung_bg1[dsto + XY(0, 1)] = src[1];
-    dung_bg1[dsto + XY(0, 2)] = src[2];
+    dung_bg1[dsto + XY(0, 0)] = src[0].v;
+    dung_bg1[dsto + XY(0, 1)] = src[1].v;
+    dung_bg1[dsto + XY(0, 2)] = src[2].v;
     dsto++, src += 3;
   }
   Door_PrioritizeCurDoor();
@@ -3086,12 +3086,12 @@ void RoomDraw_OneSidedShutters_North(uint8 door_type, uint16 dsto) {  // 81a932
     door_type_and_slot[i] = (i << 8) | new_type;
     t = new_type;
   }
-  const uint16 *src = SrcPtr(kDoorTypeSrcData[t >> 1]);
-  uint16 *dst = DstoPtr(dsto);
+  const zle16_t *src = SrcPtr(kDoorTypeSrcData[t >> 1]);
+  zle16_t *dst = DstoPtr(dsto);
   for (int i = 0; i < 4; i++) {
-    dst[XY(0, 0)] = src[0];
-    dst[XY(0, 1)] = src[1];
-    dst[XY(0, 2)] = src[2];
+    dst[XY(0, 0)].v = src[0].v;
+    dst[XY(0, 1)].v = src[1].v;
+    dst[XY(0, 2)].v = src[2].v;
     dst++, src += 3;
   }
 }
@@ -3194,13 +3194,13 @@ void RoomDraw_NormalRangedDoors_West(uint8 door_type, uint16 dsto, int pos_enum)
     t = new_type;
   }
 
-  const uint16 *src = SrcPtr(kDoorTypeSrcData3[t >> 1]);
-  uint16 *dst = DstoPtr(dsto);
+  const zle16_t *src = SrcPtr(kDoorTypeSrcData3[t >> 1]);
+  zle16_t *dst = DstoPtr(dsto);
   for (int i = 0; i < 3; i++) {
-    dst[XY(0, 0)] = src[0];
-    dst[XY(0, 1)] = src[1];
-    dst[XY(0, 2)] = src[2];
-    dst[XY(0, 3)] = src[3];
+    dst[XY(0, 0)].v = src[0].v;
+    dst[XY(0, 1)].v = src[1].v;
+    dst[XY(0, 2)].v = src[2].v;
+    dst[XY(0, 3)].v = src[3].v;
     dst++, src += 4;
   }
 
@@ -3242,13 +3242,13 @@ void RoomDraw_OneSidedShutters_East(uint8 door_type, uint16 dsto) {  // 81abe2
     door_type_and_slot[i] = (i << 8) | new_type;
     t = new_type;
   }
-  const uint16 *src = SrcPtr(kDoorTypeSrcData4[t >> 1]);
-  uint16 *dst = DstoPtr(dsto) + 1;
+  const zle16_t *src = SrcPtr(kDoorTypeSrcData4[t >> 1]);
+  zle16_t *dst = DstoPtr(dsto) + 1;
   for (int i = 0; i < 3; i++) {
-    dst[XY(0, 0)] = src[0];
-    dst[XY(0, 1)] = src[1];
-    dst[XY(0, 2)] = src[2];
-    dst[XY(0, 3)] = src[3];
+    dst[XY(0, 0)].v = src[0].v;
+    dst[XY(0, 1)].v = src[1].v;
+    dst[XY(0, 2)].v = src[2].v;
+    dst[XY(0, 3)].v = src[3].v;
     dst++, src += 4;
   }
 }
@@ -3282,24 +3282,24 @@ void RoomDraw_Door_ExplodingWall(int pos_enum) {  // 81ac70
   RoomDraw_ExplodingWallSegment(SrcPtr(kDoorTypeSrcData[42]), dsto + XY(0, 6));
 }
 
-void RoomDraw_ExplodingWallSegment(const uint16 *src, uint16 dsto) {  // 81ace4
+void RoomDraw_ExplodingWallSegment(const zle16_t *src, uint16 dsto) {  // 81ace4
   RoomDraw_ExplodingWallColumn(src, DstoPtr(dsto));
   src += 12, dsto += 2;
-  int n = src[0];
-  uint16 *d = &dung_bg2[dsto];
+  int n = src[0].v;
+  zle16_t *d = (RAM16P(g_ram+0x2000) + (dsto));
   dung_draw_width_indicator = 18;
   do {
-    d[XY(0, 0)] = d[XY(0, 1)] = d[XY(0, 2)] = n;
-    d[XY(0, 3)] = d[XY(0, 4)] = d[XY(0, 5)] = n;
+    d[XY(0, 0)].v = d[XY(0, 1)].v = d[XY(0, 2)].v = n;
+    d[XY(0, 3)].v = d[XY(0, 4)].v = d[XY(0, 5)].v = n;
     d++;
   } while (--dung_draw_width_indicator);
   RoomDraw_ExplodingWallColumn(src + 1, DstoPtr(dsto + 18));
 }
 
-void RoomDraw_ExplodingWallColumn(const uint16 *src, uint16 *dst) {  // 81ad25
+void RoomDraw_ExplodingWallColumn(const zle16_t *src, zle16_t *dst) {  // 81ad25
   for (int i = 0; i < 6; i++) {
-    dst[0] = src[0];
-    dst[1] = src[6];
+    dst[0].v = src[0].v;
+    dst[1].v = src[6].v;
     dst += XY(0, 1), src += 1;
   }
 }
@@ -3319,11 +3319,11 @@ void RoomDraw_HighRangeDoor_North(uint8 door_type, uint16 dsto, int pos_enum) { 
     t = new_type;
   }
   uint16 dsto_org = dsto;
-  const uint16 *src = SrcPtr(kDoorTypeSrcData[t >> 1]);
+  const zle16_t *src = SrcPtr(kDoorTypeSrcData[t >> 1]);
   for (int i = 0; i < 4; i++) {
-    dung_bg2[dsto + XY(0, 0)] = src[0];
-    dung_bg1[dsto + XY(0, 1)] = src[1];
-    dung_bg1[dsto + XY(0, 2)] = src[2];
+    dung_bg2[dsto + XY(0, 0)] = src[0].v;
+    dung_bg1[dsto + XY(0, 1)] = src[1].v;
+    dung_bg1[dsto + XY(0, 2)] = src[2].v;
     dsto++, src += 3;
   }
   if (door_type != kDoorType_WarpRoomDoor)
@@ -3340,11 +3340,11 @@ void RoomDraw_OneSidedLowerShutters_South(uint8 door_type, uint16 dsto) {  // 81
     t = new_type;
   }
   uint16 dsto_org = dsto;
-  const uint16 *src = SrcPtr(kDoorTypeSrcData2[t >> 1]);
+  const zle16_t *src = SrcPtr(kDoorTypeSrcData2[t >> 1]);
   for (int i = 0; i < 4; i++) {
-    dung_bg1[dsto + XY(0, 1)] = src[0];
-    dung_bg1[dsto + XY(0, 2)] = src[1];
-    dung_bg2[dsto + XY(0, 3)] = src[2];
+    dung_bg1[dsto + XY(0, 1)] = src[0].v;
+    dung_bg1[dsto + XY(0, 2)] = src[1].v;
+    dung_bg2[dsto + XY(0, 3)] = src[2].v;
     dsto++, src += 3;
   }
   RoomDraw_MakeDoorHighPriority_South(dsto_org + XY(0, 4));
@@ -3367,18 +3367,18 @@ void RoomDraw_HighRangeDoor_West(uint8 door_type, uint16 dsto, int pos_enum) {  
     t = new_type;
   }
 
-  const uint16 *src = SrcPtr(kDoorTypeSrcData3[t >> 1]);
+  const zle16_t *src = SrcPtr(kDoorTypeSrcData3[t >> 1]);
   uint16 dsto_org = dsto;
-  dung_bg2[dsto + XY(0, 0)] = src[0];
-  dung_bg2[dsto + XY(0, 1)] = src[1];
-  dung_bg2[dsto + XY(0, 2)] = src[2];
-  dung_bg2[dsto + XY(0, 3)] = src[3];
+  dung_bg2[dsto + XY(0, 0)] = src[0].v;
+  dung_bg2[dsto + XY(0, 1)] = src[1].v;
+  dung_bg2[dsto + XY(0, 2)] = src[2].v;
+  dung_bg2[dsto + XY(0, 3)] = src[3].v;
   dsto++, src += 4;
   for (int i = 0; i < 2; i++) {
-    dung_bg1[dsto + XY(0, 0)] = src[0];
-    dung_bg1[dsto + XY(0, 1)] = src[1];
-    dung_bg1[dsto + XY(0, 2)] = src[2];
-    dung_bg1[dsto + XY(0, 3)] = src[3];
+    dung_bg1[dsto + XY(0, 0)] = src[0].v;
+    dung_bg1[dsto + XY(0, 1)] = src[1].v;
+    dung_bg1[dsto + XY(0, 2)] = src[2].v;
+    dung_bg1[dsto + XY(0, 3)] = src[3].v;
     dsto++, src += 4;
   }
   RoomDraw_MakeDoorHighPriority_West(dsto_org);
@@ -3395,18 +3395,18 @@ void RoomDraw_OneSidedLowerShutters_East(uint8 door_type, uint16 dsto) {  // 81a
   }
 
   uint16 dst_org = dsto;
-  const uint16 *src = SrcPtr(kDoorTypeSrcData4[t >> 1]);
+  const zle16_t *src = SrcPtr(kDoorTypeSrcData4[t >> 1]);
   for (int i = 0; i < 2; i++) {
-    dung_bg1[dsto + XY(1, 0)] = src[0];
-    dung_bg1[dsto + XY(1, 1)] = src[1];
-    dung_bg1[dsto + XY(1, 2)] = src[2];
-    dung_bg1[dsto + XY(1, 3)] = src[3];
+    dung_bg1[dsto + XY(1, 0)] = src[0].v;
+    dung_bg1[dsto + XY(1, 1)] = src[1].v;
+    dung_bg1[dsto + XY(1, 2)] = src[2].v;
+    dung_bg1[dsto + XY(1, 3)] = src[3].v;
     dsto++, src += 4;
   }
-  dung_bg2[dsto + XY(1, 0)] = src[0];
-  dung_bg2[dsto + XY(1, 1)] = src[1];
-  dung_bg2[dsto + XY(1, 2)] = src[2];
-  dung_bg2[dsto + XY(1, 3)] = src[3];
+  dung_bg2[dsto + XY(1, 0)] = src[0].v;
+  dung_bg2[dsto + XY(1, 1)] = src[1].v;
+  dung_bg2[dsto + XY(1, 2)] = src[2].v;
+  dung_bg2[dsto + XY(1, 3)] = src[3].v;
   RoomDraw_MakeDoorHighPriority_East(dst_org + XY(4, 0));
   Door_PrioritizeCurDoor();
 }
@@ -3446,12 +3446,12 @@ void RoomDraw_MakeDoorHighPriority_West(uint16 dsto) {  // 81b017
 }
 
 void RoomDraw_MakeDoorHighPriority_East(uint16 dsto) {  // 81b05c
-  uint16 *d = &dung_bg2[dsto];
+  zle16_t *d = (RAM16P(g_ram+0x2000) + (dsto));
   do {
-    d[XY(0, 0)] |= 0x2000;
-    d[XY(0, 1)] |= 0x2000;
-    d[XY(0, 2)] |= 0x2000;
-    d[XY(0, 3)] |= 0x2000;
+    d[XY(0, 0)].v |= 0x2000;
+    d[XY(0, 1)].v |= 0x2000;
+    d[XY(0, 2)].v |= 0x2000;
+    d[XY(0, 3)].v |= 0x2000;
     d += XY(1, 0), dsto += 1;
   } while (dsto & 0x1f);
 }
@@ -3521,79 +3521,79 @@ dont_mark_opened:
 }
 
 void RoomDraw_MakeDoorPartsHighPriority_Y(uint16 dsto) {  // 81b1a4
-  uint16 *d = &dung_bg2[dsto];
+  zle16_t *d = (RAM16P(g_ram+0x2000) + (dsto));
   for (int i = 0; i < 7; i++) {
-    d[XY(0, 0)] |= 0x2000;
-    d[XY(1, 0)] |= 0x2000;
-    d[XY(2, 0)] |= 0x2000;
-    d[XY(3, 0)] |= 0x2000;
+    d[XY(0, 0)].v |= 0x2000;
+    d[XY(1, 0)].v |= 0x2000;
+    d[XY(2, 0)].v |= 0x2000;
+    d[XY(3, 0)].v |= 0x2000;
     d += XY(0, 1);
   }
 }
 
 void RoomDraw_MakeDoorPartsHighPriority_X(uint16 dsto) {  // 81b1e7
-  uint16 *d = &dung_bg2[dsto];
+  zle16_t *d = (RAM16P(g_ram+0x2000) + (dsto));
   for (int i = 0; i < 5; i++) {
-    d[XY(0, 0)] |= 0x2000;
-    d[XY(0, 1)] |= 0x2000;
-    d[XY(0, 2)] |= 0x2000;
-    d[XY(0, 3)] |= 0x2000;
+    d[XY(0, 0)].v |= 0x2000;
+    d[XY(0, 1)].v |= 0x2000;
+    d[XY(0, 2)].v |= 0x2000;
+    d[XY(0, 3)].v |= 0x2000;
     d += XY(1, 0);
   }
 }
 
-void RoomDraw_Downwards4x2VariableSpacing(int increment, const uint16 *src, uint16 *dst) {  // 81b220
+void RoomDraw_Downwards4x2VariableSpacing(int increment, const zle16_t *src, zle16_t *dst) {  // 81b220
   do {
-    dst[XY(0, 0)] = src[0];
-    dst[XY(1, 0)] = src[1];
-    dst[XY(2, 0)] = src[2];
-    dst[XY(3, 0)] = src[3];
-    dst[XY(0, 1)] = src[4];
-    dst[XY(1, 1)] = src[5];
-    dst[XY(2, 1)] = src[6];
-    dst[XY(3, 1)] = src[7];
+    dst[XY(0, 0)].v = src[0].v;
+    dst[XY(1, 0)].v = src[1].v;
+    dst[XY(2, 0)].v = src[2].v;
+    dst[XY(3, 0)].v = src[3].v;
+    dst[XY(0, 1)].v = src[4].v;
+    dst[XY(1, 1)].v = src[5].v;
+    dst[XY(2, 1)].v = src[6].v;
+    dst[XY(3, 1)].v = src[7].v;
     dst += increment;
   } while (--dung_draw_width_indicator);
 }
 
-uint16 *RoomDraw_DrawObject2x2and1(const uint16 *src, uint16 *dst) {  // 81b279
-  dst[XY(0, 0)] = src[0];
-  dst[XY(0, 1)] = src[1];
-  dst[XY(0, 2)] = src[2];
-  dst[XY(0, 3)] = src[3];
-  dst[XY(0, 4)] = src[4];
+zle16_t *RoomDraw_DrawObject2x2and1(const zle16_t *src, zle16_t *dst) {  // 81b279
+  dst[XY(0, 0)].v = src[0].v;
+  dst[XY(0, 1)].v = src[1].v;
+  dst[XY(0, 2)].v = src[2].v;
+  dst[XY(0, 3)].v = src[3].v;
+  dst[XY(0, 4)].v = src[4].v;
   return dst;
 }
 
-uint16 *RoomDraw_RightwardShelfEnd(const uint16 *src, uint16 *dst) {  // 81b2e1
-  dst[XY(0, 0)] = src[0];
-  dst[XY(0, 1)] = src[1];
-  dst[XY(0, 2)] = src[2];
-  dst[XY(0, 3)] = src[3];
+zle16_t *RoomDraw_RightwardShelfEnd(const zle16_t *src, zle16_t *dst) {  // 81b2e1
+  dst[XY(0, 0)].v = src[0].v;
+  dst[XY(0, 1)].v = src[1].v;
+  dst[XY(0, 2)].v = src[2].v;
+  dst[XY(0, 3)].v = src[3].v;
   return dst;
 }
 
-uint16 *RoomDraw_RightwardBarSegment(const uint16 *src, uint16 *dst) {  // 81b2f6
-  dst[XY(0, 0)] = src[0];
-  dst[XY(0, 1)] = src[1];
-  dst[XY(0, 2)] = src[2];
+zle16_t *RoomDraw_RightwardBarSegment(const zle16_t *src, zle16_t *dst) {  // 81b2f6
+  dst[XY(0, 0)].v = src[0].v;
+  dst[XY(0, 1)].v = src[1].v;
+  dst[XY(0, 2)].v = src[2].v;
   return dst;
 }
 
-void DrawBigGraySegment(uint16 a, const uint16 *src, uint16 *dst, uint16 dsto) {  // 81b33a
+void DrawBigGraySegment(uint16 a, const zle16_t *src, zle16_t *dst, uint16 dsto) {  // 81b33a
   int i = dung_misc_objs_index >> 1;
   dung_replacement_tile_state[i] = a;
   dung_misc_objs_index += 2;
   dung_object_pos_in_objdata[i] = dung_load_ptr_offs;
   dung_object_tilemap_pos[i] = dsto * 2 | (dung_line_ptrs_row0 != 0x4000 ? 0 : 0x2000);
-  replacement_tilemap_UL[i] = dst[XY(0, 0)];
-  replacement_tilemap_LL[i] = dst[XY(0, 1)];
-  replacement_tilemap_UR[i] = dst[XY(1, 0)];
-  replacement_tilemap_LR[i] = dst[XY(1, 1)];
+  replacement_tilemap_UL[i] = dst[XY(0, 0)].v;
+  replacement_tilemap_LL[i] = dst[XY(0, 1)].v;
+  replacement_tilemap_UR[i] = dst[XY(1, 0)].v;
+  replacement_tilemap_LR[i] = dst[XY(1, 1)].v;
   RoomDraw_Rightwards2x2(src, dst);
 }
 
-void RoomDraw_SinglePot(const uint16 *src, uint16 *dst, uint16 dsto) {  // 81b395
+void RoomDraw_SinglePot(const zle16_t *src, zle16_t *dst, uint16 dsto) {  // 81b395
   int i = dung_misc_objs_index >> 1;
   dung_misc_objs_index += 2;
   dung_replacement_tile_state[i] = 0x1111;
@@ -3608,7 +3608,7 @@ void RoomDraw_SinglePot(const uint16 *src, uint16 *dst, uint16 dsto) {  // 81b39
   RoomDraw_Rightwards2x2(src, dst);
 }
 
-void RoomDraw_BombableFloor(const uint16 *src, uint16 *dst, uint16 dsto) {  // 81b3e1
+void RoomDraw_BombableFloor(const zle16_t *src, zle16_t *dst, uint16 dsto) {  // 81b3e1
   if (dungeon_room_index == 101 && (dung_savegame_state_bits & 0x1000)) {
     dung_draw_width_indicator = 0;
     dung_draw_height_indicator = 0;
@@ -3617,7 +3617,7 @@ void RoomDraw_BombableFloor(const uint16 *src, uint16 *dst, uint16 dsto) {  // 8
   }
 
   src = SrcPtr(0x220);
-  const uint16 *src_below = SrcPtr(0x5ba);
+  const zle16_t *src_below = SrcPtr(0x5ba);
 
   Object_BombableFloorHelper(0x3030, src, src_below, dst, dsto);
   Object_BombableFloorHelper(0x3131, src + 4, src_below + 4, dst + XY(2, 0), dsto + XY(2, 0));
@@ -3625,7 +3625,7 @@ void RoomDraw_BombableFloor(const uint16 *src, uint16 *dst, uint16 dsto) {  // 8
   Object_BombableFloorHelper(0x3333, src + 12, src_below + 12, dst + XY(2, 2), dsto + XY(2, 2));
 }
 
-void RoomDraw_HammerPegSingle(const uint16 *src, uint16 *dst, uint16 dsto) {  // 81b493
+void RoomDraw_HammerPegSingle(const zle16_t *src, zle16_t *dst, uint16 dsto) {  // 81b493
   int i = dung_misc_objs_index >> 1;
   dung_misc_objs_index += 2;
   dung_replacement_tile_state[i] = 0x4040;
@@ -3644,11 +3644,11 @@ void DrawObjects_PushableBlock(uint16 dsto_x2, uint16 slot) {  // 81b4d6
   dung_replacement_tile_state[x] = 0;
   dung_object_pos_in_objdata[x] = slot;
   dung_object_tilemap_pos[x] = dsto_x2;
-  uint16 *dst = DstoPtr((dsto_x2 >> 1) & 0x1fff);
-  replacement_tilemap_UL[x] = dst[XY(0, 0)];
-  replacement_tilemap_LL[x] = dst[XY(0, 1)];
-  replacement_tilemap_UR[x] = dst[XY(1, 0)];
-  replacement_tilemap_LR[x] = dst[XY(1, 1)];
+  zle16_t *dst = DstoPtr((dsto_x2 >> 1) & 0x1fff);
+  replacement_tilemap_UL[x] = dst[XY(0, 0)].v;
+  replacement_tilemap_LL[x] = dst[XY(0, 1)].v;
+  replacement_tilemap_UR[x] = dst[XY(1, 0)].v;
+  replacement_tilemap_LR[x] = dst[XY(1, 1)].v;
   RoomDraw_Rightwards2x2(SrcPtr(0xe52), dst);
 }
 
@@ -3658,7 +3658,7 @@ void DrawObjects_LightableTorch(uint16 dsto_x2, uint16 slot) {  // 81b509
   dung_object_tilemap_pos[x] = dsto_x2;
   dung_object_pos_in_objdata[x] = slot;
   uint16 src_img = 0xec2;
-  uint16 *dst = DstoPtr((dsto_x2 >> 1) & 0x1fff);
+  zle16_t *dst = DstoPtr((dsto_x2 >> 1) & 0x1fff);
   if (dsto_x2 & 0x8000) {
     src_img = 0xeca;
     if (dung_num_lit_torches < 3)
@@ -3727,10 +3727,10 @@ void Dungeon_LoadHeader() {  // 81b564
   dung_savegame_state_bits = (x & 0xff0) << 4;
   dung_quadrants_visited = x & 0xf;
 
-  const uint16 *dp = GetRoomDoorInfo(dungeon_room_index);
+  const zle16_t *dp = GetRoomDoorInfo(dungeon_room_index);
   int i = 0;
-  for (; dp[i] != 0xffff; i++)
-    dung_door_tilemap_address[i] = dp[i];
+  for (; dp[i].v != 0xffff; i++)
+    dung_door_tilemap_address[i] = dp[i].v;
   dung_door_tilemap_address[i] = 0;
 
   if (((dungeon_room_index - 1) & 0xf) != 0xf)
@@ -3788,10 +3788,10 @@ void Dungeon_CheckAdjacentRoomsForOpenDoors(int idx, int room) {  // 81b759
 }
 
 void Dungeon_LoadAdjacentRoomDoors(int room) {  // 81b7ef
-  const uint16 *dp = GetRoomDoorInfo(room);
+  const zle16_t *dp = GetRoomDoorInfo(room);
   adjacent_doors_flags = (save_dung_info[room] & 0xf000) | 0xf00;
   for (int i = 0; ; i++) {
-    uint16 a = dp[i];
+    uint16 a = dp[i].v;
     adjacent_doors[i] = a;
     if (a == 0xffff)
       break;
@@ -4336,7 +4336,7 @@ void Dungeon_DetectStaircase() {  // 81c329
   }
 
   int j = (which_staircase_index & 3);
-  BYTE(dungeon_room_index) = dung_hdr_travel_destinations[j + 1];
+  (*(uint8*)(g_ram+(0xA0))) = dung_hdr_travel_destinations[j + 1];
   cur_staircase_plane = dung_hdr_staircase_plane[j];
   byte_7E0492 = (link_is_on_lower_level || link_is_on_lower_level_mirror) ? 2 : 0;
   subsubmodule_index = 0;
@@ -4405,8 +4405,8 @@ void RoomTag_QuadrantTrigger(int k) {  // 81c461
         RoomTag_OperateChestReveal(k);
     } else {
       uint8 a = (dung_flag_movable_block_was_pushed ^ 1);
-      if (a != BYTE(dung_flag_trapdoors_down)) {
-        BYTE(dung_flag_trapdoors_down) = a;
+      if (a != (*(uint8*)(g_ram+(0x468)))) {
+        (*(uint8*)(g_ram+(0x468))) = a;
         sound_effect_2 = 37;
         submodule_index = 5;
         dung_cur_door_pos = 0;
@@ -4458,7 +4458,7 @@ void RoomTag_RoomTrigger_BlockDoor(int k) {  // 81c4e7
 // Used for bosses
 void RoomTag_PrizeTriggerDoorDoor(int k) {  // 81c508
   int t = savegame_is_darkworld ? link_has_crystals : link_which_pendants;
-  if (t & kDungeonCrystalPendantBit[BYTE(cur_palace_index_x2) >> 1]) {
+  if (t & kDungeonCrystalPendantBit[(*(uint8*)(g_ram+(0x40C))) >> 1]) {
     dung_flag_trapdoors_down = 0;
     dung_cur_door_pos = 0;
     door_animation_step_indicator = 0;
@@ -4574,7 +4574,7 @@ void Dung_TagRoutine_BlastWallStuff(int k) {  // 81c68c
   messaging_buf[0x1a / 2] = (j & 0x7e) * 4 + dung_loade_bgoffs_h_copy;
   messaging_buf[0x18 / 2] = ((j & 0x1f80) >> 4) + dung_loade_bgoffs_v_copy;
   sound_effect_2 = 27;
-  BYTE(dung_unk_blast_walls_2) = 1;
+  (*(uint8*)(g_ram+(0x454))) = 1;
   AncillaAdd_BlastWall();
 }
 
@@ -4584,9 +4584,9 @@ void RoomTag_GetHeartForPrize(int k) {  // 81c709
   if (!(dung_savegame_state_bits & 0x8000))
     return;
   int t = savegame_is_darkworld ? link_has_crystals : link_which_pendants;
-  if (!(t & kDungeonCrystalPendantBit[BYTE(cur_palace_index_x2) >> 1])) {
+  if (!(t & kDungeonCrystalPendantBit[(*(uint8*)(g_ram+(0x40C))) >> 1])) {
     byte_7E04C2 = 128;
-    if (Ancilla_SpawnFallingPrize(kBossFinishedFallingItem[BYTE(cur_palace_index_x2) >> 1]) < 0)
+    if (Ancilla_SpawnFallingPrize(kBossFinishedFallingItem[(*(uint8*)(g_ram+(0x40C))) >> 1]) < 0)
       return; // Zelda bugfix. Price won't spawn if we're out of ancillas
   }
   dung_hdr_tag[k] = 0;
@@ -4649,31 +4649,31 @@ void RoomTag_OperateChestReveal(int k) {  // 81c7d8
     WORD(dung_bg2_attr_table[pos + XY(0, 1)]) = attr;
     attr += 0x101;
 
-    const uint16 *src = SrcPtr(0x149c);
-    dung_bg2[pos + XY(0, 0)] = src[0];
-    dung_bg2[pos + XY(0, 1)] = src[1];
-    dung_bg2[pos + XY(1, 0)] = src[2];
-    dung_bg2[pos + XY(1, 1)] = src[3];
+    const zle16_t *src = SrcPtr(0x149c);
+    dung_bg2[pos + XY(0, 0)] = src[0].v;
+    dung_bg2[pos + XY(0, 1)] = src[1].v;
+    dung_bg2[pos + XY(1, 0)] = src[2].v;
+    dung_bg2[pos + XY(1, 1)] = src[3].v;
 
     uint16 yy = WORD(overworld_map_state);
 
-    uint16 *dst = &vram_upload_data[vram_upload_offset >> 1];
-    dst[0] = RoomTag_BuildChestStripes(XY(0, 0) * 2, yy);
-    dst[3] = RoomTag_BuildChestStripes(XY(0, 1) * 2, yy);
-    dst[6] = RoomTag_BuildChestStripes(XY(1, 0) * 2, yy);
-    dst[9] = RoomTag_BuildChestStripes(XY(1, 1) * 2, yy);
+    zle16_t *dst = (RAM16P(g_ram+0x1002) + (vram_upload_offset >> 1));
+    dst[0].v = RoomTag_BuildChestStripes(XY(0, 0) * 2, yy);
+    dst[3].v = RoomTag_BuildChestStripes(XY(0, 1) * 2, yy);
+    dst[6].v = RoomTag_BuildChestStripes(XY(1, 0) * 2, yy);
+    dst[9].v = RoomTag_BuildChestStripes(XY(1, 1) * 2, yy);
 
-    dst[2] = src[0];
-    dst[5] = src[1];
-    dst[8] = src[2];
-    dst[11] = src[3];
+    dst[2].v = src[0].v;
+    dst[5].v = src[1].v;
+    dst[8].v = src[2].v;
+    dst[11].v = src[3].v;
 
-    dst[1] = 0x100;
-    dst[4] = 0x100;
-    dst[7] = 0x100;
-    dst[10] = 0x100;
+    dst[1].v = 0x100;
+    dst[4].v = 0x100;
+    dst[7].v = 0x100;
+    dst[10].v = 0x100;
 
-    dst[12] = 0xffff;
+    dst[12].v = 0xffff;
 
     vram_upload_offset += 24;
     WORD(overworld_map_state) += 2;
@@ -4809,7 +4809,7 @@ void RoomTag_WaterOff(int k) {  // 81ca94
     dung_savegame_state_bits |= 0x800;
     dung_flag_statechange_waterpuzzle = 0;
     int dsto = ((water_hdma_var1 & 0x1ff) - 0x10) << 3 | ((water_hdma_var0 & 0x1ff) - 0x10) >> 3;
-    DrawWaterThing(&dung_bg2[dsto], SrcPtr(0x1438));
+    DrawWaterThing((RAM16P(g_ram+0x2000) + (dsto)), SrcPtr(0x1438));
     Dungeon_PrepOverlayDma_nextPrep(0, dsto * 2);
     sound_effect_2 = 0x1b;
     sound_effect_1 = 0x2e;
@@ -4823,7 +4823,7 @@ void RoomTag_WaterOn(int k) {  // 81cb1a
     sound_effect_1 = 0x2f;
     submodule_index = 12;
     subsubmodule_index = 0;
-    BYTE(dung_floor_y_offs) = 1;
+    (*(uint8*)(g_ram+(0x424))) = 1;
     dung_hdr_tag[1] = 0;
     dung_savegame_state_bits |= 0x800;
     dung_flag_statechange_waterpuzzle = 0;
@@ -4839,8 +4839,8 @@ void RoomTag_WaterGate(int k) {  // 81cb49
   dung_hdr_tag[1] = 0;
   dung_savegame_state_bits |= 0x800;
   dung_flag_statechange_waterpuzzle = 0;
-  BYTE(water_hdma_var2) = 0;
-  BYTE(spotlight_var4) = 0;
+  (*(uint8*)(g_ram+(0x684))) = 0;
+  (*(uint8*)(g_ram+(0x67A))) = 0;
   W12SEL_copy = 3;
   W34SEL_copy = 0;
   WOBJSEL_copy = 0;
@@ -4946,7 +4946,7 @@ void RoomTag_OperateWaterFlooring() {  // 81cc95
     dung_draw_width_indicator = (t & 3) + 1;
     dung_draw_height_indicator = (t >> 8 & 3) + 1;
     dung_load_ptr_offs += 3, layoutsrc += 3;
-    const uint16 *src = SrcPtr(0x110);
+    const zle16_t *src = SrcPtr(0x110);
     int dsto2 = (t & 0xfc) >> 2 | (t >> 10) << 6;
     do {
       int dsto = dsto2;
@@ -4954,14 +4954,14 @@ void RoomTag_OperateWaterFlooring() {  // 81cc95
       do {
         int nn = 2;
         do {
-          dung_bg1[dsto + XY(0, 0)] = src[0];
-          dung_bg1[dsto + XY(1, 0)] = src[1];
-          dung_bg1[dsto + XY(2, 0)] = src[2];
-          dung_bg1[dsto + XY(3, 0)] = src[3];
-          dung_bg1[dsto + XY(0, 1)] = src[4];
-          dung_bg1[dsto + XY(1, 1)] = src[5];
-          dung_bg1[dsto + XY(2, 1)] = src[6];
-          dung_bg1[dsto + XY(3, 1)] = src[7];
+          dung_bg1[dsto + XY(0, 0)] = src[0].v;
+          dung_bg1[dsto + XY(1, 0)] = src[1].v;
+          dung_bg1[dsto + XY(2, 0)] = src[2].v;
+          dung_bg1[dsto + XY(3, 0)] = src[3].v;
+          dung_bg1[dsto + XY(0, 1)] = src[4].v;
+          dung_bg1[dsto + XY(1, 1)] = src[5].v;
+          dung_bg1[dsto + XY(2, 1)] = src[6].v;
+          dung_bg1[dsto + XY(3, 1)] = src[7].v;
           dsto += XY(0, 2);
         } while (--nn);
         dsto += XY(4, -4);
@@ -5143,7 +5143,7 @@ not_openable:
     WriteAttr2(pos + XY(0, 1), 0x202);
     static const uint16 kSrcTiles1[] = { 0x7ea, 0x80a, 0x80a, 0x82a };
     addr = (pos - XY(1, 1)) * 2;
-    RoomDraw_Object_Nx4(4, SrcPtr(kSrcTiles1[attr & 3]), &dung_bg2[addr >> 1]);
+    RoomDraw_Object_Nx4(4, SrcPtr(kSrcTiles1[attr & 3]), (RAM16P(g_ram+0x2000) + (addr >> 1)));
   } else {
     dung_cur_door_pos = pos;
     int k = attr & 0xf;
@@ -5158,7 +5158,7 @@ not_openable:
     door_open_closed_counter = 0;
     dung_cur_door_idx = k * 2;
     dung_which_key_x2 = k * 2;
-    RoomDraw_Object_Nx4(4, SrcPtr(kDoorTypeSrcData[0x56 / 2]), &dung_bg2[addr >> 1]);
+    RoomDraw_Object_Nx4(4, SrcPtr(kDoorTypeSrcData[0x56 / 2]), (RAM16P(g_ram+0x2000) + (addr >> 1)));
     Dungeon_LoadToggleDoorAttr_OtherEntry(k);
   }
 
@@ -5250,14 +5250,14 @@ void DrawEyeWatchDoor(int door) {  // 81d33a
 }
 
 void Door_BlastWallExploding_Draw(int dsto) {  // 81d373
-  uint16 *dst = &dung_bg2[dsto];
-  const uint16 *src = SrcPtr(0x31ea);
+  zle16_t *dst = (RAM16P(g_ram+0x2000) + (dsto));
+  const zle16_t *src = SrcPtr(0x31ea);
   ClearExplodingWallFromTileMap_ClearOnePair(dst, src);
   dst += 2;
-  uint16 v = src[24];
+  uint16 v = src[24].v;
   for (int n = dung_unk_blast_walls_2 - 1; n; n--) {
     for (int j = 0; j < 12; j++)
-      dst[XY(0, j)] = v;
+      dst[XY(0, j)].v = v;
     dst++;
   }
   ClearExplodingWallFromTileMap_ClearOnePair(dst, src + 25);
@@ -5306,7 +5306,7 @@ void OperateShutterDoors() {  // 81d38f
   if (anim_dst != 0) {
     nmi_disable_core_updates = nmi_copy_packets_flag = 1;
 getout:
-    if (BYTE(door_animation_step_indicator) != 0x10)
+    if ((*(uint8*)(g_ram+(0x690))) != 0x10)
       return;
   }
   submodule_index = 0;
@@ -5398,7 +5398,7 @@ void DrawCompletelyOpenDoor() {  // 81d5aa
 void Dungeon_ClearAwayExplodingWall() {  // 81d6c1
   flag_is_link_immobilized = 6;
   flag_unk1 = 6;
-  if (BYTE(messaging_buf[0]) != 6)
+  if ((*(uint8*)(g_ram+0x10000+2*(0))) != 6)
     return;
 
   word_7E045E = 0;
@@ -5581,7 +5581,7 @@ uint8 HandleItemTileAction_Dungeon(uint16 x, uint16 y) {  // 81dabb
       RoomDraw_16x16Single(dung_misc_objs_index);
       Point16U pt;
       ManipBlock_Something(&pt);
-      BYTE(dung_secrets_unk1) |= 0x80;
+      (*(uint8*)(g_ram+(0xB9C))) |= 0x80;
       Sprite_SpawnImmediatelySmashedTerrain(1, pt.x, pt.y);
       AncillaAdd_BushPoof(pt.x, pt.y);  // return value wtf?
     }
@@ -5596,7 +5596,7 @@ void ManipBlock_Something(Point16U *pt) {  // 81db41
 }
 
 void RevealPotItem(uint16 pos6, uint16 pos4) {  // 81e6b2
-  BYTE(dung_secrets_unk1) = 0;
+  (*(uint8*)(g_ram+(0xB9C))) = 0;
 
   const uint8 *src_ptr = kDungeonSecrets + WORD(kDungeonSecrets[dungeon_room_index * 2]);
 
@@ -5619,23 +5619,23 @@ void RevealPotItem(uint16 pos6, uint16 pos4) {  // 81e6b2
   if (data < 0x80) {
     if (data != 8) {
       uint16 mask = 1 << index;
-      uint16 *pr = &pots_revealed_in_room[dungeon_room_index];
-      if (*pr & mask)
+      zle16_t *pr = (RAM16P(g_ram+0xF580) + (dungeon_room_index));
+      if (pr->v & mask)
         return;
-      *pr |= mask;
+      pr->v |= mask;
     }
-    BYTE(dung_secrets_unk1) |= data;
+    (*(uint8*)(g_ram+(0xB9C))) |= data;
   } else if (data != 0x88) {
     int j = dung_bg2_attr_table[pos6] & 0xf;
     int k = (j - (dung_replacement_tile_state[j] & 0xf));
     dung_misc_objs_index = 2 * k;
     sound_effect_2 = 0x1b;
-    const uint16 *src = SrcPtr(0x5ba);
+    const zle16_t *src = SrcPtr(0x5ba);
     for (int i = 0; i < 4; i++, k++, src += 4) {
-      replacement_tilemap_UL[k] = src[0];
-      replacement_tilemap_LL[k] = src[1];
-      replacement_tilemap_UR[k] = src[2];
-      replacement_tilemap_LR[k] = src[3];
+      replacement_tilemap_UL[k] = src[0].v;
+      replacement_tilemap_LL[k] = src[1].v;
+      replacement_tilemap_UR[k] = src[2].v;
+      replacement_tilemap_LR[k] = src[3].v;
     }
   } else {
     int k = dung_misc_objs_index >> 1;
@@ -5656,44 +5656,44 @@ void Dungeon_UpdateTileMapWithCommonTile(int x, int y, uint8 v) {  // 81e7a9
 void Dungeon_PrepSpriteInducedDma(int x, int y, uint8 v) {  // 81e7df
   static const uint16 kPrepSpriteInducedDma_Srcs[10] = { 0xe0, 0xade, 0x5aa, 0x198, 0x210, 0x218, 0x1f3a, 0xeaa, 0xeb2, 0x140 };
   int pos = ((y + 1) & 0x1f8) << 3 | (x & 0x1f8) >> 3;
-  const uint16 *src = SrcPtr(kPrepSpriteInducedDma_Srcs[v >> 1]);
-  uint16 *dst = &vram_upload_data[vram_upload_offset >> 1];
-  dst[0] = Dungeon_MapVramAddr(pos + 0);
-  dst[3] = Dungeon_MapVramAddr(pos + 64);
-  dst[6] = Dungeon_MapVramAddr(pos + 1);
-  dst[9] = Dungeon_MapVramAddr(pos + 65);
-  uint8 attr = attributes_for_tile[src[3] & 0x3ff];
+  const zle16_t *src = SrcPtr(kPrepSpriteInducedDma_Srcs[v >> 1]);
+  zle16_t *dst = (RAM16P(g_ram+0x1002) + (vram_upload_offset >> 1));
+  dst[0].v = Dungeon_MapVramAddr(pos + 0);
+  dst[3].v = Dungeon_MapVramAddr(pos + 64);
+  dst[6].v = Dungeon_MapVramAddr(pos + 1);
+  dst[9].v = Dungeon_MapVramAddr(pos + 65);
+  uint8 attr = attributes_for_tile[src[3].v & 0x3ff];
   dung_bg2_attr_table[pos + XY(0, 0)] = attr;
   dung_bg2_attr_table[pos + XY(0, 1)] = attr;
   dung_bg2_attr_table[pos + XY(1, 0)] = attr;
   dung_bg2_attr_table[pos + XY(1, 1)] = attr;
-  dung_bg2[pos + XY(0, 0)] = dst[2] = src[0];
-  dung_bg2[pos + XY(0, 1)] = dst[5] = src[1];
-  dung_bg2[pos + XY(1, 0)] = dst[8] = src[2];
-  dung_bg2[pos + XY(1, 1)] = dst[11] = src[3];
-  dst[1] = 0x100;
-  dst[4] = 0x100;
-  dst[7] = 0x100;
-  dst[10] = 0x100;
-  dst[12] = 0xffff;
+  dung_bg2[pos + XY(0, 0)] = dst[2].v = src[0].v;
+  dung_bg2[pos + XY(0, 1)] = dst[5].v = src[1].v;
+  dung_bg2[pos + XY(1, 0)] = dst[8].v = src[2].v;
+  dung_bg2[pos + XY(1, 1)] = dst[11].v = src[3].v;
+  dst[1].v = 0x100;
+  dst[4].v = 0x100;
+  dst[7].v = 0x100;
+  dst[10].v = 0x100;
+  dst[12].v = 0xffff;
   vram_upload_offset += 24;
 }
 
 void Dungeon_DeleteRupeeTile(uint16 x, uint16 y) {  // 81e8bd
   int pos = (y & 0x1f8) * 8 | (x & 0x1f8) >> 3;
-  uint16 *dst = &vram_upload_data[vram_upload_offset >> 1];
-  dst[2] = 0x190f;
-  dst[5] = 0x190f;
+  zle16_t *dst = (RAM16P(g_ram+0x1002) + (vram_upload_offset >> 1));
+  dst[2].v = 0x190f;
+  dst[5].v = 0x190f;
   dung_bg2[pos + XY(0, 0)] = 0x190f;
   dung_bg2[pos + XY(0, 1)] = 0x190f;
   uint16 attr = attributes_for_tile[0x190f & 0x3ff] * 0x101;
   WORD(dung_bg2_attr_table[pos + XY(0, 0)]) = attr;
   WORD(dung_bg2_attr_table[pos + XY(0, 1)]) = attr;
-  dst[0] = Dungeon_MapVramAddr(pos + XY(0, 0));
-  dst[3] = Dungeon_MapVramAddr(pos + XY(0, 1));
-  dst[1] = 0x100;
-  dst[4] = 0x100;
-  dst[6] = 0xffff;
+  dst[0].v = Dungeon_MapVramAddr(pos + XY(0, 0));
+  dst[3].v = Dungeon_MapVramAddr(pos + XY(0, 1));
+  dst[1].v = 0x100;
+  dst[4].v = 0x100;
+  dst[6].v = 0xffff;
   vram_upload_offset += 24;
   dung_savegame_state_bits |= 0x1000;
   nmi_load_bg_from_vram = 1;
@@ -5710,7 +5710,7 @@ uint8 OpenChestForItem(uint8 tile, int *chest_position) {  // 81eb66
 
   uint16 loc = dung_chest_locations[chest_idx], pos, chest_room;
   uint8 data = 0xff;
-  const uint16 *ptr;
+  const zle16_t *ptr;
 
   if (loc >= 0x8000) {
     // big key lock
@@ -5725,10 +5725,10 @@ uint8 OpenChestForItem(uint8 tile, int *chest_position) {  // 81eb66
       pos = (loc & 0x7fff) >> 1;
 
       ptr = SrcPtr(dung_floor_2_filler_tiles);
-      overworld_tileattr[pos + 0] = ptr[0];
-      overworld_tileattr[pos + 64] = ptr[1];
-      overworld_tileattr[pos + 1] = ptr[2];
-      overworld_tileattr[pos + 65] = ptr[3];
+      overworld_tileattr[pos + 0] = ptr[0].v;
+      overworld_tileattr[pos + 64] = ptr[1].v;
+      overworld_tileattr[pos + 1] = ptr[2].v;
+      overworld_tileattr[pos + 65] = ptr[3].v;
       goto afterStoreCrap;
     }
   } else {
@@ -5753,10 +5753,10 @@ uint8 OpenChestForItem(uint8 tile, int *chest_position) {  // 81eb66
           ptr = SrcPtr(0x14A4);
           pos = loc >> 1;
 
-          overworld_tileattr[pos + 0] = ptr[0];
-          overworld_tileattr[pos + 64] = ptr[1];
-          overworld_tileattr[pos + 1] = ptr[2];
-          overworld_tileattr[pos + 65] = ptr[3];
+          overworld_tileattr[pos + 0] = ptr[0].v;
+          overworld_tileattr[pos + 64] = ptr[1].v;
+          overworld_tileattr[pos + 1] = ptr[2].v;
+          overworld_tileattr[pos + 65] = ptr[3].v;
 
           uint8 attr;
 afterStoreCrap:
@@ -5767,23 +5767,23 @@ afterStoreCrap:
           dung_bg2_attr_table[pos + 1] = attr;
           dung_bg2_attr_table[pos + 65] = attr;
 
-          uint16 *dst = &vram_upload_data[vram_upload_offset >> 1];
-          dst[0] = Dungeon_MapVramAddr(pos + 0);
-          dst[3] = Dungeon_MapVramAddr(pos + 64);
-          dst[6] = Dungeon_MapVramAddr(pos + 1);
-          dst[9] = Dungeon_MapVramAddr(pos + 65);
+          zle16_t *dst = (RAM16P(g_ram+0x1002) + (vram_upload_offset >> 1));
+          dst[0].v = Dungeon_MapVramAddr(pos + 0);
+          dst[3].v = Dungeon_MapVramAddr(pos + 64);
+          dst[6].v = Dungeon_MapVramAddr(pos + 1);
+          dst[9].v = Dungeon_MapVramAddr(pos + 65);
 
-          dst[2] = ptr[0];
-          dst[5] = ptr[1];
-          dst[8] = ptr[2];
-          dst[11] = ptr[3];
+          dst[2].v = ptr[0].v;
+          dst[5].v = ptr[1].v;
+          dst[8].v = ptr[2].v;
+          dst[11].v = ptr[3].v;
 
-          dst[1] = 0x100;
-          dst[4] = 0x100;
-          dst[7] = 0x100;
-          dst[10] = 0x100;
+          dst[1].v = 0x100;
+          dst[4].v = 0x100;
+          dst[7].v = 0x100;
+          dst[10].v = 0x100;
 
-          dst[12] = 0xffff;
+          dst[12].v = 0xffff;
 
           vram_upload_offset += 24;
           nmi_load_bg_from_vram = 1;
@@ -5802,12 +5802,12 @@ afterStoreCrap:
 
 void OpenBigChest(uint16 loc, int *chest_position) {  // 81ed05
   uint16 pos = loc >> 1;
-  const uint16 *src = SrcPtr(0x14C4);
+  const zle16_t *src = SrcPtr(0x14C4);
 
   for (int i = 0; i < 4; i++) {
-    dung_bg2[pos + XY(i, 0)] = src[0];
-    dung_bg2[pos + XY(i, 1)] = src[1];
-    dung_bg2[pos + XY(i, 2)] = src[2];
+    dung_bg2[pos + XY(i, 0)] = src[0].v;
+    dung_bg2[pos + XY(i, 1)] = src[1].v;
+    dung_bg2[pos + XY(i, 2)] = src[2].v;
     src += 3;
   }
 
@@ -5853,32 +5853,32 @@ uint8 OpenMiniGameChest(int *chest_position) {  // 81edab
   WORD(dung_bg2_attr_table[pos + XY(0, 0)]) = 0x202;
   WORD(dung_bg2_attr_table[pos + XY(0, 1)]) = 0x202;
 
-  const uint16 *src = SrcPtr(0x14A4);
+  const zle16_t *src = SrcPtr(0x14A4);
 
   int pos_wrong = pos + XY(0, 2);  // zelda bug?
-  dung_bg2[pos_wrong + XY(0, 0)] = src[0];
-  dung_bg2[pos_wrong + XY(0, 1)] = src[1];
-  dung_bg2[pos_wrong + XY(1, 0)] = src[2];
-  dung_bg2[pos_wrong + XY(1, 1)] = src[3];
+  dung_bg2[pos_wrong + XY(0, 0)] = src[0].v;
+  dung_bg2[pos_wrong + XY(0, 1)] = src[1].v;
+  dung_bg2[pos_wrong + XY(1, 0)] = src[2].v;
+  dung_bg2[pos_wrong + XY(1, 1)] = src[3].v;
 
   // The orig asm code seems to access invalid vram here because it indexes by 0x14a4
-  uint16 *dst = &vram_upload_data[vram_upload_offset >> 1];
-  dst[0] = Dungeon_MapVramAddr(pos + 0);
-  dst[3] = Dungeon_MapVramAddr(pos + 64);
-  dst[6] = Dungeon_MapVramAddr(pos + 1);
-  dst[9] = Dungeon_MapVramAddr(pos + 65);
+  zle16_t *dst = (RAM16P(g_ram+0x1002) + (vram_upload_offset >> 1));
+  dst[0].v = Dungeon_MapVramAddr(pos + 0);
+  dst[3].v = Dungeon_MapVramAddr(pos + 64);
+  dst[6].v = Dungeon_MapVramAddr(pos + 1);
+  dst[9].v = Dungeon_MapVramAddr(pos + 65);
 
-  dst[2] = src[0];
-  dst[5] = src[1];
-  dst[8] = src[2];
-  dst[11] = src[3];
+  dst[2].v = src[0].v;
+  dst[5].v = src[1].v;
+  dst[8].v = src[2].v;
+  dst[11].v = src[3].v;
 
-  dst[1] = 0x100;
-  dst[4] = 0x100;
-  dst[7] = 0x100;
-  dst[10] = 0x100;
+  dst[1].v = 0x100;
+  dst[4].v = 0x100;
+  dst[7].v = 0x100;
+  dst[10].v = 0x100;
 
-  dst[12] = 0xffff;
+  dst[12].v = 0xffff;
 
   vram_upload_offset += 24;
 
@@ -5887,11 +5887,11 @@ uint8 OpenMiniGameChest(int *chest_position) {  // 81edab
   uint16 r16 = some_menu_ctr;
 
   t = GetRandomNumber();
-  if (BYTE(dungeon_room_index) == 0) {
+  if ((*(uint8*)(g_ram+(0xA0))) == 0) {
     t = t & 0xf;
     rv = kDungeon_RupeeChestMinigamePrizes[t & 0xf];
 
-  } else if (BYTE(dungeon_room_index) == 0x18) {
+  } else if ((*(uint8*)(g_ram+(0xA0))) == 0x18) {
     t = 0x10 + (t & 0xf);
     rv = kDungeon_RupeeChestMinigamePrizes[0x10 + (t & 0xf)];
   } else {
@@ -5950,29 +5950,29 @@ void Dungeon_FloodSwampWater_PrepTileMap() {  // 81f046
   }
 }
 
-void Dungeon_AdjustWaterVomit(const uint16 *src, int depth) {  // 81f0c9
+void Dungeon_AdjustWaterVomit(const zle16_t *src, int depth) {  // 81f0c9
   int dsto = (word_7E047C >> 1) + XY(0, 2);
-  uint16 *dst = &dung_bg2[dsto];
+  zle16_t *dst = (RAM16P(g_ram+0x2000) + (dsto));
   do {
-    dst[0] = src[0];
-    dst[1] = src[1];
-    dst[2] = src[2];
-    dst[3] = src[3];
+    dst[0].v = src[0].v;
+    dst[1].v = src[1].v;
+    dst[2].v = src[2].v;
+    dst[3].v = src[3].v;
     dst += XY(0, 1), src += 4;
   } while (--depth);
-  uint16 *vram = vram_upload_data;
+  zle16_t *vram = RAM16P(g_ram+0x1002);
   for (int i = 0; i < 4; i++) {
-    uint16 *dst = &dung_bg2[dsto];
-    vram[0] = Dungeon_MapVramAddr(dsto);
-    vram[1] = 0x980;
-    vram[2] = dst[XY(0, 0)];
-    vram[3] = dst[XY(0, 1)];
-    vram[4] = dst[XY(0, 2)];
-    vram[5] = dst[XY(0, 3)];
-    vram[6] = dst[XY(0, 4)];
+    zle16_t *dst = (RAM16P(g_ram+0x2000) + (dsto));
+    vram[0].v = Dungeon_MapVramAddr(dsto);
+    vram[1].v = 0x980;
+    vram[2].v = dst[XY(0, 0)].v;
+    vram[3].v = dst[XY(0, 1)].v;
+    vram[4].v = dst[XY(0, 2)].v;
+    vram[5].v = dst[XY(0, 3)].v;
+    vram[6].v = dst[XY(0, 4)].v;
     vram += 7, dsto++;
   }
-  vram[0] = 0xffff;
+  vram[0].v = 0xffff;
   nmi_load_bg_from_vram = 1;
 }
 
@@ -6018,9 +6018,9 @@ void FloodDam_Expand() {  // 81f30c
   watergate_var1++;
   water_hdma_var3 = watergate_var1 >> 1;
   uint8 r0 = water_hdma_var3 - 8;
-  BYTE(spotlight_y_upper) = word_7E0678;
-  BYTE(spotlight_var4) += 1;
-  BYTE(water_hdma_var2) = spotlight_var4 + r0;
+  (*(uint8*)(g_ram+(0x676))) = word_7E0678;
+  (*(uint8*)(g_ram+(0x67A))) += 1;
+  (*(uint8*)(g_ram+(0x684))) = spotlight_var4 + r0;
 
   if (watergate_var1 & 0xf)
     return;
@@ -6029,7 +6029,7 @@ void FloodDam_Expand() {  // 81f30c
     subsubmodule_index++;
 
   static const uint16 kWatergateSrcs1[] = { 0x12f8, 0x1348, 0x1398, 0x13e8 };
-  RoomDraw_Object_Nx4(10, SrcPtr(kWatergateSrcs1[(watergate_var1 >> 4) - 1]), &dung_bg2[watergate_pos >> 1]);
+  RoomDraw_Object_Nx4(10, SrcPtr(kWatergateSrcs1[(watergate_var1 >> 4) - 1]), (RAM16P(g_ram+0x2000) + (watergate_pos >> 1)));
   int pos = watergate_pos;
   int n = 3;
   int dma_ptr = 0;
@@ -6056,7 +6056,7 @@ void Watergate_Main_State1() {  // 81f3aa
 }
 
 void FloodDam_Fill() {  // 81f3bd
-  BYTE(water_hdma_var2)++;
+  (*(uint8*)(g_ram+(0x684)))++;
   uint8 t = water_hdma_var2 + spotlight_y_upper;
   if (t >= 225) {
     dung_cur_quadrant_upload = 0;
@@ -6105,12 +6105,12 @@ void Dungeon_ExtinguishTorch() {  // 81f4a6
 void SpiralStairs_MakeNearbyWallsHighPriority_Entering() {  // 81f528
   int pos = dung_inter_starcases[which_staircase_index & 3] - 4;
   word_7E048C = pos * 2;
-  uint16 *dst = &dung_bg2[pos];
+  zle16_t *dst = (RAM16P(g_ram+0x2000) + (pos));
   for (int i = 0; i < 5; i++) {
-    dst[XY(0, 0)] |= 0x2000;
-    dst[XY(0, 1)] |= 0x2000;
-    dst[XY(0, 2)] |= 0x2000;
-    dst[XY(0, 3)] |= 0x2000;
+    dst[XY(0, 0)].v |= 0x2000;
+    dst[XY(0, 1)].v |= 0x2000;
+    dst[XY(0, 2)].v |= 0x2000;
+    dst[XY(0, 3)].v |= 0x2000;
     dst += 1;
   }
   int dp = Dungeon_PrepOverlayDma_nextPrep(0, pos * 2);
@@ -6120,12 +6120,12 @@ void SpiralStairs_MakeNearbyWallsHighPriority_Entering() {  // 81f528
 
 void SpiralStairs_MakeNearbyWallsLowPriority() {  // 81f585
   int pos = word_7E048C >> 1;
-  uint16 *dst = &dung_bg2[pos];
+  zle16_t *dst = (RAM16P(g_ram+0x2000) + (pos));
   for (int i = 0; i < 5; i++) {
-    dst[XY(0, 0)] &= ~0x2000;
-    dst[XY(0, 1)] &= ~0x2000;
-    dst[XY(0, 2)] &= ~0x2000;
-    dst[XY(0, 3)] &= ~0x2000;
+    dst[XY(0, 0)].v &= ~0x2000;
+    dst[XY(0, 1)].v &= ~0x2000;
+    dst[XY(0, 2)].v &= ~0x2000;
+    dst[XY(0, 3)].v &= ~0x2000;
     dst += 1;
   }
   int dp = Dungeon_PrepOverlayDma_nextPrep(0, pos * 2);
@@ -6149,27 +6149,27 @@ void ClearAndStripeExplodingWall(uint16 dsto) {  // 81f811
   if (!(dung_door_direction[dung_cur_door_idx >> 1] & 2))
     r6++;
 
-  uint16 *uvdata = &uvram.data[0];
+  zle16_t *uvdata = ((zle16_t*)((uint8*)&uvram + offsetof(UploadVram_3, data)));
   for (;;) {
-    const uint16 *bg2 = &dung_bg2[dsto];
+    const zle16_t *bg2 = (RAM16P(g_ram+0x2000) + (dsto));
     do {
       uint16 vram_addr = Dungeon_MapVramAddrNoSwap(dsto);
-      uvdata[0] = vram_addr;
-      uvdata[1] = r6 | 0xa00;
-      uvdata[2] = bg2[XY(0, 0)];
-      uvdata[3] = bg2[XY(0, 1)];
-      uvdata[4] = bg2[XY(0, 2)];
-      uvdata[5] = bg2[XY(0, 3)];
-      uvdata[6] = bg2[XY(0, 4)];
-      uvdata[7] = vram_addr + 0x4a0;
-      uvdata[8] = r6 | 0xe00;
-      uvdata[9] = bg2[XY(0, 5)];
-      uvdata[10] = bg2[XY(0, 6)];
-      uvdata[11] = bg2[XY(0, 7)];
-      uvdata[12] = bg2[XY(0, 8)];
-      uvdata[13] = bg2[XY(0, 9)];
-      uvdata[14] = bg2[XY(0, 10)];
-      uvdata[15] = bg2[XY(0, 11)];
+      uvdata[0].v = vram_addr;
+      uvdata[1].v = r6 | 0xa00;
+      uvdata[2].v = bg2[XY(0, 0)].v;
+      uvdata[3].v = bg2[XY(0, 1)].v;
+      uvdata[4].v = bg2[XY(0, 2)].v;
+      uvdata[5].v = bg2[XY(0, 3)].v;
+      uvdata[6].v = bg2[XY(0, 4)].v;
+      uvdata[7].v = vram_addr + 0x4a0;
+      uvdata[8].v = r6 | 0xe00;
+      uvdata[9].v = bg2[XY(0, 5)].v;
+      uvdata[10].v = bg2[XY(0, 6)].v;
+      uvdata[11].v = bg2[XY(0, 7)].v;
+      uvdata[12].v = bg2[XY(0, 8)].v;
+      uvdata[13].v = bg2[XY(0, 9)].v;
+      uvdata[14].v = bg2[XY(0, 10)].v;
+      uvdata[15].v = bg2[XY(0, 11)].v;
       dsto++, bg2++, uvdata += 16;
     } while (--r10);
     if (!r14)
@@ -6178,7 +6178,7 @@ void ClearAndStripeExplodingWall(uint16 dsto) {  // 81f811
     dsto += kBlastWall_Tab2[(r2 >> 1) + ((r6 & 1) ? 0 : 8) - 1] >> 1;
     r10 = 3;
   }
-  uvdata[0] = 0xffff;
+  uvdata[0].v = 0xffff;
 }
 
 void Dungeon_DrawRoomOverlay(const uint8 *src) {  // 81f967
@@ -6188,19 +6188,19 @@ void Dungeon_DrawRoomOverlay(const uint8 *src) {  // 81f967
     uint16 a = WORD(*src);
     if (a == 0xffff)
       break;
-    uint16 *p = &dung_bg2[(src[0] >> 2) | (src[1] >> 2) << 6];
+    zle16_t *p = (RAM16P(g_ram+0x2000) + ((src[0] >> 2) | (src[1] >> 2) << 6));
     uint8 type = src[2];
     if (type == 0xa4) {
-      p[XY(0, 1)] = p[XY(1, 1)] = p[XY(2, 1)] = p[XY(3, 1)] =
-          p[XY(0, 2)] = p[XY(1, 2)] = p[XY(2, 2)] = p[XY(3, 2)] = SrcPtr(0x5aa)[0];
-      p[XY(0, 0)] = p[XY(1, 0)] = p[XY(2, 0)] = p[XY(3, 0)] = SrcPtr(0x63c)[1];
-      p[XY(0, 3)] = p[XY(1, 3)] = p[XY(2, 3)] = p[XY(3, 3)] = SrcPtr(0x642)[1];
+      p[XY(0, 1)].v = p[XY(1, 1)].v = p[XY(2, 1)].v = p[XY(3, 1)].v =
+          p[XY(0, 2)].v = p[XY(1, 2)].v = p[XY(2, 2)].v = p[XY(3, 2)].v = SrcPtr(0x5aa)[0];
+      p[XY(0, 0)].v = p[XY(1, 0)].v = p[XY(2, 0)].v = p[XY(3, 0)].v = SrcPtr(0x63c)[1];
+      p[XY(0, 3)].v = p[XY(1, 3)].v = p[XY(2, 3)].v = p[XY(3, 3)].v = SrcPtr(0x642)[1];
     } else {
-      const uint16 *sp = SrcPtr(dung_floor_2_filler_tiles);
-      p[XY(0, 0)] = p[XY(2, 0)] = p[XY(0, 2)] = p[XY(2, 2)] = sp[0];
-      p[XY(1, 0)] = p[XY(3, 0)] = p[XY(1, 2)] = p[XY(3, 2)] = sp[1];
-      p[XY(0, 1)] = p[XY(2, 1)] = p[XY(0, 3)] = p[XY(2, 3)] = sp[4];
-      p[XY(1, 1)] = p[XY(3, 1)] = p[XY(1, 3)] = p[XY(3, 3)] = sp[5];
+      const zle16_t *sp = SrcPtr(dung_floor_2_filler_tiles);
+      p[XY(0, 0)].v = p[XY(2, 0)].v = p[XY(0, 2)].v = p[XY(2, 2)].v = sp[0].v;
+      p[XY(1, 0)].v = p[XY(3, 0)].v = p[XY(1, 2)].v = p[XY(3, 2)].v = sp[1].v;
+      p[XY(0, 1)].v = p[XY(2, 1)].v = p[XY(0, 3)].v = p[XY(2, 3)].v = sp[4].v;
+      p[XY(1, 1)].v = p[XY(3, 1)].v = p[XY(1, 3)].v = p[XY(3, 3)].v = sp[5].v;
     }
     src += 3;
   }
@@ -6242,12 +6242,12 @@ void DrawDoorToTileMap_North(int door, int r4_door) {  // 81fad7
 }
 
 void Object_Draw_DoorUp_4x3(uint16 src, int door) {  // 81fae3
-  const uint16 *s = SrcPtr(src);
-  uint16 *dst = &dung_bg2[dung_door_tilemap_address[door] >> 1];
+  const zle16_t *s = SrcPtr(src);
+  zle16_t *dst = (RAM16P(g_ram+0x2000) + (dung_door_tilemap_address[door] >> 1));
   for (int i = 0; i < 4; i++) {
-    dst[XY(0, 0)] = s[0];
-    dst[XY(0, 1)] = s[1];
-    dst[XY(0, 2)] = s[2];
+    dst[XY(0, 0)].v = s[0].v;
+    dst[XY(0, 1)].v = s[1].v;
+    dst[XY(0, 2)].v = s[2].v;
     dst += 1, s += 3;
   }
 }
@@ -6288,12 +6288,12 @@ void DrawDoorToTileMap_South(int door, int r4_door) {  // 81fb8e
 }
 
 void Object_Draw_DoorDown_4x3(uint16 src, int door) {  // 81fb9b
-  const uint16 *s = SrcPtr(src);
-  uint16 *dst = &dung_bg2[dung_door_tilemap_address[door] >> 1];
+  const zle16_t *s = SrcPtr(src);
+  zle16_t *dst = (RAM16P(g_ram+0x2000) + (dung_door_tilemap_address[door] >> 1));
   for (int i = 0; i < 4; i++) {
-    dst[XY(0, 1)] = s[0];
-    dst[XY(0, 2)] = s[1];
-    dst[XY(0, 3)] = s[2];
+    dst[XY(0, 1)].v = s[0].v;
+    dst[XY(0, 2)].v = s[1].v;
+    dst[XY(0, 3)].v = s[2].v;
     dst += 1, s += 3;
   }
 }
@@ -6373,10 +6373,10 @@ uint8 GetDoorGraphicsIndex(int door, int r4_door) {  // 81fd79
   return door_type;
 }
 
-void ClearExplodingWallFromTileMap_ClearOnePair(uint16 *dst, const uint16 *src) {  // 81fddb
+void ClearExplodingWallFromTileMap_ClearOnePair(zle16_t *dst, const zle16_t *src) {  // 81fddb
   for (int i = 2; i != 0; i--) {
     for (int j = 0; j < 12; j++)
-      dst[XY(0, j)] = src[j];
+      dst[XY(0, j)].v = src[j].v;
     dst++;
     src += 12;
   }
@@ -6451,9 +6451,9 @@ void Module_PreDungeon() {  // 82821e
   }
   overworld_fixed_color_plusminus = kLitTorchesColorPlus[x];
   Dungeon_ApproachFixedColor_variable(overworld_fixed_color_plusminus);
-  BYTE(palette_filter_countdown) = 0x1f;
+  (*(uint8*)(g_ram+(0xC007))) = 0x1f;
   mosaic_target_level = 0;
-  BYTE(darkening_or_lightening_screen) = 2;
+  (*(uint8*)(g_ram+(0xC009))) = 2;
   overworld_palette_aux_or_main = 0;
   link_speed_modifier = 0;
   button_mask_b_y = 0;
@@ -6627,12 +6627,12 @@ void Module07_01_SubtileTransition() {  // 82897c
 }
 
 void DungeonTransition_Subtile_ResetShutters() {  // 828995
-  BYTE(dung_flag_trapdoors_down) = 0;
-  BYTE(door_animation_step_indicator) = 7;
+  (*(uint8*)(g_ram+(0x468))) = 0;
+  (*(uint8*)(g_ram+(0x690))) = 7;
   uint8 bak = submodule_index;
   OperateShutterDoors();
   submodule_index = bak;
-  BYTE(palette_filter_countdown) = 31;
+  (*(uint8*)(g_ram+(0xC007))) = 31;
   mosaic_target_level = 0;
   subsubmodule_index++;
 }
@@ -6653,16 +6653,16 @@ void DungeonTransition_Subtile_ApplyFilter() {  // 8289d8
     return;
   }
   ApplyPaletteFilter_bounce();
-  if (BYTE(palette_filter_countdown))
+  if ((*(uint8*)(g_ram+(0xC007))))
     ApplyPaletteFilter_bounce();
 }
 
 void DungeonTransition_Subtile_TriggerShutters() {  // 8289f0
   ResetThenCacheRoomEntryProperties();
-  if (!BYTE(dung_flag_trapdoors_down)) {
-    BYTE(dung_flag_trapdoors_down)++;
-    BYTE(dung_cur_door_pos) = 0;
-    BYTE(door_animation_step_indicator) = 0;
+  if (!(*(uint8*)(g_ram+(0x468)))) {
+    (*(uint8*)(g_ram+(0x468)))++;
+    (*(uint8*)(g_ram+(0x68E))) = 0;
+    (*(uint8*)(g_ram+(0x690))) = 0;
     submodule_index = 5;
   }
 }
@@ -6691,7 +6691,7 @@ void Module07_02_01_LoadNextRoom() {  // 828a5b
   LoadTransAuxGFX_sprite();
   subsubmodule_index++;
   overworld_map_state = 0;
-  BYTE(dungeon_room_index2) = BYTE(dungeon_room_index);
+  (*(uint8*)(g_ram+(0x48E))) = (*(uint8*)(g_ram+(0xA0)));
   Dungeon_ResetSprites();
   if (!hdr_dungeon_dark_with_lantern)
     MirrorBg1Bg2Offs();
@@ -6810,7 +6810,7 @@ void DungeonTransition_RunFiltering() {  // 828b67
 void Module07_02_FadedFilter() {  // 828b92
   if (dung_want_lights_out | dung_want_lights_out_copy) {
     ApplyPaletteFilter_bounce();
-    if (BYTE(palette_filter_countdown))
+    if ((*(uint8*)(g_ram+(0xC007))))
       ApplyPaletteFilter_bounce();
   } else {
     subsubmodule_index++;
@@ -6819,10 +6819,10 @@ void Module07_02_FadedFilter() {  // 828b92
 
 void Dungeon_InterRoomTrans_State15() {  // 828bae
   ResetThenCacheRoomEntryProperties();
-  if (!BYTE(dung_flag_trapdoors_down) && (BYTE(dungeon_room_index) != 172 || dung_savegame_state_bits & 0x3000)) {
-    BYTE(dung_flag_trapdoors_down) = 1;
-    BYTE(dung_cur_door_pos) = 0;
-    BYTE(door_animation_step_indicator) = 0;
+  if (!(*(uint8*)(g_ram+(0x468))) && ((*(uint8*)(g_ram+(0xA0))) != 172 || dung_savegame_state_bits & 0x3000)) {
+    (*(uint8*)(g_ram+(0x468))) = 1;
+    (*(uint8*)(g_ram+(0x68E))) = 0;
+    (*(uint8*)(g_ram+(0x690))) = 0;
     submodule_index = 5;
   }
   Dungeon_PlayMusicIfDefeated();
@@ -6888,7 +6888,7 @@ table:
   case 0: ResetTransitionPropsAndAdvance_ResetInterface(); break;
   case 1:
     ApplyPaletteFilter_bounce();
-    if (BYTE(palette_filter_countdown))
+    if ((*(uint8*)(g_ram+(0xC007))))
       ApplyPaletteFilter_bounce();
     break;
   case 2: Dungeon_InitializeRoomFromSpecial(); break;
@@ -6906,7 +6906,7 @@ table:
   case 14: Dungeon_DoubleApplyAndIncrementGrayscale(); break;
   case 15: Dungeon_Staircase14(); break;
   case 16:
-    if (!(BYTE(darkening_or_lightening_screen) | BYTE(palette_filter_countdown)) && overworld_map_state == 5)
+    if (!((*(uint8*)(g_ram+(0xC009))) | (*(uint8*)(g_ram+(0xC007)))) && overworld_map_state == 5)
       ResetThenCacheRoomEntryProperties();
     break;
   }
@@ -6948,7 +6948,7 @@ void Dungeon_InitializeRoomFromSpecial() {  // 828ce2
   ResetStarTileGraphics();
   LoadTransAuxGFX();
   Dungeon_LoadCustomTileAttr();
-  BYTE(dungeon_room_index2) = BYTE(dungeon_room_index);
+  (*(uint8*)(g_ram+(0x48E))) = (*(uint8*)(g_ram+(0xA0)));
   Follower_Initialize();
   subsubmodule_index += 1;
 }
@@ -7035,13 +7035,13 @@ void Module07_07_06_SyncBG1and2() {  // 828e80
 
 void Module07_07_0F_FallingFadeIn() {  // 828ea1
   ApplyPaletteFilter_bounce();
-  if (BYTE(darkening_or_lightening_screen))
+  if ((*(uint8*)(g_ram+(0xC009))))
     return;
-  HIBYTE(tiledetect_which_y_pos[0]) = HIBYTE(link_y_coord) + (BYTE(link_y_coord) >= BYTE(tiledetect_which_y_pos[0]));
+  (*(uint8*)(g_ram+0x51+2*(0)+1)) = (*(uint8*)(g_ram+(0x20)+1)) + ((*(uint8*)(g_ram+(0x20))) >= (*(uint8*)(g_ram+0x51+2*(0))));
   Dungeon_SetBossMusicUnorthodox();
-  if (BYTE(dungeon_room_index) == 0x89 || BYTE(dungeon_room_index) == 0x4f)
+  if ((*(uint8*)(g_ram+(0xA0))) == 0x89 || (*(uint8*)(g_ram+(0xA0))) == 0x4f)
     return;
-  if (BYTE(dungeon_room_index) == 0xA7) {
+  if ((*(uint8*)(g_ram+(0xA0))) == 0xA7) {
     hud_floor_changed_timer = 0;
     dung_cur_floor = 1;
     return;
@@ -7309,7 +7309,7 @@ void Module07_0E_02_ApplyFilterIf() {  // 8290a1
 }
 
 void Dungeon_SyncBackgroundsFromSpiralStairs() {  // 8290c7
-  if (follower_indicator == 6 && BYTE(dungeon_room_index) == 100)
+  if (follower_indicator == 6 && (*(uint8*)(g_ram+(0xA0))) == 100)
     follower_indicator = 0;
   uint8 bak = link_is_on_lower_level;
   link_y_coord += which_staircase_index & 4 ? 48 : -48;
@@ -7389,7 +7389,7 @@ void Module07_0E_13_SetRoomAndLayerAndCache() {  // 8291dd
   TS_copy &= 0xf;
   if (!(which_staircase_index & 4))
     SpiralStairs_MakeNearbyWallsLowPriority();
-  BYTE(dungeon_room_index2) = BYTE(dungeon_room_index);
+  (*(uint8*)(g_ram+(0x48E))) = (*(uint8*)(g_ram+(0xA0)));
   ResetThenCacheRoomEntryProperties();
 }
 
@@ -7432,12 +7432,12 @@ void SpiralStairs_MakeNearbyWallsHighPriority_Exiting() {  // 8292b1
     x++;
   p -= 4;
   word_7E048C = p * 2;
-  uint16 *dst = &dung_bg2[p];
+  zle16_t *dst = (RAM16P(g_ram+0x2000) + (p));
   for (int i = 0; i < 5; i++) {
-    dst[XY(0, 0)] |= 0x2000;
-    dst[XY(0, 1)] |= 0x2000;
-    dst[XY(0, 2)] |= 0x2000;
-    dst[XY(0, 3)] |= 0x2000;
+    dst[XY(0, 0)].v |= 0x2000;
+    dst[XY(0, 1)].v |= 0x2000;
+    dst[XY(0, 2)].v |= 0x2000;
+    dst[XY(0, 3)].v |= 0x2000;
     dst += 1;
   }
 }
@@ -7498,7 +7498,7 @@ void Module07_11_00_PrepAndReset() {  // 8293bb
 void Module07_11_01_FadeOut() {  // 8293ed
   if (staircase_var1 < 9) {
     ApplyPaletteFilter_bounce();
-    if (BYTE(palette_filter_countdown) == 23)
+    if ((*(uint8*)(g_ram+(0xC007))) == 23)
       subsubmodule_index++;
   }
 }
@@ -7522,7 +7522,7 @@ void Module07_11_03_FilterAndLoadBGChars() {  // 829422
 void Module07_11_04_FilterDoBGAndResetSprites() {  // 82942a
   ApplyPaletteFilter_bounce();
   DungeonTransition_TriggerBGC56UpdateAndAdvance();
-  BYTE(dungeon_room_index2) = BYTE(dungeon_room_index);
+  (*(uint8*)(g_ram+(0x48E))) = (*(uint8*)(g_ram+(0xA0)));
   Dungeon_ResetSprites();
 }
 
@@ -7571,7 +7571,7 @@ void Module07_11_09_LoadSpriteGraphics() {  // 8294e0
 }
 
 void Module07_11_19_SetSongAndFilter() {  // 8294ed
-  if (overworld_map_state == 5 && !BYTE(darkening_or_lightening_screen)) {
+  if (overworld_map_state == 5 && !(*(uint8*)(g_ram+(0xC009)))) {
     subsubmodule_index++;
     if (dungeon_room_index == 48)
       music_control = 0x1c;
@@ -7686,7 +7686,7 @@ void Module07_18_RescuedMaiden() {  // 82980a
   case 0:
     PaletteFilter_RestoreBGSubstractiveStrict();
     main_palette_buffer[0] = main_palette_buffer[32];
-    if (BYTE(darkening_or_lightening_screen) != 255)
+    if ((*(uint8*)(g_ram+(0xC009))) != 255)
       return;
     for (int i = 0; i < 0x1000; i++)
       dung_bg2[i] = dung_bg1[i] = 0x1ec;
@@ -7704,11 +7704,11 @@ void Module07_18_RescuedMaiden() {  // 82980a
     TS_copy = 1;
     flag_is_link_immobilized = 2;
     int j = FindInWordArray(kBossRooms, dungeon_room_index, countof(kBossRooms)) - 4;
-    uint16 *dst = &dung_bg1[kCrystal_Tab0[j] >> 1];
+    zle16_t *dst = (RAM16P(g_ram+0x4000) + (kCrystal_Tab0[j] >> 1));
     for (int n = 0, t = 0; n != 4; n++) {
       for (int i = 0; i != 8; i++, t++) {
-        dst[i + XY(0, 0)] = 0x1f80 | t;
-        dst[i + XY(0, 4)] = 0x1f88 | t;
+        dst[i + XY(0, 0)].v = 0x1f80 | t;
+        dst[i + XY(0, 4)].v = 0x1f88 | t;
       }
       t += 8, dst += XY(0, 1);
     }
@@ -7749,7 +7749,7 @@ void Module07_1A_RoomDraw_OpenTriforceDoor_bounce() {  // 829916
 
   flag_is_link_immobilized = 1;
   if (R16 != 0) {
-    if (--BYTE(R16) || --HIBYTE(R16))
+    if (--(*(uint8*)(g_ram+(0xc8))) || --(*(uint8*)(g_ram+(0xc8)+1)))
       return;
     sound_effect_ambient = 21;
     link_force_hold_sword_up = 0;
@@ -7759,13 +7759,13 @@ void Module07_1A_RoomDraw_OpenTriforceDoor_bounce() {  // 829916
   if (++subsubmodule_index & 3)
     return;
 
-  const uint16 *src = SrcPtr(kOpenGanonDoor_Tab[(subsubmodule_index - 4) >> 2]);
-  uint16 *dst = &dung_bg2[0];
+  const zle16_t *src = SrcPtr(kOpenGanonDoor_Tab[(subsubmodule_index - 4) >> 2]);
+  zle16_t *dst = (RAM16P(g_ram+0x2000) + (0));
   for (int i = 0; i < 8; i++) {
-    dst[XY(44, 3)] = src[0];
-    dst[XY(44, 4)] = src[1];
-    dst[XY(44, 5)] = src[2];
-    dst[XY(44, 6)] = src[3];
+    dst[XY(44, 3)].v = src[0].v;
+    dst[XY(44, 4)].v = src[1].v;
+    dst[XY(44, 5)].v = src[2].v;
+    dst[XY(44, 6)].v = src[3].v;
     dst += XY(1, 0), src += 4;
   }
 
@@ -7831,7 +7831,7 @@ void Module11_02_LoadEntrance() {  // 829b1c
   CGWSEL_copy = 2;
   Dungeon_LoadEntrance();
 
-  uint8 dung = BYTE(cur_palace_index_x2);
+  uint8 dung = (*(uint8*)(g_ram+(0x40C)));
   link_num_keys = (dung != 255) ? link_keys_earned_per_dungeon[((dung == 2) ? 0 : dung) >> 1] : 255;
   Hud_Rebuild();
   link_this_controls_sprite_oam = 4;
@@ -7975,13 +7975,13 @@ void Dungeon_StartInterRoomTrans_Right() {  // 82b63a
   submodule_index = 1;
   if (!link_quadrant_x) {
     RoomBounds_AddB(&room_bounds_x);
-    BYTE(dungeon_room_index_prev) = dungeon_room_index;
+    (*(uint8*)(g_ram+(0xA2))) = dungeon_room_index;
     if ((link_tile_below & 0xcf) == 0x89) {
       dungeon_room_index = dung_hdr_travel_destinations[4];
       Dungeon_AdjustForTeleportDoors(dungeon_room_index - 1, 1);
     } else {
       if ((uint8)dungeon_room_index != (uint8)dungeon_room_index2) {
-        BYTE(dungeon_room_index_prev) = dungeon_room_index2;
+        (*(uint8*)(g_ram+(0xA2))) = dungeon_room_index2;
         Dungeon_AdjustAfterSpiralStairs();
       }
       dungeon_room_index += 1;
@@ -8178,7 +8178,7 @@ void DungeonTransition_ScrollRoom() {  // 82be03
       link_y_coord += kStaircaseTab3[i];
   }
 
-  if ((t & 0x1fc) == (&up_down_scroll_target)[i]) {
+  if ((t & 0x1fc) == ((g_ram+0x610))[i]) {
     SetAndSaveVisitedQuadrantFlags();
     subsubmodule_index++;
     transition_counter = 0;
@@ -8192,7 +8192,7 @@ void Module07_11_0A_ScrollCamera() {  // 82be75
   link_visibility_status = tagalong_var5 = 12;
   int i = overworld_screen_transition;
   BG1VOFS_copy2 = BG2VOFS_copy2 = (BG2VOFS_copy2 + kStaircaseTab3[i]) & ~3;
-  if ((BG1VOFS_copy2 & 0x1fc) == (&up_down_scroll_target)[i]) {
+  if ((BG1VOFS_copy2 & 0x1fc) == ((g_ram+0x610))[i]) {
     if (submodule_index >= 18)
       i += 2;
     link_y_coord += kStaircaseTab5[i];
@@ -8220,9 +8220,9 @@ void SubtileTransitionCalculateLanding() {  // 82c12c
   int8 v = kStaircaseTab2[a];
   v -= (v < 0) ? -8 : 8;
   if (st & 2)
-    BYTE(link_x_coord) = v;
+    (*(uint8*)(g_ram+(0x22))) = v;
   else
-    BYTE(link_y_coord) = v;
+    (*(uint8*)(g_ram+(0x20))) = v;
   link_visibility_status = 0;
 }
 
@@ -8239,7 +8239,7 @@ void Dungeon_IntraRoomTrans_State5() {  // 82c170
   if (byte_7E004E == 2 || byte_7E004E == 4)
     is_standing_in_doorway = 0;
   // todo: write to tiledetect_diag_state
-  BYTE(force_move_any_direction) = 0;
+  (*(uint8*)(g_ram+(0x49))) = 0;
   byte_7E004E = 0;
   overworld_screen_transition = 0;
   subsubmodule_index++;
@@ -8250,10 +8250,10 @@ bool DungeonTransition_MoveLinkOutDoor() {  // 82c191
   int r0 = overworld_screen_transition & 1 ? -2 : 2;
   if ((overworld_screen_transition & 2) == 0) {
     link_y_coord += r0;
-    return (BYTE(link_y_coord) & 0xfe) == x;
+    return ((*(uint8*)(g_ram+(0x20))) & 0xfe) == x;
   } else {
     link_x_coord += r0;
-    return (BYTE(link_x_coord) & 0xfe) == x;
+    return ((*(uint8*)(g_ram+(0x22))) & 0xfe) == x;
   }
 }
 
@@ -8355,7 +8355,7 @@ void Dungeon_LoadEntrance() {  // 82d8b3
     link_direction_facing = 2;
     main_tile_theme_index = kStartingPoint_blockset[i];
     dung_cur_floor = kStartingPoint_floor[i];
-    BYTE(cur_palace_index_x2) = kStartingPoint_palace[i];
+    (*(uint8*)(g_ram+(0x40C))) = kStartingPoint_palace[i];
     is_standing_in_doorway = 0;
     link_is_on_lower_level = kStartingPoint_startingBg[i] >> 4;
     link_is_on_lower_level_mirror = kStartingPoint_startingBg[i] & 0xf;
@@ -8406,7 +8406,7 @@ void Dungeon_LoadEntrance() {  // 82d8b3
       queued_music_control = 18;
 
     dung_cur_floor = kEntranceData_floor[i];
-    BYTE(cur_palace_index_x2) = kEntranceData_palace[i];
+    (*(uint8*)(g_ram+(0x40C))) = kEntranceData_palace[i];
     is_standing_in_doorway = kEntranceData_doorwayOrientation[i];
     link_is_on_lower_level = kEntranceData_startingBg[i] >> 4;
     link_is_on_lower_level_mirror = kEntranceData_startingBg[i] & 0xf;
@@ -8420,14 +8420,14 @@ void Dungeon_LoadEntrance() {  // 82d8b3
   }
   player_oam_x_offset = player_oam_y_offset = 0x80;
   link_direction_mask_a = link_direction_mask_b = 0xf;
-  BYTE(link_z_coord) = link_actual_vel_z = 0xff;
-  memcpy(movable_block_datas, kMovableBlockDataInit, kMovableBlockDataInit_SIZE);
-  memcpy(&movable_block_datas[99], kTorchDataInit, 116); // junk
-  memcpy(dung_torch_data, kTorchDataInit, kTorchDataInit_SIZE);
-  memcpy(&dung_torch_data[144], kTorchDataJunk, kTorchDataJunk_SIZE);
+  (*(uint8*)(g_ram+(0x24))) = link_actual_vel_z = 0xff;
+  memcpy(movable_block_datas, RAM16P(g_asset_ptrs[53]), kMovableBlockDataInit_SIZE);
+  memcpy(&movable_block_datas[99], RAM16P(g_asset_ptrs[54]), 116); // junk
+  memcpy(RAM16P(g_ram+0xFB40), RAM16P(g_asset_ptrs[54]), kTorchDataInit_SIZE);
+  memcpy((RAM16P(g_ram+0xFB40) + (144)), RAM16P(g_asset_ptrs[55]), kTorchDataJunk_SIZE);
 
-  memset(memorized_tile_addr, 0, 0x100);
-  memset(pots_revealed_in_room, 0, 0x280);
+  memset(RAM16P(g_ram+0xF800), 0, 0x100);
+  memset(RAM16P(g_ram+0xF580), 0, 0x280);
   orange_blue_barrier_state = 0;
   byte_7E04BC = 0;
 }
@@ -8453,7 +8453,7 @@ void PushBlock_HandleFalling(uint8 y) {  // 87edf9
   pushedblocks_maybe_timeout = 9;
 
   if (++pushedblocks_some_index == 4) {
-    BYTE(dung_replacement_tile_state[y]) = 0;
+    (*(uint8*)(g_ram+0x500+2*(y))) = 0;
     pushedblocks_some_index = 0;
     int i = (index_of_changable_dungeon_objs[1] - 1) == y;
     index_of_changable_dungeon_objs[i] = 0;
@@ -8531,8 +8531,8 @@ void PushBlock_HandleCollision(uint8 i, uint16 x, uint16 y) {  // 87efb9
   uint16 r4 = o + kPushBlock_C[dir];
   uint16 r6 = o + kPushBlock_D[dir];
 
-  uint16 *coord_p = (dir < 2) ? &link_y_coord : &link_x_coord;
-  uint16 r8 = *coord_p + kPushBlock_E[dir];
+  zle16_t *coord_p = (dir < 2) ? (g_ram+0x20) : (g_ram+0x22);
+  uint16 r8 = coord_p->v + kPushBlock_E[dir];
   uint16 r10 = ((dir < 2) ? y : x) + kPushBlock_F[dir];
 
   bitmask_of_dragstate &= ~4;
@@ -8541,7 +8541,7 @@ void PushBlock_HandleCollision(uint8 i, uint16 x, uint16 y) {  // 87efb9
     if (link_direction_facing == pushedblock_facing[i])
       bitmask_of_dragstate |= index_of_changable_dungeon_objs[i] ? 4 : 1;
     if (dir & 1 ? (r8 >= r10 && (uint16)(r8 - r10) < 8) : (uint16)(r8 - r10) >= 0xfff8) {
-      *coord_p -= r8 - r10;
+      coord_p->v -= r8 - r10;
       *(dir & 2 ? &link_x_vel : &link_y_vel) -= r8 - r10;
     }
   }
@@ -8756,8 +8756,8 @@ void CrystalCutscene_Initialize() {  // 9ecce3
   static const uint16 kCrystalMaiden_Pal[8] = { 0, 0x3821, 0x4463, 0x54a5, 0x5ce7, 0x6d29, 0x79ad, 0x7e10 };
 
   CGADSUB_copy = 0x33;
-  BYTE(palette_filter_countdown) = 0;
-  BYTE(darkening_or_lightening_screen) = 0;
+  (*(uint8*)(g_ram+(0xC007))) = 0;
+  (*(uint8*)(g_ram+(0xC009))) = 0;
   Palette_AssertTranslucencySwap();
   PaletteFilter_Crystal();
   for (int i = 0; i < 8; i++)
@@ -8781,7 +8781,7 @@ void CrystalCutscene_SpawnMaiden() {  // 9ecd48
   sprite_floor[j] = 0;
   sprite_A[j] = Ancilla_TerminateSelectInteractives(j);
   item_receipt_method = 0;
-  if (BYTE(cur_palace_index_x2) == 24) {
+  if ((*(uint8*)(g_ram+(0x40C))) == 24) {
     sprite_oam_flags[j] = 9;
     follower_indicator = 1;
   } else {

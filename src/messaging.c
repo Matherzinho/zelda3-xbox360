@@ -256,11 +256,11 @@ const uint8 *GetLightOverworldTilemap() {
 
 void SaveGameFile() {  // 80894a
   int offs = ((srm_var1 >> 1) - 1) * 0x500;
-  memcpy(g_zenv.sram + offs, save_dung_info, 0x500);
-  memcpy(g_zenv.sram + offs + 0xf00, save_dung_info, 0x500);
+  memcpy(g_zenv.sram + offs, RAM16P(g_ram+0xF000), 0x500);
+  memcpy(g_zenv.sram + offs + 0xf00, RAM16P(g_ram+0xF000), 0x500);
   uint16 t = 0x5a5a;
   for (int i = 0; i < 0x4fe; i += 2)
-    t -= *(uint16 *)((char *)save_dung_info + i);
+    t -= *(uint16 *)((char *)RAM16P(g_ram+0xF000) + i);
   word_7EF4FE = t;
   WORD(g_zenv.sram[offs + 0x4fe]) = t;
   WORD(g_zenv.sram[offs + 0x4fe + 0xf00]) = t;
@@ -315,9 +315,9 @@ void Module0E_05_DesertPrayer() {  // 80f8b1
   case 1: ApplyPaletteFilter_bounce(); break;
   case 2:
     DesertPrayer_InitializeIrisHDMA();
-    BYTE(palette_filter_countdown) = mosaic_target_level - 1;
+    (*(uint8*)(g_ram+(0xC007))) = mosaic_target_level - 1;
     mosaic_target_level = 0;
-    BYTE(darkening_or_lightening_screen) = 2;
+    (*(uint8*)(g_ram+(0xC009))) = 2;
     break;
   case 3:
     ApplyPaletteFilter_bounce();
@@ -402,13 +402,13 @@ void CleanUpAndPrepDesertPrayerHDMA() {  // 82c7b8
   TMW_copy = TM_copy;
   TSW_copy = TS_copy;
   HDMAEN_copy = 0x80;
-  memset(hdma_table_dynamic, 0, 240 * sizeof(uint16));
+  memset(RAM16P(g_ram+0x1DBA0), 0, 240 * sizeof(uint16));
 }
 
 void DesertPrayer_InitializeIrisHDMA() {  // 87ea06
   CleanUpAndPrepDesertPrayerHDMA();
   spotlight_var1 = 0x26;
-  BYTE(spotlight_var2) = 0;
+  (*(uint8*)(g_ram+(0x67E))) = 0;
   DesertPrayer_BuildIrisHDMATable();
   subsubmodule_index++;
 }
@@ -440,7 +440,7 @@ void DesertPrayer_BuildIrisHDMATable() {  // 87ea27
         r2 = spotlight_var3 + pair.b;
         r0 = spotlight_var3 - pair.b;
       }
-      k = (r14 - BYTE(spotlight_var4) - 1);
+      k = (r14 - (*(uint8*)(g_ram+(0x67A))) - 1);
     }
     uint8 t6 = (r0 < 256) ? r0 : (r0 < 512) ? 255 : 0;
     uint8 t7 = (r2 < 256) ? r2 : 255;
@@ -448,7 +448,7 @@ void DesertPrayer_BuildIrisHDMATable() {  // 87ea27
     if (k < 240)
      hdma_table_dynamic[k] = (r6 == 0xffff) ? 0xff : r6;
     if (sign16(spotlight_y_lower) || (r4 >= spotlight_y_lower && r4 < spotlight_y_upper)) {
-      k = BYTE(spotlight_var4) - 2 + r14;
+      k = (*(uint8*)(g_ram+(0x67A))) - 2 + r14;
       if (k < 240)
         hdma_table_dynamic[k] = (r6 == 0xffff) ? 0xff : r6;
       spotlight_var4++;
@@ -458,11 +458,11 @@ void DesertPrayer_BuildIrisHDMATable() {  // 87ea27
 
   if (subsubmodule_index != 4)
     return;
-  if (BYTE(spotlight_var2) != 1 && (filtered_joypad_H | filtered_joypad_L) & 0xc0) {
-    BYTE(spotlight_var2) = 1;
-    BYTE(spotlight_var1) >>= 1;
+  if ((*(uint8*)(g_ram+(0x67E))) != 1 && (filtered_joypad_H | filtered_joypad_L) & 0xc0) {
+    (*(uint8*)(g_ram+(0x67E))) = 1;
+    (*(uint8*)(g_ram+(0x67C))) >>= 1;
   }
-  if (BYTE(spotlight_var2) && (BYTE(spotlight_var1) += 8) >= 0xc0) {
+  if ((*(uint8*)(g_ram+(0x67E))) && ((*(uint8*)(g_ram+(0x67C))) += 8) >= 0xc0) {
     byte_7E02F0 ^= 1;
     music_control = 0xf3;
     sound_effect_ambient = 0;
@@ -514,10 +514,10 @@ Pair16U DesertHDMA_CalculateIrisShapeLine() {  // 87ecdc
     0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
     0,
   };
-  uint8 t = snes_divide(BYTE(spotlight_var4) << 8, BYTE(spotlight_var1)) >> 1;
-  uint8 r6 = BYTE(spotlight_var2) ? kPrayingScene_Tab1[t] : kPrayingScene_Tab0[t];
-  uint16 r8 = r6 * BYTE(spotlight_var1) >> 8;
-  if (BYTE(spotlight_var2))
+  uint8 t = snes_divide((*(uint8*)(g_ram+(0x67A))) << 8, (*(uint8*)(g_ram+(0x67C)))) >> 1;
+  uint8 r6 = (*(uint8*)(g_ram+(0x67E))) ? kPrayingScene_Tab1[t] : kPrayingScene_Tab0[t];
+  uint16 r8 = r6 * (*(uint8*)(g_ram+(0x67C))) >> 8;
+  if ((*(uint8*)(g_ram+(0x67E))))
     r8 <<= 1;
   Pair16U ret = { r6, r8 };
   return ret;
@@ -617,8 +617,8 @@ void Death_Func1() {  // 89f2a4
   link_cape_mode = 0;
   mapbak_bg1_x_offset = palette_filter_countdown;
   mapbak_bg1_y_offset = darkening_or_lightening_screen;
-  memcpy(mapbak_palette, aux_palette_buffer, 256);
-  memset(aux_palette_buffer + 32, 0, 192);
+  memcpy(RAM16P(g_ram+0x1DD80), RAM16P(g_ram+0xC300), 256);
+  memset(RAM16P(g_ram+0xC300) + 32, 0, 192);
   palette_filter_countdown = 0;
   darkening_or_lightening_screen = 0;
   bg1_x_offset = 0;
@@ -674,8 +674,8 @@ void GameOver_IrisWipe() {  // 89f350
   TS_copy = 0;
   CGADSUB_copy = 32;
   some_menu_ctr = 64;
-  BYTE(palette_filter_countdown) = 0;
-  BYTE(darkening_or_lightening_screen) = 0;
+  (*(uint8*)(g_ram+(0xC007))) = 0;
+  (*(uint8*)(g_ram+(0xC009))) = 0;
   Death_PrepFaint();
 }
 
@@ -686,7 +686,7 @@ void GameOver_SplatAndFade() {  // 89f3de
   }
   PaletteFilter_RestoreBGSubstractiveStrict();
   main_palette_buffer[0] = main_palette_buffer[32];
-  if (BYTE(darkening_or_lightening_screen) != 0xff)
+  if ((*(uint8*)(g_ram+(0xC009))) != 0xff)
     return;
   mosaic_level = 0;
   mosaic_inc_or_dec = 0;
@@ -792,7 +792,7 @@ void Death_Func15(bool count_as_death) {  // 89f50f
     follower_indicator = 0;
 
   death_var4 = link_health_current = kHealthAfterDeath[link_health_capacity >> 3];
-  uint8 i = BYTE(cur_palace_index_x2);
+  uint8 i = (*(uint8*)(g_ram+(0x40C)));
   if (i != 0xff)
     link_keys_earned_per_dungeon[(i == 2 ? 0 : i) >> 1] = link_num_keys;
   Sprite_ResetAll();
@@ -803,7 +803,7 @@ void Death_Func15(bool count_as_death) {  // 89f50f
     if (!player_is_indoors)
       goto outdoors;
 
-    if (follower_indicator != 1 && BYTE(cur_palace_index_x2) != 255) {
+    if (follower_indicator != 1 && (*(uint8*)(g_ram+(0x40C))) != 255) {
       death_var4 = 0;
     } else {
       queued_music_control = 0;
@@ -845,7 +845,7 @@ void Death_Func15(bool count_as_death) {  // 89f50f
     BG2HOFS_copy = 0;
     BG1VOFS_copy = 0;
     BG2VOFS_copy = 0;
-    memset(save_dung_info, 0, 256 * 5);
+    memset(RAM16P(g_ram+0xF000), 0, 256 * 5);
     flag_which_music_type = 0;
     LoadOverworldSongs();
   }
@@ -868,8 +868,8 @@ void RevivalFairy_Main_bounce() {  // 89f6b4
 
 void GameOver_RiseALittle() {  // 89f6b9
   if (link_hearts_filler == 0) {
-    memcpy(aux_palette_buffer, mapbak_palette, 256);
-    memset(main_palette_buffer + 32, 0, 192);
+    memcpy(RAM16P(g_ram+0xC300), RAM16P(g_ram+0x1DD80), 256);
+    memset(RAM16P(g_ram+0xC500) + 32, 0, 192);
     main_palette_buffer[0] = 0;
     palette_filter_countdown = 0;
     darkening_or_lightening_screen = 2;
@@ -900,7 +900,7 @@ void GameOver_Restore0E() {  // 89f735
 void GameOver_ResituateLink() {  // 89f742
   PaletteFilter_RestoreBGAdditiveStrict();
   main_palette_buffer[0] = main_palette_buffer[32];
-  if (BYTE(palette_filter_countdown) != 32)
+  if ((*(uint8*)(g_ram+(0xC007))) != 32)
     return;
   if (!player_is_indoors)
     Overworld_SetFixedColAndScroll();
@@ -1016,11 +1016,11 @@ void FluteMenu_LoadSelectedScreen() {  // 8ab8c5
   hud_palette = 0;
   InitializeTilesets();
   overworld_map_state++;
-  BYTE(dung_draw_width_indicator) = 0;
+  (*(uint8*)(g_ram+(0xB2))) = 0;
   Overworld_LoadOverlays2();
   submodule_index--;
   sound_effect_2 = 16;
-  uint8 m = overworld_music[BYTE(overworld_screen_index)];
+  uint8 m = overworld_music[(*(uint8*)(g_ram+(0x8A)))];
   sound_effect_ambient = m >> 4;
   music_control = ZeldaIsPlayingMusicTrack(m & 0xf) ? 0xf3 : m & 0xf;
 }
@@ -1094,9 +1094,9 @@ void WorldMap_FadeOut() {  // 8ab9a3
   mapbak_BG2VOFS_copy2 = BG2VOFS_copy2;
   BG1HOFS_copy2 = BG2HOFS_copy2 = BG3HOFS_copy2 = 0;
   BG1VOFS_copy2 = BG2VOFS_copy2 = BG3VOFS_copy2 = 0;
-  WORD(mapbak_CGWSEL) = WORD(CGWSEL_copy);
+  mapbak_CGWSEL = WORD(CGWSEL_copy);
   link_dma_graphics_index = 0x1fc;
-  if (BYTE(overworld_screen_index) < 0x80) {
+  if ((*(uint8*)(g_ram+(0x8A))) < 0x80) {
     link_y_coord_spexit = link_y_coord;
     link_x_coord_spexit = link_x_coord;
   }
@@ -1163,12 +1163,12 @@ void WorldMap_PlayerControl() {  // 8abae6
     overworld_map_state++;
     return;
   }
-  if (BYTE(dung_draw_width_indicator)) {
-    BYTE(dung_draw_width_indicator)--;
+  if ((*(uint8*)(g_ram+(0xB2)))) {
+    (*(uint8*)(g_ram+(0xB2)))--;
   } else if (filtered_joypad_L & 0x30 || DidPressButtonForMap()) {
     // next zoom level
     sound_effect_2 = 36;
-    BYTE(dung_draw_width_indicator) = 8;
+    (*(uint8*)(g_ram+(0xB2))) = 8;
 
     int t = overworld_map_flags ^ 1;
     overworld_map_flags = t | 0x80;
@@ -1205,8 +1205,8 @@ void WorldMap_RestoreGraphics() {  // 8abbd6
     return;
   EnableForceBlank();
   overworld_map_state++;
-  memcpy(main_palette_buffer, aux_palette_buffer, 512);
-  WORD(CGWSEL_copy) = WORD(mapbak_CGWSEL);
+  memcpy(RAM16P(g_ram+0xC500), RAM16P(g_ram+0xC300), 512);
+  WORD(CGWSEL_copy) = mapbak_CGWSEL;
   BG3HOFS_copy2 = BG3VOFS_copy2 = 0;
   BG1HOFS_copy2 = mapbak_BG1HOFS_copy2;
   BG2HOFS_copy2 = mapbak_BG2HOFS_copy2;
@@ -1228,14 +1228,14 @@ void WorldMap_ExitMap() {  // 8abc54
   hud_palette = 0;
   InitializeTilesets();
   flag_update_cgram_in_nmi++;
-  BYTE(dung_draw_width_indicator) = 0;
+  (*(uint8*)(g_ram+(0xB2))) = 0;
   overworld_map_state = 0;
   subsubmodule_index = 0;
   main_module_index = saved_module_for_menu;
   submodule_index = 32;
   vram_upload_offset = 0;
   HDMAEN_copy = mapbak_HDMAEN;
-  sound_effect_ambient = overworld_music[BYTE(overworld_screen_index)] >> 4;
+  sound_effect_ambient = overworld_music[(*(uint8*)(g_ram+(0x8A)))] >> 4;
   sound_effect_2 = 0x10;
   music_control = 0xf3;
 }
@@ -1291,7 +1291,7 @@ void WorldMap_HandleSprites() {  // 8abf66
   uint16 xbak = link_x_coord_spexit;
 
   int k = 15;
-  if (BYTE(overworld_screen_index) < 0x40 && (bird_travel_x_lo[k] | bird_travel_x_hi[k] | bird_travel_y_lo[k] | bird_travel_y_hi[k])) {
+  if ((*(uint8*)(g_ram+(0x8A))) < 0x40 && (bird_travel_x_lo[k] | bird_travel_x_hi[k] | bird_travel_y_lo[k] | bird_travel_y_hi[k])) {
     if (!frame_counter)
       birdtravel_var1[k]++;
     link_x_coord_spexit = bird_travel_x_hi[k] << 8 | bird_travel_x_lo[k];
@@ -1535,7 +1535,7 @@ void Module0E_03_01_00_PrepMapGraphics() {  // 8ae0e4
   mapbak_TM = TM_copy;
   mapbak_TS = TS_copy;
   main_tile_theme_index = 32;
-  sprite_graphics_index = 0x80 | BYTE(cur_palace_index_x2) >> 1;
+  sprite_graphics_index = 0x80 | (*(uint8*)(g_ram+(0x40C))) >> 1;
   aux_tile_theme_index = 64;
   TM_copy = 0x16;
   TS_copy = 1;
@@ -1558,7 +1558,7 @@ void Module0E_03_01_01_DrawLEVEL() {  // 8ae1a4
   // Display FLOOR instead of MAP
   int i = kDungMap_Tab0[cur_palace_index_x2 >> 1] >> 1;
   if (i >= 0) {
-    uint8 *dst = (uint8 *)&vram_upload_data[0];
+    uint8 *dst = (uint8 *)(RAM16P(g_ram+0x1002) + (0));
     dst[32] = 0xff;
     WORD(dst[14   ]) = kDungMap_Tab1[i];
     WORD(dst[14+16]) = kDungMap_Tab2[i];
@@ -1594,7 +1594,7 @@ void Module0E_03_01_02_DrawFloorsBackdrop() {  // 8ae1f3
   } while (t7 += 0x20, t7 < 0x1360);
   vram_upload_offset = offs * 2;
   DungeonMap_BuildFloorListBoxes(t5, t7_org);
-  ((uint8 *)vram_upload_data)[vram_upload_offset] = 0xff;
+  ((uint8 *)RAM16P(g_ram+0x1002))[vram_upload_offset] = 0xff;
   dungmap_init_state++;
   nmi_load_bg_from_vram = 1;
 }
@@ -1636,7 +1636,7 @@ void Module0E_03_01_03_DrawRooms() {  // 8ae384
   DungeonMap_DrawFloorNumbersByRoom(0, ~0x1000);
   DungeonMap_DrawBorderForRooms(0, ~0x1000);
   DungeonMap_DrawDungeonLayout(0);
-  BYTE(dungmap_cur_floor)--;
+  (*(uint8*)(g_ram+(0x20E)))--;
   DungeonMap_DrawFloorNumbersByRoom(0x300, ~0x1000);
   DungeonMap_DrawBorderForRooms(0x300, ~0x1000);
   DungeonMap_DrawDungeonLayout(0x300);
@@ -1644,7 +1644,7 @@ void Module0E_03_01_03_DrawRooms() {  // 8ae384
   WORD(g_ram[6]) = 0;
   WORD(g_ram[10]) = 0;
   nmi_subroutine_index = 8;
-  BYTE(nmi_load_target_addr) = 0x22;
+  (*(uint8*)(g_ram+(0x116))) = 0x22;
   dungmap_init_state++;
 }
 
@@ -1812,7 +1812,7 @@ void DungeonMap_DrawRoomMarkers() {  // 8ae823
       break;
     if ((int16)(dungmap_var7 -= 0x10) < 0) {
       dungmap_var7 = 0x40;
-      BYTE(dungmap_var8) -= 0x10;
+      (*(uint8*)(g_ram+(0xFAA))) -= 0x10;
     }
   }
 
@@ -2056,7 +2056,7 @@ void DungeonMap_RecoverGFX() {  // 8aef19
   subsubmodule_index = 0;
   HDMAEN_copy = hdmaen_bak;
 
-  memcpy(main_palette_buffer, mapbak_palette, sizeof(uint16) * 256);
+  memcpy(RAM16P(g_ram+0xC500), RAM16P(g_ram+0x1DD80), sizeof(uint16) * 256);
   COLDATA_copy0 |= overworld_fixed_color_plusminus;
   COLDATA_copy1 |= overworld_fixed_color_plusminus;
   COLDATA_copy2 |= overworld_fixed_color_plusminus;
@@ -2093,7 +2093,7 @@ void CopySaveToWRAM() {  // 8ccfbb
   bird_travel_y_lo[k] = 0;
   birdtravel_var1[k] = 0;
 
-  memcpy(save_dung_info, &g_zenv.sram[WORD(g_ram[0])], 0x500);
+  memcpy(RAM16P(g_ram+0xF000), &g_zenv.sram[WORD(g_ram[0])], 0x500);
 
   bg_tile_animation_countdown = 7;
   word_7EC013 = 7;
@@ -2139,12 +2139,12 @@ void Text_Initialize() {  // 8ec483
 }
 
 void Text_Initialize_initModuleStateLoop() {  // 8ec493
-  memcpy(&text_msgbox_topleft_copy, kText_InitializationData, 32);
+  memcpy((g_ram+0x1CD0), kText_InitializationData, 32);
   Text_InitVwfState();
   RenderText_SetDefaultWindowPosition();
   text_tilemap_cur = 0x3980;
   Text_LoadCharacterBuffer();
-  memset(messaging_buf, 0, 0x7e0);
+  memset(RAM16P(g_ram+0x10000), 0, 0x7e0);
   nmi_subroutine_index = 2;
   nmi_disable_core_updates = 2;
 }
@@ -2343,7 +2343,7 @@ void Text_Render() {  // 8ec8d9
 
 void RenderText_Draw_Border() {  // 8ec8ea
   RenderText_DrawBorderInitialize();
-  uint16 *d = RenderText_DrawBorderRow(vram_upload_data, 0);
+  uint16 *d = RenderText_DrawBorderRow(RAM16P(g_ram+0x1002), 0);
   for(int i = 0; i != 6; i++)
     d = RenderText_DrawBorderRow(d, 6);
   d = RenderText_DrawBorderRow(d, 12);
@@ -2354,7 +2354,7 @@ void RenderText_Draw_Border() {  // 8ec8ea
 void RenderText_Draw_BorderIncremental() {  // 8ec919
   nmi_load_bg_from_vram = 1;
   uint8 a = text_incremental_state;
-  uint16 *d = vram_upload_data;
+  uint16 *d = RAM16P(g_ram+0x1002);
   if (a)
     a = (a < 7) ? 1 : 2;
   switch (a) {
@@ -2399,7 +2399,7 @@ RESTART:;
   case kTextCmd_NextPic:  // RenderText_Draw_NextImage
     if (main_module_index == 20) {
       PaletteFilterHistory();
-      if (!BYTE(palette_filter_countdown))
+      if (!(*(uint8*)(g_ram+(0xC007))))
         goto COMMAND_DONE;
     } else {
       goto COMMAND_DONE;
@@ -2453,7 +2453,7 @@ RESTART:;
       text_wait_countdown = kText_WaitDurations[TEXTCMD_PARAM(cmd)] - 1;
       break;
     case 1:
-      BYTE(text_wait_countdown) = 0;
+      (*(uint8*)(g_ram+(0x1CE0))) = 0;
       goto COMMAND_DONE;
     default:
       text_wait_countdown--;
@@ -2498,7 +2498,7 @@ RESTART:;
 
 void RenderText_Draw_Finish() {  // 8eca35
   RenderText_DrawBorderInitialize();
-  uint16 *d = vram_upload_data;
+  uint16 *d = RAM16P(g_ram+0x1002);
   d[0] = swap16(text_msgbox_topleft_copy);
   d[1] = 0x2E42;
   d[2] = 0x387F;
@@ -2530,7 +2530,7 @@ void VWF_RenderSingle(int c) {  // 8ecab8
   uint16 r10 = (c & 0x70) * 2 + (c & 0xf);
   uint16 r0 = arrval * 2;
   const uint16 *src2 = (uint16*)(kFontData + r10 * 16);
-  uint8 *mbuf = (uint8 *)messaging_buf;
+  uint8 *mbuf = (uint8 *)RAM16P(g_ram+0x10000);
   for (int i = 0; i != 16; i += 2) {
     uint16 r4 = *src2++;
     int y = r0 + vwf_line_ptr;
@@ -2716,7 +2716,7 @@ bool RenderText_Draw_Scroll() {  // 8ecfe2
   uint8 r2 = dialogue_scroll_speed;
   do {
     for (int i = 0; i < 0x7e0; i += 16) {
-      uint16 *p = (uint16 *)((uint8 *)messaging_buf + i);
+      uint16 *p = (uint16 *)((uint8 *)RAM16P(g_ram+0x10000) + i);
       p[0] = p[1];
       p[1] = p[2];
       p[2] = p[3];
@@ -2726,7 +2726,7 @@ bool RenderText_Draw_Scroll() {  // 8ecfe2
       p[6] = p[7];
       p[7] = p[168];
     }
-    uint16 *p = messaging_buf;
+    uint16 *p = RAM16P(g_ram+0x10000);
     for (int i = 0x34f; i <= 0x3ef; i += 8)
       p[i] = 0;
 
@@ -2763,7 +2763,7 @@ uint16 *RenderText_DrawBorderRow(uint16 *d, int y) {  // 8ed2ab
 }
 
 void Text_BuildCharacterTilemap() {  // 8ed2ec
-  uint16 *vwf300 = (uint16 *)&g_ram[0x1300];
+  uint16 *vwf300 = (zle16_t *)&g_ram[0x1300];
   for (int i = 0; i < 126; i++)
     vwf300[i] = text_tilemap_cur++;
   RenderText_Refresh();
@@ -2772,8 +2772,8 @@ void Text_BuildCharacterTilemap() {  // 8ed2ec
 void RenderText_Refresh() {  // 8ed307
   RenderText_DrawBorderInitialize();
   text_msgbox_topleft_copy += 0x21;
-  uint16 *d = vram_upload_data;
-  uint16 *s = (uint16 *)&g_ram[0x1300];
+  uint16 *d = RAM16P(g_ram+0x1002);
+  uint16 *s = (zle16_t *)&g_ram[0x1300];
   for (int j = 0; j != 6; j++) {
     *d++ = swap16(text_msgbox_topleft_copy);
     text_msgbox_topleft_copy += 0x20;
@@ -2818,7 +2818,7 @@ void DungMap_Backup() {  // 8ed94c
   COLDATA_copy1 = 0x40;
   COLDATA_copy2 = 0x80;
   link_dma_graphics_index = 0x250;
-  memcpy(mapbak_palette, main_palette_buffer, sizeof(uint16) * 256);
+  memcpy(RAM16P(g_ram+0x1DD80), RAM16P(g_ram+0xC500), sizeof(uint16) * 256);
   mapbak_bg1_x_offset = bg1_x_offset;
   mapbak_bg1_y_offset = bg1_y_offset;
   bg1_x_offset = 0;
