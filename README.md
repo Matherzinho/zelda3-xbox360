@@ -1,5 +1,12 @@
 # Zelda3
 
+## Xbox 360 Xenon port
+
+This repository also contains an experimental Xbox 360 port in `xbox360/`, based on `snesrev/zelda3` baseline commit `45a149d8b4bb8098f53d1009f76e76e7d8b79bbf`. Xenon-specific files are in `xbox360/` and use `ZELDA_XENON` where needed. This independent community port is not affiliated with Nintendo or Microsoft. See [BUILDING_XBOX360.md](BUILDING_XBOX360.md) and [PORT_STATUS.md](PORT_STATUS.md).
+
+Supply your own legally obtained compatible US ROM and generate `zelda3_assets.dat` locally as documented in [BUILDING_XBOX360.md](BUILDING_XBOX360.md). Do not commit ROMs, extracted assets, or build output.
+
+
 A reimplementation of Zelda 3.
 
 Our discord server is: https://discord.gg/AJJbJAzNNJ

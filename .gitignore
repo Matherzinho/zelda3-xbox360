@@ -31,3 +31,17 @@ __pycache__
 /sprites-gfx
 /glsl-shaders
 /token.txt
+
+# Local ROMs, extracted assets and Xenon build outputs
+*.sfc
+*.smc
+*.xex
+*.elf
+*.a
+*.o
+*.log
+*.pyc
+__pycache__/
+.venv/
+/xbox360/build/
+/stdout

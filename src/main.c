@@ -19,6 +19,7 @@
 #include "variables.h"
 
 #include "zelda_rtl.h"
+#include "game.h"
 #include "zelda_cpu_infra.h"
 
 #include "config.h"
@@ -40,7 +41,7 @@ static void HandleGamepadInput(int button, bool pressed);
 static void HandleGamepadAxisInput(int gamepad_id, int axis, int value);
 static void OpenOneGamepad(int i);
 static void HandleVolumeAdjustment(int volume_adjustment);
-static void LoadAssets();
+
 static void SwitchDirectory();
 
 enum {
@@ -287,24 +288,21 @@ int main(int argc, char** argv) {
     SwitchDirectory();
   }
   ParseConfigFile(config_file);
-  LoadAssets();
+  if (!ZeldaGameLoadAssets("zelda3_assets.dat", NULL, 0)) Die("Failed to load zelda3_assets.dat");
   LoadLinkGraphics();
 
-  ZeldaInitialize();
-  g_zenv.ppu->extraLeftRight = UintMin(g_config.extended_aspect_ratio, kPpuExtraLeftRight);
+  ZeldaGameInitialize(g_config.extended_aspect_ratio, g_config.enable_msu, g_config.language);
   g_snes_width = (g_config.extended_aspect_ratio * 2 + 256);
   g_snes_height = (g_config.extend_y ? 240 : 224);
 
 
-  // Delay actually setting those features in ram until any snapshots finish playing.
-  g_wanted_zelda_features = g_config.features0;
 
   g_ppu_render_flags = g_config.new_renderer * kPpuRenderFlags_NewRenderer |
                        g_config.enhanced_mode7 * kPpuRenderFlags_4x4Mode7 |
                        g_config.extend_y * kPpuRenderFlags_Height240 |
                        g_config.no_sprite_limits * kPpuRenderFlags_NoSpriteLimits;
-  ZeldaEnableMsu(g_config.enable_msu);
-  ZeldaSetLanguage(g_config.language);
+  // Preserve the original timing: apply wanted features after base game initialization.
+  ZeldaGameSetWantedFeatures(g_config.features0);
 
   if (g_config.fullscreen == 1)
     g_win_flags ^= SDL_WINDOW_FULLSCREEN_DESKTOP;
@@ -805,51 +803,7 @@ static void LoadLinkGraphics() {
 }
 
 
-const uint8 *g_asset_ptrs[kNumberOfAssets];
-uint32 g_asset_sizes[kNumberOfAssets];
 
-static void LoadAssets() {
-  size_t length = 0;
-  uint8 *data = ReadWholeFile("zelda3_assets.dat", &length);
-  if (!data) {
-    size_t bps_length, bps_src_length;
-    uint8 *bps, *bps_src;
-    bps = ReadWholeFile("zelda3_assets.bps", &bps_length);
-    if (!bps)
-      Die("Failed to read zelda3_assets.dat. Please see the README for information about how you get this file.");
-    bps_src = ReadWholeFile("zelda3.sfc", &bps_src_length);
-    if (!bps_src)
-      Die("Missing file: zelda3.sfc");
-    data = ApplyBps(bps_src, bps_src_length, bps, bps_length, &length);
-    if (!data)
-      Die("Unable to apply zelda3_assets.bps. Please make sure you got the right version of 'zelda3.sfc'");
-  }
-
-  static const char kAssetsSig[] = { kAssets_Sig };
-
-  if (length < 16 + 32 + 32 + 8 + kNumberOfAssets * 4 ||
-      memcmp(data, kAssetsSig, 48) != 0 ||
-      *(uint32*)(data + 80) != kNumberOfAssets)
-    Die("Invalid assets file");
-
-  uint32 offset = 88 + kNumberOfAssets * 4 + *(uint32 *)(data + 84);
-
-  for (size_t i = 0; i < kNumberOfAssets; i++) {
-    uint32 size = *(uint32 *)(data + 88 + i * 4);
-    offset = (offset + 3) & ~3;
-    if ((uint64)offset + size > length)
-      Die("Assets file corruption");
-    g_asset_sizes[i] = size;
-    g_asset_ptrs[i] = data + offset;
-    offset += size;
-  }
-
-  if (g_config.features0 & kFeatures0_DimFlashes) { // patch dungeon floor palettes
-    kPalette_DungBgMain[0x484] = 0x70;
-    kPalette_DungBgMain[0x485] = 0x95;
-    kPalette_DungBgMain[0x486] = 0x57;
-  }
-}
 
 // Go some steps up and find zelda3.ini
 static void SwitchDirectory() {
@@ -875,8 +829,4 @@ static void SwitchDirectory() {
     while (pos != 0 && buf[pos] != '/' && buf[pos] != '\\')
       pos--;
   }
-}
-
-MemBlk FindInAssetArray(int asset, int idx) {
-  return FindIndexInMemblk((MemBlk) { g_asset_ptrs[asset], g_asset_sizes[asset] }, idx);
 }

@@ -3,6 +3,14 @@
 #include <stdio.h>
 #include <string.h>
 #include <SDL.h>
+#ifdef ZELDA_XENON
+#undef KMOD_ALT
+#undef KMOD_CTRL
+#undef KMOD_SHIFT
+#define KMOD_ALT SDL_KMOD_ALT
+#define KMOD_CTRL SDL_KMOD_CTRL
+#define KMOD_SHIFT SDL_KMOD_SHIFT
+#endif
 #include "features.h"
 #include "util.h"
 
