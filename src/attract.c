@@ -9,7 +9,7 @@
 #include "attract.h"
 #include "sprite_main.h"
 
-const uint16 kMapMode_Zooms1[240] = {
+const zle16_t kMapMode_Zooms1[240] = {
   375, 374, 373, 373, 372, 371, 371, 370, 369, 369, 368, 367, 367, 366, 365, 365,
   364, 363, 363, 361, 361, 360, 359, 359, 358, 357, 357, 356, 355, 355, 354, 354,
   353, 352, 352, 351, 351, 350, 349, 349, 348, 348, 347, 346, 346, 345, 345, 344,
@@ -26,7 +26,7 @@ const uint16 kMapMode_Zooms1[240] = {
   269, 268, 268, 268, 267, 267, 267, 266, 266, 266, 265, 265, 265, 264, 264, 264,
   263, 263, 262, 262, 262, 261, 261, 261, 260, 260, 260, 259, 259, 259, 258, 258,
 };
-const uint16 kMapMode_Zooms2[240] = {
+const zle16_t kMapMode_Zooms2[240] = {
   136, 136, 135, 135, 135, 135, 135, 134, 134, 134, 133, 133, 133, 133, 132, 132,
   132, 132, 132, 131, 131, 131, 130, 130, 130, 130, 130, 129, 129, 129, 129, 129,
   128, 128, 128, 127, 127, 127, 127, 127, 126, 126, 126, 126, 126, 125, 125, 125,
@@ -977,7 +977,7 @@ void Attract_ShowTimedTextMessage() {  // 8cf766
 
 void Attract_ControlMapZoom() {  // 8cf783
   for (int i = 240 - 1; i >= 0; i--)
-    hdma_table_dynamic[i] = kMapMode_Zooms1[i] * timer_for_mode7_zoom >> 8;
+    hdma_table_dynamic[i] = kMapMode_Zooms1[i].v * timer_for_mode7_zoom >> 8;
 }
 
 void Attract_BuildBackgrounds() {  // 8cf7e6

@@ -185,9 +185,9 @@ void ZeldaDrawPpuFrame(uint8 *pixel_buffer, size_t pitch, uint32 render_flags) {
   // Cheat: Let the PPU impl know about the hdma perspective correction so it can avoid guessing.
   if ((render_flags & kPpuRenderFlags_4x4Mode7) && g_zenv.ppu->mode == 7) {
     if (hdma_chans[0].table == kMapModeHdma0)
-      PpuSetMode7PerspectiveCorrection(g_zenv.ppu, kMapMode_Zooms1[0], kMapMode_Zooms1[223]);
+      PpuSetMode7PerspectiveCorrection(g_zenv.ppu, kMapMode_Zooms1[0].v, kMapMode_Zooms1[223].v);
     else if (hdma_chans[0].table == kMapModeHdma1)
-      PpuSetMode7PerspectiveCorrection(g_zenv.ppu, kMapMode_Zooms2[0], kMapMode_Zooms2[223]);
+      PpuSetMode7PerspectiveCorrection(g_zenv.ppu, kMapMode_Zooms2[0].v, kMapMode_Zooms2[223].v);
     else if (hdma_chans[0].table == kAttractIndirectHdmaTab)
       PpuSetMode7PerspectiveCorrection(g_zenv.ppu, hdma_table_dynamic[0], hdma_table_dynamic[223]);
     else

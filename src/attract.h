@@ -5,8 +5,8 @@ typedef struct AttractOamInfo {
 } AttractOamInfo;
 
 
-extern const uint16 kMapMode_Zooms1[240];
-extern const uint16 kMapMode_Zooms2[240];
+extern const zle16_t kMapMode_Zooms1[240];
+extern const zle16_t kMapMode_Zooms2[240];
 void Attract_DrawSpriteSet2(const AttractOamInfo *p, int n);
 void Attract_ZeldaPrison_Case0();
 void Attract_ZeldaPrison_Case1();
