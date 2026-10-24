@@ -76,6 +76,10 @@ python3 assets/restool.py --extract-dialogue -r <translated ROM>    # writes ass
 python3 assets/add_language.py zelda3_assets.dat <code>             # adds it, or replaces it if already there
 ```
 
+The dialogue, the item names, the ability names and the box titles follow the language. The title screen's lettering
+and the file select screen's labels are pictures, and stay as the assets have them. The interface words for a
+language live in `src/ui_text.c`; a new language adds one `UiLocale` there and nothing else.
+
 `restool.py` recognises the translations it supports by checksum (`assets/util.py`): `pt-br` is "A LENDA DE ZELDA
 (BR)" on the US ROM, header or not; the others are listed in the upstream README. Building everything at once also
 works: `python3 assets/restool.py --languages=pt-br`. Do not commit or share the extracted text, font or assets.

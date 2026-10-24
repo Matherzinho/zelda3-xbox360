@@ -22,6 +22,9 @@ Nintendo or Microsoft.
   or shared between worker threads (the Xbox draws its lines on three worker threads on the other cores).
 - Brazilian Portuguese (`pt-br`) from "A LENDA DE ZELDA (BR)": text and font extracted from the translated ROM and
   added to the assets with `assets/add_language.py`; switchable in the menu.
+- Interface text per language (`src/ui_text.c`): the item names, ability names and box titles the game draws with its
+  own tiles. A language with no locale, English included, draws the tiles it always did, so its picture is unchanged
+  (checked frame by frame over a reference playthrough).
 
 ## Not yet confirmed on hardware
 
@@ -29,8 +32,8 @@ Nintendo or Microsoft.
 - MSU-1 audio and the PC's snapshot/replay hotkeys are not enabled on Xbox.
 - Worker threads, picture-sized textures and the Portuguese text were tested in QEMU and a simulator of the frontend,
   not yet on a console.
-- Only the dialogue font and text change with the language: graphics with words in them (title screen, item names
-  on the menu screen, the name entry screen) stay as in the US assets.
+- The title screen's lettering and the file select screen's labels are pictures in the assets, so they stay in
+  English; the title would need its subtitle drawn again for each language.
 
 ## Legal assets
 
