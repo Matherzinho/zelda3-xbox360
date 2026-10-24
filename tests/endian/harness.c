@@ -32,10 +32,12 @@ static uint64_t fnv(const uint8 *p, size_t n, uint64_t h) {
   for (; i < n; i++) { h ^= p[i]; h *= 1099511628211ull; }
   return h;
 }
+// The 12 bits the frontends pass: B, Y, Select, Start, Up, Down, Left, Right, A, X, L, R.
+enum { kPad_B = 1 << 0, kPad_Start = 1 << 3, kPad_Down = 1 << 5, kPad_A = 1 << 8 };
 static uint16 PadForFrame(int f) {
   int ph = f % 90; uint16 in = 0;
-  if (ph >= 10 && ph < 14) in |= (uint16)(kJoypadH_Start << 8);
-  if (ph >= 50 && ph < 54) in |= kJoypadL_A;
+  if (ph >= 10 && ph < 14) in |= kPad_Start;
+  if (ph >= 50 && ph < 54) in |= kPad_A;
   return in;
 }
 #include "../../xbox360/platform/s360_jobs.h"
@@ -95,7 +97,7 @@ int main(int argc, char **argv) {
       uint32 v = (uint32)strtoul(getenv("ZFORCE_FEATURES"), NULL, 0);
       for (int i = 0; i < 4; i++) g_ram[0x64c + i] = (uint8)(v >> (8 * i));
     }
-    ZeldaGameUpdate(stop_at >= 0 && f >= stop_at ? (getenv("ZSTOP_A") && f % 40 < 3 ? kJoypadL_A : 0) : PadForFrame(f));
+    ZeldaGameUpdate(stop_at >= 0 && f >= stop_at && !getenv("ZSTOP_PAD") ? (getenv("ZSTOP_A") && f % 40 < 3 ? kPad_A : 0) : PadForFrame(f));
     int scale = PpuGetCurrentRenderScale(g_zenv.ppu, render_flags);
     int w = 256 * scale, h = 224 * scale;
     struct timespec t0, t1;
@@ -128,8 +130,43 @@ int main(int argc, char **argv) {
            (unsigned long long)hp, (unsigned long long)hr, (unsigned long long)hv, (unsigned long long)hc, (unsigned long long)hs,
            (unsigned long long)ha);
     fflush(stdout);
+    if (getenv("ZDUMP_VRAM_AT") && f == atoi(getenv("ZDUMP_VRAM_AT"))) {  // VRAM, OAM and BG registers, for tools
+      Ppu *pp = g_zenv.ppu;
+      FILE *o = fopen("vram.bin", "wb"); fwrite(pp->vram, 1, 0x10000, o); fclose(o);
+      o = fopen("oam.bin", "wb"); fwrite(pp->oam, 1, 0x220, o); fclose(o);
+      o = fopen("cgram.bin", "wb"); fwrite(pp->cgram, 1, 0x200, o); fclose(o);
+      o = fopen("regs.txt", "w");
+      fprintf(o, "mode %d screen %x %x objsize %d obj %x %x\n", pp->mode, pp->screenEnabled[0], pp->screenEnabled[1], pp->objSize, pp->objTileAdr1, pp->objTileAdr2);
+      for (int l = 0; l < 4; l++) fprintf(o, "bg%d map %x tiles %x scroll %d %d wide %d high %d\n", l + 1, pp->bgLayer[l].tilemapAdr,
+        pp->bgLayer[l].tileAdr, pp->bgLayer[l].hScroll, pp->bgLayer[l].vScroll, pp->bgLayer[l].tilemapWider, pp->bgLayer[l].tilemapHigher);
+      fclose(o);
+    }
+    if (getenv("ZTILEUSE")) {  // which 2bpp tiles at VRAM 0x7000 BG3 maps refer to, written at the end
+      static uint8 used[1024];
+      Ppu *pp = g_zenv.ppu;
+      BgLayer *l = &pp->bgLayer[2];
+      if (l->tileAdr == 0x7000 && (pp->screenEnabled[0] | pp->screenEnabled[1]) & 4) {
+        int n = 0x400 << (l->tilemapWider + l->tilemapHigher);
+        for (int i = 0; i < n; i++) used[pp->vram[(l->tilemapAdr + i) & 0x7fff].v & 0x3ff] = 1;
+      }
+      if (f == frames - 1) { FILE *o = fopen(getenv("ZTILEUSE"), "wb"); fwrite(used, 1, sizeof used, o); fclose(o); }
+    }
     int dump_every = getenv("ZDUMP_EVERY") ? atoi(getenv("ZDUMP_EVERY")) : 0;  // also write frame%05d.ppm files
-    if (dump_every && f % dump_every == 0) {
+    // ZDUMP_WHEN=addr:val,... (hex RAM bytes) also dumps the frames where all match, at most every ZDUMP_GAP frames
+    bool when = false;
+    if (getenv("ZDUMP_WHEN")) {
+      static int last = -100000;
+      int gap = getenv("ZDUMP_GAP") ? atoi(getenv("ZDUMP_GAP")) : 60;
+      when = f - last >= gap;
+      for (const char *c = getenv("ZDUMP_WHEN"); when && *c; ) {
+        unsigned a, v; int n = 0;
+        if (sscanf(c, "%x:%x%n", &a, &v, &n) != 2) break;
+        when = g_ram[a] == v;
+        c += n; if (*c == ',') c++;
+      }
+      if (when) last = f;
+    }
+    if ((dump_every && f % dump_every == 0) || when) {
       char name[64]; snprintf(name, sizeof name, "frame%05d.ppm", f);
       FILE *o = fopen(name, "wb");
       fprintf(o, "P6\n%d %d\n255\n", w, h);

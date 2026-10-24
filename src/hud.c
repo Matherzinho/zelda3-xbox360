@@ -1,4 +1,5 @@
 #include "hud.h"
+#include "ui_text.h"
 #include "zelda_rtl.h"
 
 #include "variables.h"
@@ -501,6 +502,7 @@ bool Hud_HaveAnyItems() { // new
 }
 
 void Hud_Init() {  // 8dddab
+  UiDrawLabels(g_zenv.vram);
   Hud_SearchForEquippedItem();
   Hud_DrawYButtonItems();
   Hud_DrawAbilityBox();
@@ -1035,8 +1037,13 @@ void Hud_DrawAbilityBox() {  // 8de6b6
   uint8 flags = link_ability_flags;
   for (int i = 0; i < 2; i++, flags <<= 1) {
     for (int j = 0; j < 3; j++, flags <<= 1) {
-      if (flags & 0x80)
-        Hud_DrawNxN(dst + HUDXY(4 + j * 5, 22 + i * 2), kHudAbilityText + i * 40 + j * 10, 5, 2);
+      if (flags & 0x80) {
+        const char *ui_name = UiText(kUiText_Ability_Lift1 + i * 3 + j);
+        zle16_t localized[10];
+        if (ui_name)
+          UiTextToTiles(localized, ui_name, 5, 2, 0x2c00);
+        Hud_DrawNxN(dst + HUDXY(4 + j * 5, 22 + i * 2), ui_name ? localized : kHudAbilityText + i * 40 + j * 10, 5, 2);
+      }
     }
   }
   // A
@@ -1052,8 +1059,13 @@ void Hud_DrawAbilityBox() {  // 8de6b6
   Hud_DrawItem(dst + HUDXY(4, 27), &kHudItemBoots[link_item_boots]);
   Hud_DrawItem(dst + HUDXY(12, 27), &kHudItemFlippers[link_item_flippers]);
   Hud_DrawItem(dst + HUDXY(16, 27), &kHudItemMoonPearl[link_item_moon_pearl]);
-  if (link_item_gloves)
-    Hud_DrawNxN(dst + HUDXY(4, 22), kHudGlovesText + (link_item_gloves != 1) * 10, 5, 2);
+  if (link_item_gloves) {
+    const char *ui_name = UiText(link_item_gloves != 1 ? kUiText_Ability_Lift3 : kUiText_Ability_Lift2);
+    zle16_t localized[10];
+    if (ui_name)
+      UiTextToTiles(localized, ui_name, 5, 2, 0x2c00);
+    Hud_DrawNxN(dst + HUDXY(4, 22), ui_name ? localized : kHudGlovesText + (link_item_gloves != 1) * 10, 5, 2);
+  }
 }
 
 void Hud_DrawProgressIcons() {  // 8de9c8
@@ -1089,6 +1101,8 @@ void Hud_DrawProgressIcons_Pendants() {  // 8de9d3
   };
   zle16_t *dst = uvram_screen.row[0].col + (kNewStyleInventory ? HUDXY(22, 11) : HUDXY(21, 11));
   Hud_DrawNxN(dst, kProgressIconPendantsBg, 10, 9);
+  if (UiHasLocale())
+    UiLabelTiles(kUiText_Pendants, dst + HUDXY(1, 1), 8, 0x2400);  // the label on the box's second row
   Hud_DrawItem(dst + HUDXY(4, 3), &kHudPendants0[(link_which_pendants >> 0) & 1]);
   Hud_DrawItem(dst + HUDXY(2, 6), &kHudPendants1[(link_which_pendants >> 1) & 1]);
   Hud_DrawItem(dst + HUDXY(6, 6), &kHudPendants2[(link_which_pendants >> 2) & 1]);
@@ -1109,6 +1123,8 @@ void Hud_DrawProgressIcons_Crystals() {  // 8dea62
 
   zle16_t *dst = uvram_screen.row[0].col + (kNewStyleInventory ? HUDXY(22, 11) : HUDXY(21, 11));
   Hud_DrawNxN(dst, kProgressIconCrystalsBg, 10, 9);
+  if (UiHasLocale())
+    UiLabelTiles(kUiText_Crystals, dst + HUDXY(1, 1), 8, 0x2400);
 
   uint8 f = link_has_crystals;
   if (f & 1) {
@@ -1216,25 +1232,48 @@ void Hud_DrawSelectedYButtonItem() {  // 8deb3a
       Hud_DrawFlashingCircle(p, kSwitchLR_palettes[btn_index]);
   }
 
+  // The name of the item, from the game's own tiles or, with a locale, from its text (ui_text.c).
+  static const uint8 kBottleUiText[8] = {
+    kUiText_Bottle_Mushroom, kUiText_Bottle_Empty, kUiText_Bottle_LifeMedicine, kUiText_Bottle_MagicMedicine,
+    kUiText_Bottle_CureAll, kUiText_Bottle_Faerie, kUiText_Bottle_Bee, kUiText_Bottle_GoodBee,
+  };
   const zle16_t *src_p;
+  int ui_id = -1;
   if (item == kHudItem_BottleOld && !kNewStyleInventory && link_item_bottle_index) {
-    src_p = &kHudBottlesItemText[(link_bottle_info[link_item_bottle_index - 1] - 1) * 16];
+    int bottle = link_bottle_info[link_item_bottle_index - 1] - 1;
+    src_p = &kHudBottlesItemText[bottle * 16];
+    ui_id = kBottleUiText[bottle & 7];
   } else if (item == 5 && link_item_mushroom != 1) {
     src_p = &kHudMushroomItemText[(link_item_mushroom - 2) * 16];
+    ui_id = kUiText_Item_Powder;  // the only name this branch draws
   } else if (item == 20 && link_item_mirror != 1) {
     src_p = &kHudMirrorItemText[(link_item_mirror - 2) * 16];
+    ui_id = kUiText_Item_Mirror;  // the only name this branch draws
   } else if (item == 13 && link_item_flute != 1) {
     src_p = &kHudFluteItemText[(link_item_flute - 2) * 16];
+    ui_id = kUiText_Item_Flute;
   } else if (item == 1 && link_item_bow != 1) {
     src_p = &kHudBowItemText[(link_item_bow - 2) * 16];
+    ui_id = link_item_bow >= 4 ? kUiText_Item_BowSilver : kUiText_Item_BowArrows;
   } else if (item >= kHudItem_Bottle1 && item <= kHudItem_Bottle4) {
-    src_p = &kHudBottlesItemText[(link_bottle_info[item - kHudItem_Bottle1] - 1) * 16];
+    int bottle = link_bottle_info[item - kHudItem_Bottle1] - 1;
+    src_p = &kHudBottlesItemText[bottle * 16];
+    ui_id = kBottleUiText[bottle & 7];
   } else if (item == kHudItem_Shovel) {
     src_p = &kHudItemText[(13 - 1) * 16];
+    ui_id = kUiText_Item_Shovel;
   } else if (item == 0) {
     src_p = btn_index ? kNotAssignedItemText : &kHudItemText[(20 - 1) * 16];
+    ui_id = btn_index ? kUiText_NotAssigned : -1;
   } else {
     src_p = &kHudItemText[(item - 1) * 16];
+    ui_id = item >= 1 && item <= 20 ? kUiText_Item_Bow + item - 1 : -1;
+  }
+  zle16_t localized[16];
+  const char *ui_name = ui_id >= 0 ? UiText(ui_id) : NULL;
+  if (ui_name) {
+    UiTextToTiles(localized, ui_name, 8, 2, 0x2400);
+    src_p = localized;
   }
   Hud_DrawNxN(dst_box + HUDXY(22, 8), src_p, 8, 2);
 }
@@ -1252,8 +1291,14 @@ void Hud_DrawEquipmentBox() {  // 8ded29
     0x2479, 0x247a, 0x247b, 0x247c, 0x248c, 0x24f5, 0x24f5, 0x24f5,
     0x2469, 0x246a, 0x246b, 0x246c, 0x246d, 0x246e, 0x246f, 0x24f5,
   };
-  memcpy(dst + HUDXY(22, 22), &kHudEquipmentDungeonItemText[0], 8 * sizeof(uint16));
-  memcpy(dst + HUDXY(22, 26), &kHudEquipmentDungeonItemText[8], 8 * sizeof(uint16));
+  if (UiHasLocale()) {
+    // The equipment label no longer fits the tiles the game's own art uses, so it names its own (ui_text.c).
+    UiLabelTiles(kUiText_Equipment, dst + HUDXY(22, 22), 8, 0x2400);
+    UiLabelTiles(kUiText_DungeonItem, dst + HUDXY(22, 26), 8, 0x2400);
+  } else {
+    memcpy(dst + HUDXY(22, 22), &kHudEquipmentDungeonItemText[0], 8 * sizeof(uint16));
+    memcpy(dst + HUDXY(22, 26), &kHudEquipmentDungeonItemText[8], 8 * sizeof(uint16));
+  }
 
   static const ItemBoxGfx kHudItemHeartPieces[4] = {
     {{0x2484, 0x6484, 0x2485, 0x6485}},
@@ -1462,6 +1507,7 @@ static void Hud_Update_Inventory() {  // 8dfc09
 }
 
 void Hud_Rebuild() {  // 8dfa70
+  UiDrawLabels(g_zenv.vram);  // a locale's own wording in the tiles the labels are drawn from (ui_text.c)
   // Ensure all of the 165 hud words are initialized.
   // This was broken by my previous reorg... quick fix for now.
   if (hud_tile_indices_buffer[HUDXY(8, 2)] == 0) {

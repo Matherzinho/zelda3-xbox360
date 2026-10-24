@@ -1,4 +1,5 @@
 #include "zelda_rtl.h"
+#include "ui_text.h"
 #include "variables.h"
 #include "misc.h"
 #include "nmi.h"
@@ -774,6 +775,7 @@ void ZeldaSetLanguage(const char *language) {
       }
     }
   }
+  UiSetLocale(language);  // the interface text that is drawn with the game's own tiles (ui_text.c)
   g_zenv.dialogue_blk = kDialogue(found.ptr[0]);
   g_zenv.dialogue_font_blk = kDialogueFont(found.ptr[1]);
   g_zenv.dialogue_flags = found.ptr[2];

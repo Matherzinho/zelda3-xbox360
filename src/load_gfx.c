@@ -1,3 +1,4 @@
+#include "ui_text.h"
 #include "zelda_rtl.h"
 #include "variables.h"
 #include "snes/snes_regs.h"
@@ -863,6 +864,7 @@ void LoadDefaultGraphics() {  // 80e2d0
   DecompAndUpload2bpp(&g_zenv.vram[0x7000], 0x6a);
   DecompAndUpload2bpp(&g_zenv.vram[0x7400], 0x6b);
   DecompAndUpload2bpp(&g_zenv.vram[0x7800], 0x69);
+  UiDrawLabels(g_zenv.vram);  // a locale's own wording over the labels drawn as art (ui_text.c)
 }
 
 void Attract_LoadBG3GFX() {  // 80e36d
@@ -932,7 +934,8 @@ void Graphics_LoadChrHalfSlot() {  // 80e3fa
 }
 
 void TransferFontToVRAM() {  // 80e556
-  memcpy(&g_zenv.vram[0x7000], FindIndexInMemblk(kDialogueFont(0), 0).ptr, 0x800 * sizeof(uint16));
+  // The selected language's font, so the file select screen and the credits draw its letters.
+  memcpy(&g_zenv.vram[0x7000], FindIndexInMemblk(g_zenv.dialogue_font_blk, 0).ptr, 0x800 * sizeof(uint16));
 }
 
 void Do3To4High(zle16_t *vram_ptr, const uint8 *decomp_addr) {  // 80e5af
