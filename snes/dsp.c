@@ -8,6 +8,7 @@
 #include <limits.h>
 #include "dsp_regs.h"
 #include "dsp.h"
+#include "types.h"
 
 #define MY_CHANGES 1
 
@@ -125,8 +126,31 @@ void dsp_reset(Dsp* dsp) {
   dsp->sampleOffset = 0;
 }
 
+static void dsp_swap_words(Dsp *dsp) {
+#if ZELDA_BIG_ENDIAN_HOST
+#define SW(x) ((x) = swap16(x))
+  for (int i = 0; i < 8; i++) {
+    DspChannel *c = &dsp->channel[i];
+    SW(c->pitch); SW(c->pitchCounter); SW(c->decodeOffset); SW(c->old); SW(c->older);
+    for (int j = 0; j < 19; j++) SW(c->decodeBuffer[j]);
+    for (int j = 0; j < 4; j++) SW(c->adsrRates[j]);
+    SW(c->rateCounter); SW(c->sustainLevel); SW(c->gainValue); SW(c->gain); SW(c->sampleOut);
+  }
+  SW(dsp->dirPage); SW(dsp->noiseSample); SW(dsp->noiseRate); SW(dsp->noiseCounter);
+  SW(dsp->echoBufferAdr); SW(dsp->echoDelay); SW(dsp->echoRemain); SW(dsp->echoBufferIndex);
+  for (int j = 0; j < 8; j++) { SW(dsp->firBufferL[j]); SW(dsp->firBufferR[j]); }
+  for (int j = 0; j < 534 * 2; j++) SW(dsp->sampleBuffer[j]);
+  SW(dsp->sampleOffset);
+#undef SW
+#else
+  (void)dsp;
+#endif
+}
+
 void dsp_saveload(Dsp *dsp, SaveLoadFunc *func, void *ctx) {
+  dsp_swap_words(dsp);
   func(ctx, &dsp->ram, sizeof(Dsp) - offsetof(Dsp, ram));
+  dsp_swap_words(dsp);
 }
 
 void dsp_cycle(Dsp* dsp) {

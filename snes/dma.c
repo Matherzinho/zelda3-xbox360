@@ -6,6 +6,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include "dma.h"
+#include "types.h"
 #include "snes.h"
 #include "snes_regs.h"
 
@@ -63,8 +64,27 @@ void dma_reset(Dma* dma) {
   dma->dmaBusy = false;
 }
 
+static void dma_swap_words(Dma *dma) {
+#if ZELDA_BIG_ENDIAN_HOST
+  for (int i = 0; i < 8; i++) {
+    DmaChannel *c = &dma->channel[i];
+    c->aAdr = swap16(c->aAdr); c->size = swap16(c->size); c->tableAdr = swap16(c->tableAdr);
+  }
+  dma->hdmaTimer = swap16(dma->hdmaTimer);
+  dma->dmaTimer = __builtin_bswap32(dma->dmaTimer);
+#else
+  (void)dma;
+#endif
+}
+
 void dma_saveload(Dma *dma, SaveLoadFunc *func, void *ctx) {
-  func(ctx, &dma->channel, sizeof(Dma) - offsetof(Dma, channel));
+  // The snapshot holds the 185 bytes from 'channel' through 'dmaBusy' plus 7 padding bytes, as laid
+  // out by a 64-bit little-endian build. 32-bit builds have less tail padding, so the size is fixed here.
+  uint8_t junk[7] = { 0 };
+  dma_swap_words(dma);
+  func(ctx, &dma->channel, offsetof(Dma, dmaBusy) + 1 - offsetof(Dma, channel));
+  func(ctx, junk, 7);
+  dma_swap_words(dma);
 }
 
 uint8_t dma_read(Dma* dma, uint16_t adr) {

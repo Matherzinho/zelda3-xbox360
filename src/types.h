@@ -94,6 +94,10 @@ typedef struct ZELDA_LE_STRUCT { uint32 v; } zle32_t;
 #define RAM16P(p) ((zle16_t*)(p))
 #define RAMS16P(p) ((zles16_t*)(p))
 
+#if defined(ZELDA_XENON) && !defined(ZELDA_BIG_ENDIAN_HOST)
+#error "Xbox 360 builds must be detected as big-endian (check __BYTE_ORDER__)"
+#endif
+
 // Byte/word views of a variable. For byte lvalues WORD/DWORD read the following bytes as little-endian.
 #define BYTE(x) (((uint8*)&(x))[ZELDA_LOW_IDX(x)])
 #define HIBYTE(x) (((uint8*)&(x))[ZELDA_HIGH_IDX(x)])

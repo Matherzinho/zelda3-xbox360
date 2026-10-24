@@ -1455,8 +1455,8 @@ typedef struct OamEntSigned {
 
 
 typedef struct ZELDA_LE_STRUCT RoomBounds {
-  union {
-    struct { uint16 a0, b0, a1, b1; };
+  union ZELDA_LE_STRUCT {
+    struct ZELDA_LE_STRUCT { uint16 a0, b0, a1, b1; };
     uint16 v[4];
   };
 } RoomBounds;

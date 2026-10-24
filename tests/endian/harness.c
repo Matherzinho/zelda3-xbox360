@@ -8,6 +8,7 @@
 #include "zelda_rtl.h"
 #include "snes/ppu.h"
 #include "util.h"
+#include "zelda_rtl.h"
 
 Config g_config;
 void NORETURN Die(const char *error) { fprintf(stderr, "Die: %s\n", error); exit(1); }
@@ -32,6 +33,8 @@ int main(int argc, char **argv) {
   if (!ZeldaGameLoadAssets(assets, err, sizeof err)) { fprintf(stderr, "assets: %s\n", err); return 2; }
   ZeldaGameInitialize(0, 0, "us");
   ZeldaGameSetWantedFeatures(0);
+  int replay = getenv("ZREPLAY") ? atoi(getenv("ZREPLAY")) : -1;  // replay saves/ref chapter N (0-12)
+  if (replay >= 0) SaveLoadSlot(kSaveLoad_Replay, 256 + replay);
   enum { PITCH = 1024 * 4 };
   uint8 *pix = calloc(1024, PITCH);
   extern uint8 g_ram[131072];
@@ -42,11 +45,21 @@ int main(int argc, char **argv) {
     int w = 256 * scale, h = 224 * scale;
     ZeldaGameRender(pix, PITCH, 0);
     uint64_t hp = 1469598103934665603ull;
-    for (int y = 0; y < h; y++) hp = fnv(pix + (size_t)y * PITCH, (size_t)w * 4, hp);
+    for (int y = 0; y < h; y++) for (int x = 0; x < w; x++) {  // hash pixel values, not host byte order
+      uint32 p; memcpy(&p, pix + (size_t)y * PITCH + x * 4, 4);
+      uint8 b[4] = { p, p >> 8, p >> 16, p >> 24 };
+      hp = fnv(b, 4, hp);
+    }
     uint64_t hr = fnv(g_ram, 0x20000, 1469598103934665603ull);
-    printf("frame %4d scale %d pix %016llx ram %016llx\n", f, scale, (unsigned long long)hp, (unsigned long long)hr);
+    Ppu *pp = g_zenv.ppu;
+    uint64_t hv = fnv((uint8 *)pp->vram, 0x10000, 1469598103934665603ull);
+    uint64_t hc = fnv((uint8 *)pp->cgram, 0x200, fnv((uint8 *)pp->oam, 0x220, 1469598103934665603ull));
+    uint64_t hs = fnv(g_zenv.sram, 0x2000, 1469598103934665603ull);
+    printf("frame %5d scale %d pix %016llx ram %016llx vram %016llx cgoam %016llx sram %016llx\n", f, scale,
+           (unsigned long long)hp, (unsigned long long)hr, (unsigned long long)hv, (unsigned long long)hc, (unsigned long long)hs);
     fflush(stdout);
-    if (st) {  // raw state, written in little-endian order on every host so files are comparable
+    int st_from = getenv("ZSTATE_FROM") ? atoi(getenv("ZSTATE_FROM")) : 0;
+    if (st && f >= st_from) {  // raw state, written in little-endian order on every host so files are comparable
       fwrite(g_ram, 1, 0x20000, st);
       Ppu *ppu = g_zenv.ppu;
       // PPU memories hold little-endian words on every build, so raw bytes compare directly

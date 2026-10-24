@@ -484,7 +484,9 @@ void ReadFromFile(FILE *f, void *data, size_t n) {
 void StateRecorder_Load(StateRecorder *sr, FILE *f, bool replay_mode) {
   // todo: fix robustness on invalid data.
   uint32 hdr[8] = { 0 };
-  ReadFromFile(f, hdr, sizeof(hdr));
+  uint8 hdr_bytes[32];
+  ReadFromFile(f, hdr_bytes, sizeof(hdr_bytes));
+  for (int i = 0; i < 8; i++) hdr[i] = RAM32(hdr_bytes + i * 4);
 
   assert(hdr[0] == 1);
 
@@ -550,7 +552,9 @@ void StateRecorder_Save(StateRecorder *sr, FILE *f) {
     hdr[5] |= sr->replay_pos_last_complete << 1;
     hdr[7] = sr->replay_frame_counter;
   }
-  fwrite(hdr, 1, sizeof(hdr), f);
+  uint8 hdr_bytes[32];
+  for (int i = 0; i < 8; i++) RAM32(hdr_bytes + i * 4) = hdr[i];
+  fwrite(hdr_bytes, 1, sizeof(hdr_bytes), f);
   fwrite(sr->log.data, 1, hdr[2], f);
   fwrite(sr->base_snapshot.data, 1, sr->base_snapshot.size, f);
   fwrite(arr.data, 1, arr.size, f);
