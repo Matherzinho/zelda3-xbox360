@@ -7,6 +7,8 @@
 #include "config.h"
 #include "zelda_rtl.h"
 #include "audio.h"
+#include "spc_player.h"
+#include "snes/dsp.h"
 #include "snes/ppu.h"
 #include "util.h"
 #include "zelda_rtl.h"
@@ -45,6 +47,26 @@ int main(int argc, char **argv) {
   ZeldaGameSetWantedFeatures(0);
   int replay = getenv("ZREPLAY") ? atoi(getenv("ZREPLAY")) : -1;  // replay saves/ref chapter N (0-12)
   if (replay >= 0) SaveLoadSlot(kSaveLoad_Replay, 256 + replay);
+  if (getenv("ZDSP_DUMP")) {
+    Dsp *d = g_zenv.player->dsp;
+    for (int c = 0; c < 8; c++) {
+      DspChannel *h = &d->channel[c];
+      printf("ch%d pitch %u pc %u pm %d srcn %u doff %u pf %u old %d older %d noise %d rates %u %u %u %u rc %u st %u sus %u ug %d gm %u dg %d gv %u g %u kon %d koff %d so %d vl %d vr %d ee %d dec",
+        c, h->pitch, h->pitchCounter, h->pitchModulation, h->srcn, h->decodeOffset, h->previousFlags, h->old, h->older, h->useNoise,
+        h->adsrRates[0], h->adsrRates[1], h->adsrRates[2], h->adsrRates[3], h->rateCounter, h->adsrState, h->sustainLevel, h->useGain,
+        h->gainMode, h->directGain, h->gainValue, h->gain, h->keyOn, h->keyOff, h->sampleOut, h->volumeL, h->volumeR, h->echoEnable);
+      for (int j = 0; j < 19; j++) printf(" %d", h->decodeBuffer[j]);
+      printf("\n");
+    }
+    printf("dsp dir %u ev %d mute %d reset %d mvl %d mvr %d ns %d nr %u nc %u ew %d evl %d evr %d fb %d eba %u ed %u er %u ebi %u fbi %u so %u\n",
+      d->dirPage, d->evenCycle, d->mute, d->reset, d->masterVolumeL, d->masterVolumeR, d->noiseSample, d->noiseRate, d->noiseCounter,
+      d->echoWrites, d->echoVolumeL, d->echoVolumeR, d->feedbackVolume, d->echoBufferAdr, d->echoDelay, d->echoRemain, d->echoBufferIndex,
+      d->firBufferIndex, d->sampleOffset);
+    printf("fir"); for (int j = 0; j < 8; j++) printf(" %d %d %d", d->firValues[j], d->firBufferL[j], d->firBufferR[j]); printf("\n");
+    printf("ram"); for (int j = 0; j < 0x80; j++) printf(" %02x", d->ram[j]); printf("\n");
+    unsigned long long hs = 0; for (int j = 0; j < 534 * 2; j++) hs = hs * 31 + (uint16)d->sampleBuffer[j]; printf("samplebuf %llx\n", hs);
+    unsigned long long ha = 0; for (int j = 0; j < 0x10000; j++) ha = ha * 31 + g_zenv.player->ram[j]; printf("aram %llx\n", ha);
+  }
   enum { PITCH = 1024 * 4 };
   uint8 *pix = calloc(1024, PITCH);
   extern uint8 g_ram[131072];
@@ -70,6 +92,8 @@ int main(int argc, char **argv) {
     if (audio) {
       ZeldaRenderAudio(audio_buf, 801, 2);
       ZeldaDiscardUnusedAudioFrames();
+      static FILE *adump; if (!adump && getenv("ZAUDIO_DUMP")) adump = fopen(getenv("ZAUDIO_DUMP"), "wb");
+      if (adump) for (int i = 0; i < 801 * 2; i++) { uint16 v = audio_buf[i]; fputc(v & 255, adump); fputc(v >> 8, adump); }
       for (int i = 0; i < 801 * 2; i++) { ha = (ha ^ (uint16)audio_buf[i]) * 0x100000001b3ull; ha ^= ha >> 29; }
     }
     printf("frame %5d scale %d pix %016llx ram %016llx vram %016llx cgoam %016llx sram %016llx audio %016llx\n", f, scale,

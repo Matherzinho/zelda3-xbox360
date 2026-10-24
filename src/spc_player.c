@@ -1197,24 +1197,32 @@ void SpcPlayer_Initialize(SpcPlayer *p) {
   Spc_Loop_Part1(p);
 }
 
+// Copies one variable between the SPC's little-endian RAM and the player struct; 2-byte variables are words.
+static void CopyVar(uint8 *dst, const uint8 *src, int size) {
+#if ZELDA_BIG_ENDIAN_HOST
+  if (size == 2) { dst[0] = src[1]; dst[1] = src[0]; return; }
+#endif
+  memcpy(dst, src, size);
+}
+
 void SpcPlayer_CopyVariablesToRam(SpcPlayer *p) {
   Channel *c = p->channel;
   for (int i = 0; i < 8; i++, c++) {
     for (const MemMap *m = &kChannel_Maps[0]; m != &kChannel_Maps[countof(kChannel_Maps)]; m++)
-      memcpy(&p->ram[(m->org_off & 0x7fff) + i * 2], (uint8 *)c + m->off, m->org_off & 0x8000 ? 2 : 1);
+      CopyVar(&p->ram[(m->org_off & 0x7fff) + i * 2], (uint8 *)c + m->off, m->org_off & 0x8000 ? 2 : 1);
   }
   for (const MemMapSized *m = &kSpcPlayer_Maps[0]; m != &kSpcPlayer_Maps[countof(kSpcPlayer_Maps)]; m++)
-    memcpy(&p->ram[m->org_off], (uint8 *)p + m->off, m->size);
+    CopyVar(&p->ram[m->org_off], (uint8 *)p + m->off, m->size);
 }
 
 void SpcPlayer_CopyVariablesFromRam(SpcPlayer *p) {
   Channel *c = p->channel;
   for (int i = 0; i < 8; i++, c++) {
     for (const MemMap *m = &kChannel_Maps[0]; m != &kChannel_Maps[countof(kChannel_Maps)]; m++)
-      memcpy((uint8 *)c + m->off, &p->ram[(m->org_off & 0x7fff) + i * 2], m->org_off & 0x8000 ? 2 : 1);
+      CopyVar((uint8 *)c + m->off, &p->ram[(m->org_off & 0x7fff) + i * 2], m->org_off & 0x8000 ? 2 : 1);
   }
   for (const MemMapSized *m = &kSpcPlayer_Maps[0]; m != &kSpcPlayer_Maps[countof(kSpcPlayer_Maps)]; m++)
-    memcpy((uint8 *)p + m->off, &p->ram[m->org_off], m->size);
+    CopyVar((uint8 *)p + m->off, &p->ram[m->org_off], m->size);
 }
 
 
