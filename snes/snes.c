@@ -110,7 +110,7 @@ void snes_printCpuLine(Snes *snes) {
     char line[80];
     getProcessorStateCpu(snes, line);
     fputs(line, fout);
-    fprintf(fout, " 0x%x", snes->ppu->vram[0]);
+    fprintf(fout, " 0x%x", snes->ppu->vram[0].v);
     fputs("\n", fout);
     fflush(fout);
   }

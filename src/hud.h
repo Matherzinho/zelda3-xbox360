@@ -55,7 +55,7 @@ bool Hud_RefillMagicPower();
 void Hud_RestoreTorchBackground();
 void Hud_RebuildIndoor();
 void Hud_Rebuild();
-const uint16 *Hud_GetItemBoxPtr(int item);
+const zle16_t *Hud_GetItemBoxPtr(int item);
 int GetCurrentItemButtonIndex();
 uint8 *GetCurrentItemButtonPtr(int i);
 

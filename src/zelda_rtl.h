@@ -17,7 +17,7 @@ struct Dsp;
 typedef struct ZeldaEnv {
   uint8 *ram;
   uint8 *sram;
-  uint16 *vram;
+  zle16_t *vram;  // == ppu->vram, little-endian
   struct Ppu *ppu;
   struct SpcPlayer *player;
   struct Dma *dma;

@@ -349,7 +349,7 @@ static const uint8 kOverworldAreaSprcollSizes[192] = {
   4, 4, 2, 4, 4, 2, 4, 4, 2, 2, 2, 2, 2, 2, 2, 2,
   4, 4, 2, 2, 2, 4, 4, 2, 4, 4, 2, 2, 2, 4, 4, 2,
 };
-static const uint16 kOam_ResetRegionBases[6] = {0x30, 0x1d0, 0, 0x30, 0x120, 0x140};
+static const zle16_t kOam_ResetRegionBases[6]= {0x30, 0x1d0, 0, 0x30, 0x120, 0x140};
 static const uint8 kGarnish_OamMemSize[23] = {
   0, 4, 4, 4, 4, 4,  4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
   8, 4, 4, 4, 8, 16,

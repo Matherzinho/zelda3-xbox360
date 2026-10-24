@@ -1504,17 +1504,17 @@ typedef struct ZELDA_LE_STRUCT MirrorHdmaVars {
 #define mirror_vars (*(MirrorHdmaVars*)(g_ram+0x6A0))
 
 
-typedef struct ZELDA_LE_STRUCT UploadVram_Row {
-  uint16 col[32];
+typedef struct UploadVram_Row {
+  zle16_t col[32];
 } UploadVram_Row;
 
-typedef struct ZELDA_LE_STRUCT UploadVram_32x32 {
+typedef struct UploadVram_32x32 {
   UploadVram_Row row[32];
 } UploadVram_32x32;
 
-typedef struct ZELDA_LE_STRUCT UploadVram_3 {
+typedef struct UploadVram_3 {
   uint8 pad[256];
-  uint16 data[4];
+  zle16_t data[4];
 } UploadVram_3;
 
 #define uvram (*(UploadVram_3*)(&g_ram[0x1000]))

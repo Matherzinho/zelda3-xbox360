@@ -8,6 +8,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "snes/saveload.h"
+#include "types.h"
 typedef struct Ppu Ppu;
 
 #include "src/types.h"
@@ -114,17 +115,17 @@ struct Ppu {
   int32_t m7startX;
   int32_t m7startY;
 
-  uint16_t oam[0x110];
+  zle16_t oam[0x110];  // little-endian, as SNES OAM
   
   // store 31 extra entries to remove the need for clamp
   uint8_t brightnessMult[32 + 31];
   uint8_t brightnessMultHalf[32 * 2];
-  uint16_t cgram[0x100];
+  zle16_t cgram[0x100];  // little-endian, as SNES CGRAM
   uint8_t mosaicModulo[kPpuXPixels];
   uint32_t colorMapRgb[256];
   PpuPixelPrioBufs bgBuffers[2];
   PpuPixelPrioBufs objBuffer;
-  uint16_t vram[0x8000];
+  zle16_t vram[0x8000];  // little-endian, as SNES VRAM
 };
 
 Ppu* ppu_init();

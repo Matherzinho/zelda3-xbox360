@@ -39,8 +39,8 @@ static const TagalongMessageInfo kTagalong_OutdoorInfos[5] = {
 };
 static const uint8 kTagalong_IndoorOffsets[8] = {0, 3, 6, 7, 9, 10, 11, 12};
 static const uint8 kTagalong_OutdoorOffsets[4] = {0, 1, 4, 5};
-static const uint16 kTagalong_IndoorRooms[7] = {0xf1, 0x61, 0x51, 2, 0xdb, 0xab, 0x22};
-static const uint16 kTagalong_OutdoorRooms[3] = {3, 0x5e, 0};
+static const zle16_t kTagalong_IndoorRooms[7]= {0xf1, 0x61, 0x51, 2, 0xdb, 0xab, 0x22};
+static const zle16_t kTagalong_OutdoorRooms[3]= {3, 0x5e, 0};
 typedef struct TagalongSprXY {
   int8 y1, x1, y2, x2;
 } TagalongSprXY;

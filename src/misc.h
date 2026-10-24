@@ -23,9 +23,9 @@ static inline int FindInByteArray(const uint8 *data, uint8 lookfor, size_t size)
   return -1;
 }
 
-static inline int FindInWordArray(const uint16 *data, uint16 lookfor, size_t size) {
+static inline int FindInWordArray(const zle16_t *data, uint16 lookfor, size_t size) {
   for (size_t i = size; i--;)
-    if (data[i] == lookfor)
+    if (data[i].v == lookfor)
       return (int)i;
   return -1;
 }
@@ -33,7 +33,7 @@ static inline int FindInWordArray(const uint16 *data, uint16 lookfor, size_t siz
 
 extern const uint16 kMemoryLocationToGiveItemTo[76];
 
-const uint16 *SrcPtr(uint16 src);
+const zle16_t *SrcPtr(uint16 src);
 uint8 Ancilla_Sfx2_Near(uint8 a);
 void Ancilla_Sfx3_Near(uint8 a);
 void LoadDungeonRoomRebuildHUD();

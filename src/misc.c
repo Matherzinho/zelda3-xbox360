@@ -179,7 +179,7 @@ static PlayerHandlerFunc *const kMainRouting[28] = {
   &Module1B_SpawnSelect,
 };
 
-const uint16 *SrcPtr(uint16 src) {
+const zle16_t *SrcPtr(uint16 src) {
   return (RAM16P(g_asset_ptrs[69]) + (src >> 1));
 }
 
@@ -502,12 +502,12 @@ void Dungeon_LightTorch() {  // 81f3ec
 }
 
 void RoomDraw_AdjustTorchLightingChange(uint16 x, uint16 y, uint16 r8) {  // 81f746
-  const uint16 *ptr = SrcPtr(y);
+  const zle16_t *ptr = SrcPtr(y);
   x >>= 1;
-  overworld_tileattr[x + 0] = ptr[0];
-  overworld_tileattr[x + 64] = ptr[1];
-  overworld_tileattr[x + 1] = ptr[2];
-  overworld_tileattr[x + 65] = ptr[3];
+  overworld_tileattr[x + 0] = ptr[0].v;
+  overworld_tileattr[x + 64] = ptr[1].v;
+  overworld_tileattr[x + 1] = ptr[2].v;
+  overworld_tileattr[x + 65] = ptr[3].v;
   Dungeon_PrepOverlayDma_nextPrep(0, r8);
 }
 

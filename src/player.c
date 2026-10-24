@@ -1814,7 +1814,7 @@ void Link_HandleSwimAccels() {  // 8798a8
   uint8 mask = 12;
   for (int i = 0; i < 2; i++, mask >>= 2) {
     if (joypad1H_last & mask) {
-      if (swimcoll_var7[i] &(RAM16P(g_ram+0x334) + (i)) >= 384) {
+      if (swimcoll_var7[i] && swimcoll_var9[i] >= 384) {
         uint16 t;
         for (int j = 0; j < 9 && (t = kSwimmingTab3[j]) < swimcoll_var7[i]; j++) {}
         swimcoll_var9[i] = t;
@@ -1839,8 +1839,8 @@ void Link_SetTheMaxAccel() {  // 879903
     return;
   uint8 mask = 12;
   for (int i = 0; i < 2; i++, mask >>= 2) {
-    if ((joypad1H_last & mask) &(RAM16P(g_ram+0x32B) + (i)) != 2) {
-      if (swimcoll_var1[i] || swimcoll_var7[i] >= 240 &(RAM16P(g_ram+0x33C) + (i)) >= swimcoll_var9[i]) {
+    if ((joypad1H_last & mask) && swimcoll_var5[i] != 2) {
+      if (swimcoll_var1[i] || swimcoll_var7[i] >= 240 && swimcoll_var7[i] >= swimcoll_var9[i]) {
         swimcoll_var5[i] = 0;
         if (swimcoll_var7[i] >= 240) {
           swimcoll_var1[i] = 1;
@@ -6200,7 +6200,7 @@ bool InitializePushBlock(uint8 r14, uint8 idx) {  // 87ed3f
   pushedblocks_target[r14] = 0;
   pushedblocks_subpixel[r14] = 0;
 
-  if (dung_hdr_tag[0] != 38 &(RAM16P(g_ram+0x500) + (idx >> 1)) == 0) {
+  if (dung_hdr_tag[0] != 38 && dung_replacement_tile_state[idx >> 1] == 0) {
     if (!PushBlock_AttemptToPushTheBlock(0, x, y)) {
       Ancilla_Sfx2_Near(0x22);
       dung_replacement_tile_state[idx >> 1] = 1;

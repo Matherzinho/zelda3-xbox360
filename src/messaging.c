@@ -260,7 +260,7 @@ void SaveGameFile() {  // 80894a
   memcpy(g_zenv.sram + offs + 0xf00, RAM16P(g_ram+0xF000), 0x500);
   uint16 t = 0x5a5a;
   for (int i = 0; i < 0x4fe; i += 2)
-    t -= *(uint16 *)((char *)RAM16P(g_ram+0xF000) + i);
+    t -= ((zle16_t *)((char *)RAM16P(g_ram+0xF000) + i))->v;
   word_7EF4FE = t;
   WORD(g_zenv.sram[offs + 0x4fe]) = t;
   WORD(g_zenv.sram[offs + 0x4fe + 0xf00]) = t;
@@ -268,10 +268,10 @@ void SaveGameFile() {  // 80894a
 }
 
 void TransferMode7Characters() {  // 80e399
-  uint16 *dst = g_zenv.vram;
+  zle16_t *dst = g_zenv.vram;
   const uint8 *src = kOverworldMapGfx;
   for (int i = 0; i != 0x4000; i++)
-    HIBYTE(dst[i]) = src[i];
+    (((uint8*)&dst[i])[1]) = src[i];
 }
 
 void Module0E_Interface() {  // 80f800
@@ -1276,9 +1276,9 @@ void WorldMap_SetUpHDMA() {  // 8abc96
 }
 
 void WorldMap_FillTilemapWithEF() {  // 8abda5
-  uint16 *dst = g_zenv.vram;
+  zle16_t *dst = g_zenv.vram;
   for (int i = 0; i != 0x4000; i++)
-    BYTE(dst[i]) = 0xef;
+    (*(uint8*)&dst[i]) = 0xef;
 }
 
 void WorldMap_HandleSprites() {  // 8abf66
@@ -2139,7 +2139,7 @@ void Text_Initialize() {  // 8ec483
 }
 
 void Text_Initialize_initModuleStateLoop() {  // 8ec493
-  memcpy((g_ram+0x1CD0), kText_InitializationData, 32);
+  memcpy(RAM16P(g_ram+0x1CD0), kText_InitializationData, 32);
   Text_InitVwfState();
   RenderText_SetDefaultWindowPosition();
   text_tilemap_cur = 0x3980;
@@ -2343,7 +2343,7 @@ void Text_Render() {  // 8ec8d9
 
 void RenderText_Draw_Border() {  // 8ec8ea
   RenderText_DrawBorderInitialize();
-  uint16 *d = RenderText_DrawBorderRow(RAM16P(g_ram+0x1002), 0);
+  zle16_t *d = RenderText_DrawBorderRow(RAM16P(g_ram+0x1002), 0);
   for(int i = 0; i != 6; i++)
     d = RenderText_DrawBorderRow(d, 6);
   d = RenderText_DrawBorderRow(d, 12);
@@ -2354,7 +2354,7 @@ void RenderText_Draw_Border() {  // 8ec8ea
 void RenderText_Draw_BorderIncremental() {  // 8ec919
   nmi_load_bg_from_vram = 1;
   uint8 a = text_incremental_state;
-  uint16 *d = RAM16P(g_ram+0x1002);
+  zle16_t *d = RAM16P(g_ram+0x1002);
   if (a)
     a = (a < 7) ? 1 : 2;
   switch (a) {
@@ -2498,11 +2498,11 @@ RESTART:;
 
 void RenderText_Draw_Finish() {  // 8eca35
   RenderText_DrawBorderInitialize();
-  uint16 *d = RAM16P(g_ram+0x1002);
-  d[0] = swap16(text_msgbox_topleft_copy);
-  d[1] = 0x2E42;
-  d[2] = 0x387F;
-  d[3] = 0xffff;
+  zle16_t *d = RAM16P(g_ram+0x1002);
+  d[0].v = swap16(text_msgbox_topleft_copy);
+  d[1].v = 0x2E42;
+  d[2].v = 0x387F;
+  d[3].v = 0xffff;
   nmi_load_bg_from_vram = 1;
   messaging_module = 0;
   submodule_index = 0;
@@ -2529,10 +2529,10 @@ void VWF_RenderSingle(int c) {  // 8ecab8
   vwf_arr[i + 1] = arrval + width;
   uint16 r10 = (c & 0x70) * 2 + (c & 0xf);
   uint16 r0 = arrval * 2;
-  const uint16 *src2 = (uint16*)(kFontData + r10 * 16);
+  const zle16_t *src2 = (zle16_t *)(kFontData + r10 * 16);
   uint8 *mbuf = (uint8 *)RAM16P(g_ram+0x10000);
   for (int i = 0; i != 16; i += 2) {
-    uint16 r4 = *src2++;
+    uint16 r4 = (src2++)->v;
     int y = r0 + vwf_line_ptr;
     int x = (y & 0xff0) + i;
     y = (y >> 1) & 7;
@@ -2554,9 +2554,9 @@ void VWF_RenderSingle(int c) {  // 8ecab8
       WORD(mbuf[x + 0]) = r4;
   }
   uint16 r8 = vwf_line_ptr + 0x150;
-  const uint16 *src3 = (uint16*)(kFontData + (r10 + 16) * 16);
+  const zle16_t *src3 = (zle16_t *)(kFontData + (r10 + 16) * 16);
   for (int i = 0; i != 16; i += 2) {
-    uint16 r4 = *src3++;
+    uint16 r4 = (src3++)->v;
     int y = r8 + r0;
     int x = (y & 0xff0) + i;
     y = (y >> 1) & 7;
@@ -2644,7 +2644,7 @@ void RenderText_FindYItem_Next() {  // 8ecded
 
 void RenderText_DrawSelectedYItem() {  // 8ece14
   int item = choice_in_multiselect_box;
-  const uint16 *p = Hud_GetItemBoxPtr(item);
+  const zle16_t *p = Hud_GetItemBoxPtr(item);
   p += ((item == 3 || item == 32) ? 1 : (&link_item_bow)[item]) * 4;
   uint8 *vwf300 = &g_ram[0x1300];
   memcpy(vwf300 + 0xc2, p, 4);
@@ -2716,19 +2716,19 @@ bool RenderText_Draw_Scroll() {  // 8ecfe2
   uint8 r2 = dialogue_scroll_speed;
   do {
     for (int i = 0; i < 0x7e0; i += 16) {
-      uint16 *p = (uint16 *)((uint8 *)RAM16P(g_ram+0x10000) + i);
-      p[0] = p[1];
-      p[1] = p[2];
-      p[2] = p[3];
-      p[3] = p[4];
-      p[4] = p[5];
-      p[5] = p[6];
-      p[6] = p[7];
-      p[7] = p[168];
+      zle16_t *p = (zle16_t *)((uint8 *)RAM16P(g_ram+0x10000) + i);
+      p[0].v = p[1].v;
+      p[1].v = p[2].v;
+      p[2].v = p[3].v;
+      p[3].v = p[4].v;
+      p[4].v = p[5].v;
+      p[5].v = p[6].v;
+      p[6].v = p[7].v;
+      p[7].v = p[168].v;
     }
-    uint16 *p = RAM16P(g_ram+0x10000);
+    zle16_t *p = RAM16P(g_ram+0x10000);
     for (int i = 0x34f; i <= 0x3ef; i += 8)
-      p[i] = 0;
+      p[i].v = 0;
 
     if ((++byte_7E1CDF & 0xf) == 0) {
       vwf_curline = 4;
@@ -2749,39 +2749,39 @@ void RenderText_DrawBorderInitialize() {  // 8ed29c
   text_msgbox_topleft_copy = text_msgbox_topleft;
 }
 
-uint16 *RenderText_DrawBorderRow(uint16 *d, int y) {  // 8ed2ab
+zle16_t *RenderText_DrawBorderRow(zle16_t *d, int y) {  // 8ed2ab
   y >>= 1;
-  *d++ = swap16(text_msgbox_topleft_copy);
+  (d++)->v = swap16(text_msgbox_topleft_copy);
   text_msgbox_topleft_copy += 0x20;
-  *d++ = 0x2F00;
-  *d++ = kText_BorderTiles[y];
+  (d++)->v = 0x2F00;
+  (d++)->v = kText_BorderTiles[y];
   for(int i = 0; i < 22; i++)
-    *d++ = kText_BorderTiles[y+1];
-  *d++ = kText_BorderTiles[y+2];
-  *d = 0xffff;
+    (d++)->v = kText_BorderTiles[y+1];
+  (d++)->v = kText_BorderTiles[y+2];
+  d->v = 0xffff;
   return d;
 }
 
 void Text_BuildCharacterTilemap() {  // 8ed2ec
-  uint16 *vwf300 = (zle16_t *)&g_ram[0x1300];
+  zle16_t *vwf300 = (zle16_t *)&g_ram[0x1300];
   for (int i = 0; i < 126; i++)
-    vwf300[i] = text_tilemap_cur++;
+    vwf300[i].v = text_tilemap_cur++;
   RenderText_Refresh();
 }
 
 void RenderText_Refresh() {  // 8ed307
   RenderText_DrawBorderInitialize();
   text_msgbox_topleft_copy += 0x21;
-  uint16 *d = RAM16P(g_ram+0x1002);
-  uint16 *s = (zle16_t *)&g_ram[0x1300];
+  zle16_t *d = RAM16P(g_ram+0x1002);
+  zle16_t *s = (zle16_t *)&g_ram[0x1300];
   for (int j = 0; j != 6; j++) {
-    *d++ = swap16(text_msgbox_topleft_copy);
+    (d++)->v = swap16(text_msgbox_topleft_copy);
     text_msgbox_topleft_copy += 0x20;
-    *d++ = 0x2900;
+    (d++)->v = 0x2900;
     for (int i = 0; i != 21; i++)
-      *d++ = *s++;
+      (d++)->v = (s++)->v;
   }
-  *d = 0xffff;
+  d->v = 0xffff;
   nmi_load_bg_from_vram = 1;
 }
 

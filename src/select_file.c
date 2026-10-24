@@ -13,21 +13,21 @@
 #define selectfile_R20 WORD(g_ram[0xcc])
 static const uint8 kSelectFile_Draw_Y[3] = {0x43, 0x63, 0x83};
 bool Intro_CheckCksum(const uint8 *s) {
-  const uint16 *src = (const uint16 *)s;
+  const zle16_t *src = (const zle16_t *)s;
   uint16 sum = 0;
   for (int i = 0; i < 0x280; i++)
-    sum += src[i];
+    sum += src[i].v;
   return sum == 0x5a5a;
 
 }
 
-uint16 *SelectFile_Func1() {
+zle16_t *SelectFile_Func1() {
   static const uint16 kSelectFile_Func1_Tab[4] = {0x3581, 0x3582, 0x3591, 0x3592};
-  uint16 *dst = (zle16_t *)&g_ram[0x1002];
-  *dst++ = 0x10;
-  *dst++ = 0xff07;
+  zle16_t *dst = (zle16_t *)&g_ram[0x1002];
+  (dst++)->v = 0x10;
+  (dst++)->v = 0xff07;
   for (int i = 0; i < 1024; i++)
-    *dst++ = kSelectFile_Func1_Tab[((i & 0x20) >> 4) + (i & 1)];
+    (dst++)->v = kSelectFile_Func1_Tab[((i & 0x20) >> 4) + (i & 1)];
   return dst;
 }
 
@@ -93,20 +93,20 @@ void SelectFile_Func17(int k) {
   static const uint16 kSelectFile_DrawName_VramOffs[3] = {8, 0x5c, 0xb0};
   static const uint16 kSelectFile_DrawName_HealthVramOffs[3] = {0x16, 0x6a, 0xbe};
   uint8 *sram = g_zenv.sram + 0x500 * k;
-  uint16 *name = (uint16 *)(sram + kSrmOffs_Name);
-  uint16 *dst = RAM16P(g_ram+0x1002) + kSelectFile_DrawName_VramOffs[k] / 2;
+  zle16_t *name = (zle16_t *)(sram + kSrmOffs_Name);
+  zle16_t *dst = RAM16P(g_ram+0x1002) + kSelectFile_DrawName_VramOffs[k] / 2;
   for (int i = 5; i >= 0; i--) {
-    uint16 t = *name++ + 0x1800;
-    dst[0] = t;
-    dst[21] = t + 0x10;
+    uint16 t = (name++)->v + 0x1800;
+    dst[0].v = t;
+    dst[21].v = t + 0x10;
     dst++;
   }
   int health = sram[kSrmOffs_Health] >> 3;
   dst = RAM16P(g_ram+0x1002) + kSelectFile_DrawName_HealthVramOffs[k] / 2;
-  uint16 *dst_org = dst;
+  zle16_t *dst_org = dst;
   int row = 10;
   do {
-    *dst++ = 0x520;
+    (dst++)->v = 0x520;
     if (--row == 0)
       dst = dst_org + 21;
   } while (--health);
@@ -141,8 +141,8 @@ void SelectFile_Func16() {
 }
 
 void Module_NamePlayer_1() {
-  uint16 *dst = SelectFile_Func1();
-  dst[0] = 0xffff;
+  zle16_t *dst = SelectFile_Func1();
+  dst[0].v = 0xffff;
   nmi_load_bg_from_vram = 1;
   submodule_index++;
 }
@@ -155,11 +155,11 @@ void Module_NamePlayer_2() {
 }
 
 void Intro_FixCksum(uint8 *s) {
-  uint16 *src = (uint16 *)s;
+  zle16_t *src = (zle16_t *)s;
   uint16 sum = 0;
   for (int i = 0; i < 0x27f; i++)
-    sum += src[i];
-  src[0x27f] = 0x5a5a - sum;
+    sum += src[i].v;
+  src[0x27f].v = 0x5a5a - sum;
 }
 
 void LoadFileSelectGraphics() {  // 80e4e9
@@ -259,15 +259,15 @@ void Module_EraseFile_1() {  // 8cce53
     0x84, 0x35, 0x11,    2, 0xc0, 0x22, 0x86, 0x35, 0x11, 0x1d, 0xc0, 0x22, 0x96, 0x35, 0x13, 0x42,
        0,    1, 0x93, 0x35, 0x13, 0x43, 0x40, 0x32, 0x95, 0x35, 0x13, 0x5d,    0,    1, 0x94, 0x35,
   };
-  uint16 *dst = SelectFile_Func1();
+  zle16_t *dst = SelectFile_Func1();
   memcpy(dst, kSelectFile_Gfx0, 224);
   dst += 224 / 2;
   uint16 t = 0x1103;
   for (int i = 17; i >= 0; i--) {
-    *dst++ = swap16(t);
+    (dst++)->v = swap16(t);
     t += 0x20;
-    *dst++ = 0x3240;
-    *dst++ = 0x347f;
+    (dst++)->v = 0x3240;
+    (dst++)->v = 0x347f;
   }
   *(uint8 *)dst = 0xff;
   submodule_index++;
@@ -315,7 +315,7 @@ void FileSelect_Main() {  // 8ccebd
     selectfile_var2 = selectfile_R16;
 
   for (int k = 0; k < 3; k++) {
-    if (*(uint16 *)(cart + k * 0x500 + 0x3E5) == 0x55AA) {
+    if (((zle16_t *)(cart + k * 0x500 + 0x3E5))->v == 0x55AA) {
       selectfile_arr1[k] = 1;
       SelectFile_Func5_DrawOams(k);
       SelectFile_Func6_DrawOams2(k);
@@ -406,9 +406,9 @@ void CopyFile_ConfirmSelection() {  // 8cd0b9
 void FilePicker_DeleteHeaderStripe() {  // 8cd0c6
   static const uint16 kFilePicker_DeleteHeaderStripe_Dst[2] = {4, 0x1e};
   for (int j = 1; j >= 0; j--) {
-    uint16 *dst = RAM16P(g_ram+0x1002) + kFilePicker_DeleteHeaderStripe_Dst[j] / 2;
+    zle16_t *dst = RAM16P(g_ram+0x1002) + kFilePicker_DeleteHeaderStripe_Dst[j] / 2;
     for (int i = 0; i != 11; i++)
-      dst[i] = 0xa9;
+      dst[i].v = 0xa9;
   }
 }
 
@@ -442,12 +442,12 @@ void CopyFile_SelectionAndBlinker() {  // 8cd13f
 
   for (int k = 0; k != 3; k++) {
     if (selectfile_arr1[k] & 1) {
-      const uint16 *name = (uint16 *)(g_zenv.sram + 0x500 * k + kSrmOffs_Name);
-      uint16 *dst = RAM16P(g_ram+0x1002) + kCopyFile_SelectionAndBlinker_Dst[k] / 2;
+      const zle16_t *name = (zle16_t *)(g_zenv.sram + 0x500 * k + kSrmOffs_Name);
+      zle16_t *dst = RAM16P(g_ram+0x1002) + kCopyFile_SelectionAndBlinker_Dst[k] / 2;
       for (int i = 0; i != 6; i++) {
-        uint16 t = *name++ + 0x1800;
-        dst[0] = t;
-        dst[10] = t + 0x10;
+        uint16 t = (name++)->v + 0x1800;
+        dst[0].v = t;
+        dst[10].v = t + 0x10;
         dst++;
       }
     }
@@ -482,9 +482,9 @@ void CopyFile_SelectionAndBlinker() {  // 8cd13f
     selectfile_R20 = selectfile_R16 * 2;
     memcpy(RAM16P(g_ram+0x1002) + 26, kCopyFile_SelectionAndBlinker_Tab1, 73);
     if (selectfile_R16 != 2) {
-      uint16 *dst = RAM16P(g_ram+0x1002) + selectfile_R16 * 6;
-      dst[26] = 0x2762;
-      dst[29] = 0x4762;
+      zle16_t *dst = RAM16P(g_ram+0x1002) + selectfile_R16 * 6;
+      dst[26].v = 0x2762;
+      dst[29].v = 0x4762;
     }
     submodule_index++;
     selectfile_R16 = 0;
@@ -534,17 +534,17 @@ void CopyFile_TargetSelectionAndBlink() {  // 8cd27b
     if (k * 2 == selectfile_R20)
       continue;
 
-    uint16 *dst = RAM16P(g_ram+0x1002) + kCopyFile_TargetSelectionAndBlink_Dst[j++] / 2;
+    zle16_t *dst = RAM16P(g_ram+0x1002) + kCopyFile_TargetSelectionAndBlink_Dst[j++] / 2;
     uint16 t = kCopyFile_TargetSelectionAndBlink_Tab1[k];
-    dst[0] = t;
-    dst[10] = t + 0x10;
+    dst[0].v = t;
+    dst[10].v = t + 0x10;
     dst += 2;
     if (selectfile_arr1[k]) {
-      const uint16 *name = (uint16 *)(g_zenv.sram + 0x500 * k + kSrmOffs_Name);
+      const zle16_t *name = (zle16_t *)(g_zenv.sram + 0x500 * k + kSrmOffs_Name);
       for (int i = 0; i != 6; i++) {
-        uint16 t = *name++ + 0x1800;
-        dst[0] = t;
-        dst[10] = t + 0x10;
+        uint16 t = (name++)->v + 0x1800;
+        dst[0].v = t;
+        dst[10].v = t + 0x10;
         dst++;
       }
     }
@@ -576,9 +576,9 @@ void CopyFile_TargetSelectionAndBlink() {  // 8cd27b
     selectfile_R18 = selectfile_arr2[selectfile_R16];
     memcpy(RAM16P(g_ram+0x1002) + 26, kCopyFile_TargetSelectionAndBlink_Tab2, 49);
     if (selectfile_R16 == 0) {
-      uint16 *dst = RAM16P(g_ram+0x1002);
-      dst[26] = 0x1462;
-      dst[29] = 0x3462;
+      zle16_t *dst = RAM16P(g_ram+0x1002);
+      dst[26].v = 0x1462;
+      dst[29].v = 0x3462;
     }
     submodule_index++;
     selectfile_R16 = 0;
@@ -712,9 +712,9 @@ void KILLFile_ChooseTarget() {  // 8cd4ba
     memcpy(RAM16P(g_ram+0x1002), kKILLFile_ChooseTarget_Tab2, 101);
     submodule_index++;
     if (selectfile_R16 != 2) {
-      uint16 *dst = RAM16P(g_ram+0x1002) + selectfile_R16 * 6;
-      dst[0] = 0x6762;
-      dst[3] = 0x8762;
+      zle16_t *dst = RAM16P(g_ram+0x1002) + selectfile_R16 * 6;
+      dst[0].v = 0x6762;
+      dst[3].v = 0x8762;
     }
     subsubmodule_index = selectfile_R16;
     selectfile_R16 = 0;
@@ -748,12 +748,12 @@ void NameFile_EraseSave() {  // 8cd89c
   int offs = selectfile_R16 * 0x500;
   attract_legend_ctr = offs;
   memset(g_zenv.sram + offs, 0, 0x500);
-  uint16 *name = (uint16 *)(g_zenv.sram + offs + kSrmOffs_Name);
-  name[0] = name[1] = name[2] = name[3] = name[4] = name[5] = 0xa9;
+  zle16_t *name = (zle16_t *)(g_zenv.sram + offs + kSrmOffs_Name);
+  name[0].v = name[1].v = name[2].v = name[3].v = name[4].v = name[5].v = 0xa9;
 }
 
 void NameFile_DoTheNaming() {  // 8cda4d
-  static const int16 kNamePlayer_Tab1[26] = {
+  static const zles16_t kNamePlayer_Tab1[26]= {
     -1, 1, -1, 1, -1, 1, -1, 1, -1, 1, -1, 1, -1, 1, -1, 1,
     -2, 2, -2, 2, -2, 2, -2, 2, -4, 4,
   };
@@ -915,15 +915,15 @@ void NameFile_CheckForScrollInputY() {  // 8cdcbf
 
 void NameFile_DrawSelectedCharacter(int k, uint16 chr) {  // 8cdd30
   static const uint16 kNameFile_DrawSelectedCharacter_Tab[6] = {0x84, 0x86, 0x88, 0x8a, 0x8c, 0x8e};
-  uint16 *dst = RAM16P(g_ram+0x1002);
+  zle16_t *dst = RAM16P(g_ram+0x1002);
   uint16 a = kNameFile_DrawSelectedCharacter_Tab[k] | 0x6100;
-  dst[0] = swap16(a);
-  dst[1] = 0x100;
-  dst[2] = 0x1800 | chr;
-  dst[3] = swap16(a + 0x20);
-  dst[4] = 0x100;
-  dst[5] = (0x1800 | chr) + 0x10;
-  BYTE(dst[6]) = 0xff;
+  dst[0].v = swap16(a);
+  dst[1].v = 0x100;
+  dst[2].v = 0x1800 | chr;
+  dst[3].v = swap16(a + 0x20);
+  dst[4].v = 0x100;
+  dst[5].v = (0x1800 | chr) + 0x10;
+  (*(uint8*)&dst[6]) = 0xff;
   nmi_load_bg_from_vram = 1;
 }
 

@@ -35,6 +35,7 @@ int main(int argc, char **argv) {
   enum { PITCH = 1024 * 4 };
   uint8 *pix = calloc(1024, PITCH);
   extern uint8 g_ram[131072];
+  FILE *st = getenv("ZSTATE") ? fopen(getenv("ZSTATE"), "wb") : NULL;
   for (int f = 0; f < frames; f++) {
     ZeldaGameUpdate(PadForFrame(f));
     int scale = PpuGetCurrentRenderScale(g_zenv.ppu, 0);
@@ -45,6 +46,19 @@ int main(int argc, char **argv) {
     uint64_t hr = fnv(g_ram, 0x20000, 1469598103934665603ull);
     printf("frame %4d scale %d pix %016llx ram %016llx\n", f, scale, (unsigned long long)hp, (unsigned long long)hr);
     fflush(stdout);
+    if (st) {  // raw state, written in little-endian order on every host so files are comparable
+      fwrite(g_ram, 1, 0x20000, st);
+      Ppu *ppu = g_zenv.ppu;
+      // PPU memories hold little-endian words on every build, so raw bytes compare directly
+      fwrite(ppu->vram, 1, 0x10000, st);
+      fwrite(ppu->cgram, 1, 0x200, st);
+      fwrite(ppu->oam, 1, 0x220, st);
+      fwrite(g_zenv.sram, 1, 0x2000, st);
+      for (int y = 0; y < 224; y++) for (int x = 0; x < 256; x++) {
+        uint32 p; memcpy(&p, pix + (size_t)y * PITCH + x * 4, 4);
+        uint8 b[4] = { p, p >> 8, p >> 16, p >> 24 }; fwrite(b, 1, 4, st);
+      }
+    }
   }
   if (dump) {
     FILE *o = fopen(dump, "wb");

@@ -243,26 +243,26 @@ void Polyhedral_FillLine() {  // 89fdcf
   uint16 right = kPoly_RightSideMask[(poly_x1_frac >> 8) & 7];
   poly_tmp2 = (poly_x0_frac >> 8) & 0x38;
   int d0 = ((poly_x1_frac >> 8) & 0x38);
-  uint16 *ptr = (zle16_t *)&g_ram[poly_raster_dst_ptr + d0 * 4];
+  zle16_t *ptr = (zle16_t *)&g_ram[poly_raster_dst_ptr + d0 * 4];
   if ((d0 -= poly_tmp2) == 0) {
     poly_tmp1 = left & right;
-    ptr[0] ^= (ptr[0] ^ poly_raster_color0) & poly_tmp1;
-    ptr[8] ^= (ptr[8] ^ poly_raster_color1) & poly_tmp1;
+    ptr[0].v ^= (ptr[0].v ^ poly_raster_color0) & poly_tmp1;
+    ptr[8].v ^= (ptr[8].v ^ poly_raster_color1) & poly_tmp1;
     return;
   }
   if (d0 < 0)
     return;
   int n = d0 >> 3;
-  ptr[0] ^= (ptr[0] ^ poly_raster_color0) & right;
-  ptr[8] ^= (ptr[8] ^ poly_raster_color1) & right;
+  ptr[0].v ^= (ptr[0].v ^ poly_raster_color0) & right;
+  ptr[8].v ^= (ptr[8].v ^ poly_raster_color1) & right;
   ptr -= 0x10;
   while (--n) {
-    ptr[0] = poly_raster_color0;
-    ptr[8] = poly_raster_color1;
+    ptr[0].v = poly_raster_color0;
+    ptr[8].v = poly_raster_color1;
     ptr -= 0x10;
   }
-  ptr[0] ^= (ptr[0] ^ poly_raster_color0) & left;
-  ptr[8] ^= (ptr[8] ^ poly_raster_color1) & left;
+  ptr[0].v ^= (ptr[0].v ^ poly_raster_color0) & left;
+  ptr[8].v ^= (ptr[8].v ^ poly_raster_color1) & left;
   poly_tmp1 = left, poly_raster_numfull = 0;
 }
 

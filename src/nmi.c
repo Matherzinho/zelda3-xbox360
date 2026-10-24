@@ -53,15 +53,15 @@ static void CopyToVram(uint32 dstv, const uint8 *src, int len) {
 
 static void CopyToVramVertical(uint32 dstv, const uint8 *src, int len) {
   assert(!(len & 1));
-  uint16 *dst = &g_zenv.vram[dstv];
+  zle16_t *dst = &g_zenv.vram[dstv];
   for (int i = 0, i_end = len >> 1; i < i_end; i++, dst += 32, src += 2)
-    *dst = WORD(*src);
+    dst->v = WORD(*src);
 }
 
 static void CopyToVramLow(const uint8 *src, uint32 addr, int num) {
-  uint16 *dst = &g_zenv.vram[addr];
+  zle16_t *dst = &g_zenv.vram[addr];
   for (int i = 0; i < num; i++)
-    dst[i] = (dst[i] & ~0xff) | src[i];
+    dst[i].v = (dst[i].v & ~0xff) | src[i];
 }
 
 void WritePpuRegisters() {
@@ -255,9 +255,9 @@ void NMI_DoUpdates() {  // 8089e0
       } else if (vmain == 0x81) {
         // copy with other increment
         assert((len & 1) == 0);
-        uint16 *dp = &g_zenv.vram[dst];
+        zle16_t *dp = &g_zenv.vram[dst];
         for (int i = 0; i < len; i += 2, dp += 32)
-          *dp = WORD(p[i]);
+          dp->v = WORD(p[i]);
       } else {
         assert(0);
       }
@@ -294,10 +294,10 @@ void NMI_UpdateOWScroll() {  // 808d13
   int len = f & 0x3fff;
   src += 2;
   do {
-    uint16 *dst = &g_zenv.vram[WORD(src[0])];
+    zle16_t *dst = &g_zenv.vram[WORD(src[0])];
     src += 2;
     for (int i = 0, i_end = len >> 1; i < i_end; i++, dst += step, src += 2)
-      *dst = WORD(*src);
+      dst->v = WORD(*src);
   } while (!(src[1] & 0x80));
   nmi_disable_core_updates = 0;
 }
@@ -307,9 +307,9 @@ void NMI_UpdateSubscreenOverlay() {  // 808d62
 }
 
 void NMI_HandleArbitraryTileMap(const uint8 *src, int i, int i_end) {  // 808dae
-  uint16 *r10 = (g_ram+0x14000);
+  zle16_t *r10 = RAM16P(g_ram+0x14000);
   do {
-    memcpy(&g_zenv.vram[r10[i >> 1]], src, 0x80);
+    memcpy(&g_zenv.vram[r10[i >> 1].v], src, 0x80);
     src += 0x80;
   } while ((i += 2) != i_end);
   nmi_disable_core_updates = 0;
@@ -422,12 +422,12 @@ void HandleStripes14(const uint8 *p) {  // 8092a1
     p += 4;
 
     if (vram_incr_amount == 0) {
-      uint16 *dst = &g_zenv.vram[vmem_addr];
+      zle16_t *dst = &g_zenv.vram[vmem_addr];
       if (is_memset) {
         uint16 v = p[0] | p[1] << 8;
         len = (len + 1) >> 1;
         for (int i = 0; i < len; i++)
-          dst[i] = v;
+          dst[i].v = v;
         p += 2;
       } else {
         memcpy(dst, p, len);
@@ -435,18 +435,18 @@ void HandleStripes14(const uint8 *p) {  // 8092a1
       }
     } else {
       // increment vram by 32 instead of 1
-      uint16 *dst = &g_zenv.vram[vmem_addr];
+      zle16_t *dst = &g_zenv.vram[vmem_addr];
       if (is_memset) {
         uint16 v = p[0] | p[1] << 8;
         len = (len + 1) >> 1;
         for (int i = 0; i < len; i++, dst += 32)
-          *dst = v;
+          dst->v = v;
         p += 2;
       } else {
         assert((len & 1) == 0);
         len >>= 1;
         for (int i = 0; i < len; i++, dst += 32, p += 2)
-          WORD(*dst) = WORD(*p);
+          dst->v = WORD(*p);
       }
     }
   }

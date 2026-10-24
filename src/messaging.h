@@ -119,7 +119,7 @@ void RenderText_Draw_Choose1Or2();
 bool RenderText_Draw_Scroll();
 void RenderText_SetDefaultWindowPosition();
 void RenderText_DrawBorderInitialize();
-uint16 *RenderText_DrawBorderRow(uint16 *d, int y);
+zle16_t *RenderText_DrawBorderRow(zle16_t *d, int y);
 void Text_BuildCharacterTilemap();
 void RenderText_Refresh();
 void Text_GenerateMessagePointers();

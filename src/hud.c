@@ -10,10 +10,10 @@ enum {
 };
 
 typedef struct ItemBoxGfx {
-  uint16 v[4];
+  zle16_t v[4];
 } ItemBoxGfx;
 
-static void Hud_DrawItem(uint16 *dst, const ItemBoxGfx *src);
+static void Hud_DrawItem(zle16_t *dst, const ItemBoxGfx *src);
 static bool Hud_DoWeHaveThisItem(uint8 item);
 static void Hud_EquipPrevItem(uint8 *item);
 static void Hud_EquipNextItem(uint8 *item);
@@ -217,7 +217,7 @@ static const ItemBoxGfx * const kHudItemBoxGfxPtrs[] = {
   kHudItemBottles,
 
 };
-static const uint16 kUpdateMagicPowerTilemap[17][4] = {
+static const zle16_t kUpdateMagicPowerTilemap[17][4]= {
   {0x3cf5, 0x3cf5, 0x3cf5, 0x3cf5},
   {0x3cf5, 0x3cf5, 0x3cf5, 0x3c5f},
   {0x3cf5, 0x3cf5, 0x3cf5, 0x3c4c},
@@ -484,9 +484,9 @@ void Hud_Module_Run() {  // 8ddd36
 }
 
 void Hud_ClearTileMap() {  // 8ddd5a
-  uint16 *target = (zle16_t *)&g_ram[0x1000];
+  zle16_t *target = (zle16_t *)&g_ram[0x1000];
   for (int i = 0; i < 1024; i++)
-    target[i] = 0x207f;
+    target[i].v = 0x207f;
   sound_effect_2 = 17;
   nmi_subroutine_index = 1;
   (*(uint8*)(g_ram+(0x116))) = 0x22;
@@ -727,9 +727,9 @@ void Hud_GotoBottleMenu() {  // 8ddffb
 
 void Hud_InitBottleMenu() {  // 8de002
   int r = bottle_menu_expand_row;
-  uint16 *dst = uvram_screen.row[0].col + (kNewStyleInventory ? 1 : 0);
+  zle16_t *dst = uvram_screen.row[0].col + (kNewStyleInventory ? 1 : 0);
   for (int i = 21; i <= 30; i++)
-    dst[HUDXY(i, 11 + r)] = 0x207f;
+    dst[HUDXY(i, 11 + r)].v = 0x207f;
 
   if (++bottle_menu_expand_row == 19) {
     overworld_map_state++;
@@ -740,15 +740,15 @@ void Hud_InitBottleMenu() {  // 8de002
 }
 
 void Hud_ExpandBottleMenu() {  // 8de08c
-  static const uint16 kBottleMenuTop[] = { 0x28FB, 0x28F9, 0x28F9, 0x28F9, 0x28F9, 0x28F9, 0x28F9, 0x28F9, 0x28F9, 0x68FB };
-  static const uint16 kBottleMenuTop2[] = { 0x28FC, 0x24F5, 0x24F5, 0x24F5, 0x24F5, 0x24F5, 0x24F5, 0x24F5, 0x24F5, 0x68FC };
-  static const uint16 kBottleMenuBottom[] = { 0xA8FB, 0xA8F9, 0xA8F9, 0xA8F9, 0xA8F9, 0xA8F9, 0xA8F9, 0xA8F9, 0xA8F9, 0xE8FB };
+  static const zle16_t kBottleMenuTop[]= { 0x28FB, 0x28F9, 0x28F9, 0x28F9, 0x28F9, 0x28F9, 0x28F9, 0x28F9, 0x28F9, 0x68FB };
+  static const zle16_t kBottleMenuTop2[]= { 0x28FC, 0x24F5, 0x24F5, 0x24F5, 0x24F5, 0x24F5, 0x24F5, 0x24F5, 0x24F5, 0x68FC };
+  static const zle16_t kBottleMenuBottom[]= { 0xA8FB, 0xA8F9, 0xA8F9, 0xA8F9, 0xA8F9, 0xA8F9, 0xA8F9, 0xA8F9, 0xA8F9, 0xE8FB };
 
   int r = bottle_menu_expand_row;
-  uint16 *dst = uvram_screen.row[0].col + (kNewStyleInventory ? 1 : 0);
-  memcpy(&dst[HUDXY(21, 11 + r)], kBottleMenuTop, sizeof(uint16) * 10);
-  memcpy(&dst[HUDXY(21, 12 + r)], kBottleMenuTop2, sizeof(uint16) * 10);
-  memcpy(&dst[HUDXY(21, 29)], kBottleMenuBottom, sizeof(uint16) * 10);
+  zle16_t *dst = uvram_screen.row[0].col + (kNewStyleInventory ? 1 : 0);
+  memcpy((dst + (HUDXY(21, 11 + r))), kBottleMenuTop, sizeof(uint16) * 10);
+  memcpy((dst + (HUDXY(21, 12 + r))), kBottleMenuTop2, sizeof(uint16) * 10);
+  memcpy((dst + (HUDXY(21, 29))), kBottleMenuBottom, sizeof(uint16) * 10);
 
   if (sign8(--bottle_menu_expand_row))
     overworld_map_state++;
@@ -796,72 +796,72 @@ void Hud_BottleMenu() {  // 8de0df
   }
 }
 
-static void Hud_DrawItem(uint16 *dst, const ItemBoxGfx *src) {  // new
-  dst[0] = src->v[0];
-  dst[1] = src->v[1];
-  dst[32] = src->v[2];
-  dst[33] = src->v[3];
+static void Hud_DrawItem(zle16_t *dst, const ItemBoxGfx *src) {  // new
+  dst[0].v = src->v[0].v;
+  dst[1].v = src->v[1].v;
+  dst[32].v = src->v[2].v;
+  dst[33].v = src->v[3].v;
 }
 
-static void Hud_DrawNxN(uint16 *dst, const uint16 *src, int w, int h) {  // new
+static void Hud_DrawNxN(zle16_t *dst, const zle16_t *src, int w, int h) {  // new
   for (int y = 0; y < h; y++) {
     memcpy(dst, src, sizeof(uint16) * w);
     dst += 32, src += w;
   }
 }
 
-static void Hud_Copy2x2(uint16 *dst, uint16 *src) {  // new
-  dst[0] = src[0];
-  dst[1] = src[1];
-  dst[32] = src[32];
-  dst[33] = src[33];
+static void Hud_Copy2x2(zle16_t *dst, zle16_t *src) {  // new
+  dst[0].v = src[0].v;
+  dst[1].v = src[1].v;
+  dst[32].v = src[32].v;
+  dst[33].v = src[33].v;
 }
 
-static void Hud_DrawBox(uint16 *dst, int x1, int y1, int x2, int y2, uint8 palette) {  // new
+static void Hud_DrawBox(zle16_t *dst, int x1, int y1, int x2, int y2, uint8 palette) {  // new
   uint16 t;
 
   t = 0x20fb | palette << 10;
-  dst[HUDXY(x1, y1)] = t;
-  dst[HUDXY(x2, y1)] = t + 0x4000;
-  dst[HUDXY(x1, y2)] = t + 0x8000;
-  dst[HUDXY(x2, y2)] = t + 0xc000;
+  dst[HUDXY(x1, y1)].v = t;
+  dst[HUDXY(x2, y1)].v = t + 0x4000;
+  dst[HUDXY(x1, y2)].v = t + 0x8000;
+  dst[HUDXY(x2, y2)].v = t + 0xc000;
 
   t = 0x20fc | palette << 10;
   for (int y = y1 + 1; y < y2; y++) {
-    dst[HUDXY(x1, y)] = t;
-    dst[HUDXY(x2, y)] = t + 0x4000;
+    dst[HUDXY(x1, y)].v = t;
+    dst[HUDXY(x2, y)].v = t + 0x4000;
   }
 
   t = 0x20f9 | palette << 10;
   for (int x = x1 + 1; x < x2; x++) {
-    dst[HUDXY(x, y1)] = t;
-    dst[HUDXY(x, y2)] = t + 0x8000;
+    dst[HUDXY(x, y1)].v = t;
+    dst[HUDXY(x, y2)].v = t + 0x8000;
   }
 
   for (int y = y1 + 1; y < y2; y++) {
     for (int x = x1 + 1; x < x2; x++)
-      dst[HUDXY(x, y)] = 0x24F5;
+      dst[HUDXY(x, y)].v = 0x24F5;
   }
 }
 
-static void Hud_DrawFlashingCircle(uint16 *p, uint8 palette) {  // new
+static void Hud_DrawFlashingCircle(zle16_t *p, uint8 palette) {  // new
   int pp = palette << 10;
-  p[HUDXY(0, -1)] = pp | 0x2061;
-  p[HUDXY(1, -1)] = pp | 0x2061 | 0x4000;
-  p[HUDXY(-1, 0)] = pp | 0x2070;
-  p[HUDXY(2, 0)] = pp | 0x2070 | 0x4000;
-  p[HUDXY(-1, 1)] = pp | 0xa070;
-  p[HUDXY(2, 1)] = pp | 0xa070 | 0x4000;
-  p[HUDXY(0, 2)] = pp | 0xa061;
-  p[HUDXY(1, 2)] = pp | 0xa061 | 0x4000;
-  p[HUDXY(-1, -1)] = pp | 0x2060;
-  p[HUDXY(2, -1)] = pp | 0x2060 | 0x4000;
-  p[HUDXY(2, 2)] = pp | 0x2060 | 0xC000;
-  p[HUDXY(-1, 2)] = pp | 0x2060 | 0x8000;
+  p[HUDXY(0, -1)].v = pp | 0x2061;
+  p[HUDXY(1, -1)].v = pp | 0x2061 | 0x4000;
+  p[HUDXY(-1, 0)].v = pp | 0x2070;
+  p[HUDXY(2, 0)].v = pp | 0x2070 | 0x4000;
+  p[HUDXY(-1, 1)].v = pp | 0xa070;
+  p[HUDXY(2, 1)].v = pp | 0xa070 | 0x4000;
+  p[HUDXY(0, 2)].v = pp | 0xa061;
+  p[HUDXY(1, 2)].v = pp | 0xa061 | 0x4000;
+  p[HUDXY(-1, -1)].v = pp | 0x2060;
+  p[HUDXY(2, -1)].v = pp | 0x2060 | 0x4000;
+  p[HUDXY(2, 2)].v = pp | 0x2060 | 0xC000;
+  p[HUDXY(-1, 2)].v = pp | 0x2060 | 0x8000;
 }
 
 void Hud_DrawBottleMenu() {  // 8def67
-  uint16 *dst = uvram_screen.row[0].col + (kNewStyleInventory ? 1 : 0);
+  zle16_t *dst = uvram_screen.row[0].col + (kNewStyleInventory ? 1 : 0);
   Hud_DrawBox(dst, 21, 11, 30, 29, 2);
   for (int i = 0; i < 4; i++)
     Hud_DrawItem(dst + HUDXY(25, 13 + i * 4), &kHudItemBottles[link_bottle_info[i]]);
@@ -881,10 +881,10 @@ void Hud_DrawBottleMenu_Update() {  // 8de17f
 }
 
 void Hud_EraseBottleMenu() {  // 8de2fd
-  uint16 *dst = uvram_screen.row[0].col + (kNewStyleInventory ? 1 : 0);
+  zle16_t *dst = uvram_screen.row[0].col + (kNewStyleInventory ? 1 : 0);
   int r = bottle_menu_expand_row;
   for (int i = 0; i < 10; i++)
-    dst[HUDXY(21 + i, 11 + r)] = 0x207f;
+    dst[HUDXY(21 + i, 11 + r)].v = 0x207f;
   if (++bottle_menu_expand_row == 19)
     overworld_map_state++;
   nmi_subroutine_index = 1;
@@ -932,7 +932,7 @@ static void CopyTilesForSwitchLR(int switch_lr) {
 #define PV(a0,a1,a2,a3,a4,a5,a6,a7)  ((a0 & 1) << 7 | (a0 >> 1 & 1) << 15 | (a1 & 1) << 6 | (a1 >> 1 & 1) << 14 | (a2 & 1) <<5 | (a2 >> 1&1) <<13 | (a3 & 1) << 4 | (a3>> 1 & 1) << 12 | (a4 & 1) << 3 | (a4 >> 1 & 1) << 11 | (a5 & 1) << 2 | (a5 >> 1 & 1) << 10 | (a6 & 1) << 1 | (a6 >> 1 & 1) << 9 | (a7 & 1) << 0 | (a7 >> 1 & 1) << 8) 
     
   if (switch_lr == 3) {
-    static const uint16 kBytesForNewTile0xC_TopOfR[8] = {
+    static const zle16_t kBytesForNewTile0xC_TopOfR[8]= {
       PV(1,1,1,1,1,1,3,3),
       PV(1,1,1,1,1,1,1,3),
       PV(1,1,1,1,1,1,1,1),
@@ -944,7 +944,7 @@ static void CopyTilesForSwitchLR(int switch_lr) {
     };
     memcpy(&g_zenv.vram[0x7000 + 0xc * 8], kBytesForNewTile0xC_TopOfR, sizeof(kBytesForNewTile0xC_TopOfR));
 
-    static const uint16 kBytesForNewTile0xD_BottomofR[8] = {
+    static const zle16_t kBytesForNewTile0xD_BottomofR[8]= {
       PV(1,1,1,1,1,1,3,3),
       PV(1,1,1,3,1,1,1,3),
       PV(1,1,1,3,3,1,1,1),
@@ -956,7 +956,7 @@ static void CopyTilesForSwitchLR(int switch_lr) {
     };
     memcpy(&g_zenv.vram[0x7000 + 0xd * 8], kBytesForNewTile0xD_BottomofR, sizeof(kBytesForNewTile0xD_BottomofR));
   } else if (switch_lr == 2) {
-    static const uint16 kBytesForNewTile0xE_TopOfL[8] = {
+    static const zle16_t kBytesForNewTile0xE_TopOfL[8]= {
       PV(1,1,1,3,3,3,3,3),
       PV(1,1,1,3,3,3,3,3),
       PV(1,1,1,3,3,3,3,3),
@@ -968,7 +968,7 @@ static void CopyTilesForSwitchLR(int switch_lr) {
     };
     memcpy(&g_zenv.vram[0x7000 + 0xe * 8], kBytesForNewTile0xE_TopOfL, sizeof(kBytesForNewTile0xE_TopOfL));
 
-    static const uint16 kBytesForNewTile0xF_BottomofL[8] = {
+    static const zle16_t kBytesForNewTile0xF_BottomofL[8]= {
       PV(1,1,1,3,3,3,3,3),
       PV(1,1,1,3,3,3,3,3),
       PV(1,1,1,3,3,3,3,3),
@@ -986,7 +986,7 @@ static void CopyTilesForSwitchLR(int switch_lr) {
 static const uint8 kSwitchLR_palettes[] = { 7, 3, 4, 4 };
 
 void Hud_DrawYButtonItems() {  // 8de3d9
-  uint16 *dst = uvram_screen.row[0].col;
+  zle16_t *dst = uvram_screen.row[0].col;
   int x = kNewStyleInventory ? 0 : 1;
 
   int btn_index = GetCurrentItemButtonIndex();
@@ -1000,11 +1000,11 @@ void Hud_DrawYButtonItems() {  // 8de3d9
    };
 
   if (!kNewStyleInventory) {
-    dst[HUDXY(2, 6)] = kEquipmentLetterTiles[btn_index][0];
-    dst[HUDXY(2, 7)] = kEquipmentLetterTiles[btn_index][1]; 
+    dst[HUDXY(2, 6)].v = kEquipmentLetterTiles[btn_index][0];
+    dst[HUDXY(2, 7)].v = kEquipmentLetterTiles[btn_index][1]; 
   }
-  dst[HUDXY(x + 2, 5)] = 0x246E;
-  dst[HUDXY(x + 3, 5)] = 0x246F;
+  dst[HUDXY(x + 2, 5)].v = 0x246E;
+  dst[HUDXY(x + 3, 5)].v = 0x246F;
 
   for (int i = 0; i < kHudItemCount; i++) {
     int j = hud_inventory_order[i];
@@ -1013,7 +1013,7 @@ void Hud_DrawYButtonItems() {  // 8de3d9
 }
 
 void Hud_DrawAbilityBox() {  // 8de6b6
-  static const uint16 kHudAbilityText[80] = {
+  static const zle16_t kHudAbilityText[80]= {
     0x2cf5, 0x2cf5, 0x2cf5, 0x2cf5, 0x2cf5, 0x2d5b, 0x2d58, 0x2d55, 0x2d63, 0x2d27,
     0x2cf5, 0x2cf5, 0x2cf5, 0x2cf5, 0x2cf5, 0x2cf5, 0x2d61, 0x2d54, 0x2d50, 0x2d53,
     0x2cf5, 0x2cf5, 0x2cf5, 0x2cf5, 0x2cf5, 0x2cf5, 0x2d63, 0x2d50, 0x2d5b, 0x2d5a,
@@ -1023,11 +1023,11 @@ void Hud_DrawAbilityBox() {  // 8de6b6
     0x2cf5, 0x2cf5, 0x2cf5, 0x2cf5, 0x2cf5, 0x2cf5, 0x2d62, 0x2d66, 0x2d58, 0x2d5c,
     0x2cf5, 0x2cf5, 0x2cf5, 0x207f, 0x207f, 0x2c01, 0x2c18, 0x2c28, 0x207f, 0x207f,
   };
-  static const uint16 kHudGlovesText[20] = {
+  static const zle16_t kHudGlovesText[20]= {
     0x2cf5, 0x2cf5, 0x2cf5, 0x2cf5, 0x2cf5, 0x2d5b, 0x2d58, 0x2d55, 0x2d63, 0x2d28,
     0x2cf5, 0x2cf5, 0x2cf5, 0x2cf5, 0x2cf5, 0x2d5b, 0x2d58, 0x2d55, 0x2d63, 0x2d29,
   };
-  uint16 *dst = uvram_screen.row[0].col;
+  zle16_t *dst = uvram_screen.row[0].col;
   int x = kNewStyleInventory ? 0 : 1;
 
   Hud_DrawBox(dst, x, 21, 19, 29, 1);
@@ -1041,12 +1041,12 @@ void Hud_DrawAbilityBox() {  // 8de6b6
   }
   // A
   if (!kNewStyleInventory) {
-    dst[HUDXY(2, 22)] = 0xA4F0;
-    dst[HUDXY(2, 23)] = 0x24F2;
+    dst[HUDXY(2, 22)].v = 0xA4F0;
+    dst[HUDXY(2, 23)].v = 0x24F2;
   }
   // DO text
-  dst[HUDXY(x + 2, 21)] = 0x2482;
-  dst[HUDXY(x + 3, 21)] = 0x2483;
+  dst[HUDXY(x + 2, 21)].v = 0x2482;
+  dst[HUDXY(x + 3, 21)].v = 0x2483;
 
   Hud_DrawItem(dst + HUDXY(8, 27), &kHudItemGloves[link_item_gloves]);
   Hud_DrawItem(dst + HUDXY(4, 27), &kHudItemBoots[link_item_boots]);
@@ -1064,7 +1064,7 @@ void Hud_DrawProgressIcons() {  // 8de9c8
 }
 
 void Hud_DrawProgressIcons_Pendants() {  // 8de9d3
-  static const uint16 kProgressIconPendantsBg[90] = {
+  static const zle16_t kProgressIconPendantsBg[90]= {
     0x28fb, 0x28f9, 0x28f9, 0x28f9, 0x28f9, 0x28f9, 0x28f9, 0x28f9, 0x28f9, 0x68fb,
     0x28fc, 0x2521, 0x2522, 0x2523, 0x2524, 0x253f, 0x24f5, 0x24f5, 0x24f5, 0x68fc,
     0x28fc, 0x24f5, 0x24f5, 0x24f5, 0x24f5, 0x24f5, 0x24f5, 0x24f5, 0x24f5, 0x68fc,
@@ -1087,7 +1087,7 @@ void Hud_DrawProgressIcons_Pendants() {  // 8de9d3
     {{0x313b, 0x313c, 0x313d, 0x313e}},
     {{0x3d2b, 0x3d2c, 0x3d2d, 0x3d2e}},
   };
-  uint16 *dst = uvram_screen.row[0].col + (kNewStyleInventory ? HUDXY(22, 11) : HUDXY(21, 11));
+  zle16_t *dst = uvram_screen.row[0].col + (kNewStyleInventory ? HUDXY(22, 11) : HUDXY(21, 11));
   Hud_DrawNxN(dst, kProgressIconPendantsBg, 10, 9);
   Hud_DrawItem(dst + HUDXY(4, 3), &kHudPendants0[(link_which_pendants >> 0) & 1]);
   Hud_DrawItem(dst + HUDXY(2, 6), &kHudPendants1[(link_which_pendants >> 1) & 1]);
@@ -1095,7 +1095,7 @@ void Hud_DrawProgressIcons_Pendants() {  // 8de9d3
 }
 
 void Hud_DrawProgressIcons_Crystals() {  // 8dea62
-  static const uint16 kProgressIconCrystalsBg[90] = {
+  static const zle16_t kProgressIconCrystalsBg[90]= {
     0x28fb, 0x28f9, 0x28f9, 0x28f9, 0x28f9, 0x28f9, 0x28f9, 0x28f9, 0x28f9, 0x68fb,
     0x28fc, 0x252f, 0x2534, 0x2535, 0x2536, 0x2537, 0x24f5, 0x24f5, 0x24f5, 0x68fc,
     0x28fc, 0x24f5, 0x24f5, 0x24f5, 0x24f5, 0x24f5, 0x24f5, 0x24f5, 0x24f5, 0x68fc,
@@ -1107,42 +1107,42 @@ void Hud_DrawProgressIcons_Crystals() {  // 8dea62
     0xa8fb, 0xa8f9, 0xa8f9, 0xa8f9, 0xa8f9, 0xa8f9, 0xa8f9, 0xa8f9, 0xa8f9, 0xe8fb,
   };
 
-  uint16 *dst = uvram_screen.row[0].col + (kNewStyleInventory ? HUDXY(22, 11) : HUDXY(21, 11));
+  zle16_t *dst = uvram_screen.row[0].col + (kNewStyleInventory ? HUDXY(22, 11) : HUDXY(21, 11));
   Hud_DrawNxN(dst, kProgressIconCrystalsBg, 10, 9);
 
   uint8 f = link_has_crystals;
   if (f & 1) {
-    dst[HUDXY(3, 3)] = 0x2D44;
-    dst[HUDXY(4, 3)] = 0x2D45;
+    dst[HUDXY(3, 3)].v = 0x2D44;
+    dst[HUDXY(4, 3)].v = 0x2D45;
   }
   if (f & 2) {
-    dst[HUDXY(5, 3)] = 0x2D44;
-    dst[HUDXY(6, 3)] = 0x2D45;
+    dst[HUDXY(5, 3)].v = 0x2D44;
+    dst[HUDXY(6, 3)].v = 0x2D45;
   }
   if (f & 4) {
-    dst[HUDXY(2, 5)] = 0x2D44;
-    dst[HUDXY(3, 5)] = 0x2D45;
+    dst[HUDXY(2, 5)].v = 0x2D44;
+    dst[HUDXY(3, 5)].v = 0x2D45;
   }
   if (f & 8) {
-    dst[HUDXY(4, 5)] = 0x2D44;
-    dst[HUDXY(5, 5)] = 0x2D45;
+    dst[HUDXY(4, 5)].v = 0x2D44;
+    dst[HUDXY(5, 5)].v = 0x2D45;
   }
   if (f & 16) {
-    dst[HUDXY(6, 5)] = 0x2D44;
-    dst[HUDXY(7, 5)] = 0x2D45;
+    dst[HUDXY(6, 5)].v = 0x2D44;
+    dst[HUDXY(7, 5)].v = 0x2D45;
   }
   if (f & 32) {
-    dst[HUDXY(3, 7)] = 0x2D44;
-    dst[HUDXY(4, 7)] = 0x2D45;
+    dst[HUDXY(3, 7)].v = 0x2D44;
+    dst[HUDXY(4, 7)].v = 0x2D45;
   }
   if (f & 64) {
-    dst[HUDXY(5, 7)] = 0x2D44;
-    dst[HUDXY(6, 7)] = 0x2D45;
+    dst[HUDXY(5, 7)].v = 0x2D44;
+    dst[HUDXY(6, 7)].v = 0x2D45;
   }
 }
 
 void Hud_DrawSelectedYButtonItem() {  // 8deb3a
-  static const uint16 kHudBottlesItemText[128] = {
+  static const zle16_t kHudBottlesItemText[128]= {
     0x24f5, 0x24f5, 0x24f5, 0x24f5, 0x24f5, 0x24f5, 0x24f5, 0x24f5, 0x255c, 0x2564, 0x2562, 0x2557, 0x2561, 0x255e, 0x255e, 0x255c,
     0x24f5, 0x24f5, 0x24f5, 0x24f5, 0x24f5, 0x24f5, 0x24f5, 0x24f5, 0x2551, 0x255e, 0x2563, 0x2563, 0x255b, 0x2554, 0x24f5, 0x24f5,
     0x255b, 0x2558, 0x2555, 0x2554, 0x24f5, 0x24f5, 0x24f5, 0x24f5, 0x255c, 0x2554, 0x2553, 0x2558, 0x2552, 0x2558, 0x255d, 0x2554,
@@ -1152,24 +1152,24 @@ void Hud_DrawSelectedYButtonItem() {  // 8deb3a
     0x24f5, 0x24f5, 0x24f5, 0x24f5, 0x24f5, 0x24f5, 0x24f5, 0x24f5, 0x2551, 0x2554, 0x2554, 0x24f5, 0x24f5, 0x24f5, 0x24f5, 0x24f5,
     0x24f5, 0x24f5, 0x24f5, 0x24f5, 0x24f5, 0x24f5, 0x24f5, 0x24f5, 0x2556, 0x255e, 0x255e, 0x2553, 0x24f5, 0x2551, 0x2554, 0x2554,
   };
-  static const uint16 kHudMushroomItemText[16] = {
+  static const zle16_t kHudMushroomItemText[16]= {
     0x255c, 0x2550, 0x2556, 0x2558, 0x2552, 0x24f5, 0x24f5, 0x24f5,
     0x24f5, 0x255f, 0x255e, 0x2566, 0x2553, 0x2554, 0x2561, 0x24f5,
   };
-  static const uint16 kHudFluteItemText[32] = {
+  static const zle16_t kHudFluteItemText[32]= {
     0x24f5, 0x24f5, 0x24f5, 0x24f5, 0x24f5, 0x24f5, 0x24f5, 0x24f5, 0x2555, 0x255b, 0x2564, 0x2563, 0x2554, 0x24f5, 0x24f5, 0x24f5,
     0x24f5, 0x24f5, 0x24f5, 0x24f5, 0x24f5, 0x24f5, 0x24f5, 0x24f5, 0x2555, 0x255b, 0x2564, 0x2563, 0x2554, 0x24f5, 0x24f5, 0x24f5
   };
-  static const uint16 kHudMirrorItemText[16] = {
+  static const zle16_t kHudMirrorItemText[16]= {
     0x255c, 0x2550, 0x2556, 0x2558, 0x2552, 0x24f5, 0x24f5, 0x24f5,
     0x24f5, 0x24f5, 0x255c, 0x2558, 0x2561, 0x2561, 0x255e, 0x2561
   };
-  static const uint16 kHudBowItemText[48] = {
+  static const zle16_t kHudBowItemText[48]= {
     0x24f5, 0x24f5, 0x24f5, 0x24f5, 0x24f5, 0x24f5, 0x24f5, 0x24f5, 0x256b, 0x256c, 0x256e, 0x256f, 0x257c, 0x257d, 0x257e, 0x257f,
     0x24f5, 0x24f5, 0x24f5, 0x24f5, 0x24f5, 0x24f5, 0x24f5, 0x24f5, 0x256b, 0x256c, 0x24f5, 0x24f5, 0x24f5, 0x24f5, 0x24f5, 0x24f5,
     0x256b, 0x256c, 0x24f5, 0x256e, 0x256f, 0x24f5, 0x24f5, 0x24f5, 0x2578, 0x2579, 0x257a, 0x257b, 0x257c, 0x257d, 0x257e, 0x257f,
   };
-  static const uint16 kHudItemText[320] = {
+  static const zle16_t kHudItemText[320]= {
     0x24f5, 0x24f5, 0x24f5, 0x24f5, 0x24f5, 0x24f5, 0x24f5, 0x24f5, 0x256b, 0x256c, 0x24f5, 0x24f5, 0x24f5, 0x24f5, 0x24f5, 0x24f5,
     0x24f5, 0x24f5, 0x24f5, 0x24f5, 0x24f5, 0x24f5, 0x24f5, 0x24f5, 0x2570, 0x2571, 0x2572, 0x2573, 0x2574, 0x2575, 0x2576, 0x2577,
     0x24f5, 0x24f5, 0x24f5, 0x24f5, 0x24f5, 0x24f5, 0x24f5, 0x24f5, 0x2557, 0x255e, 0x255e, 0x255a, 0x2562, 0x2557, 0x255e, 0x2563,
@@ -1194,14 +1194,14 @@ void Hud_DrawSelectedYButtonItem() {  // 8deb3a
   };
 
 #define L(x) (x == ' ' ? 0x24f5 : 0x2550 + x - 'A')
-  const uint16 kNotAssignedItemText[16] = {
+  const zle16_t kNotAssignedItemText[16]= {
     L('N'), L('O'), L('T'), L(' '), L(' '), L(' '), L(' '), L(' '),
     L('A'), L('S'), L('S'), L('I'), L('G'), L('N'), L('E'), L('D'),
   };
 #undef L
 
-  uint16 *dst_org = uvram_screen.row[0].col;
-  uint16 *dst_box = dst_org + (kNewStyleInventory ? 1 : 0);
+  zle16_t *dst_org = uvram_screen.row[0].col;
+  zle16_t *dst_box = dst_org + (kNewStyleInventory ? 1 : 0);
   
   int btn_index = GetCurrentItemButtonIndex();
   int item = *GetCurrentItemButtonPtr(btn_index);
@@ -1210,13 +1210,13 @@ void Hud_DrawSelectedYButtonItem() {  // 8deb3a
   // Display either the current item or the item assigned
   // to the x, l, or r key.
   if (item != 0) {
-    uint16 *p = dst_org + kHudItemInVramPtr[Hud_GetItemPosition(item)];
+    zle16_t *p = dst_org + kHudItemInVramPtr[Hud_GetItemPosition(item)];
     Hud_Copy2x2(dst_box + HUDXY(25, 6), p);
     if (timer_for_flashing_circle & 0x10)
       Hud_DrawFlashingCircle(p, kSwitchLR_palettes[btn_index]);
   }
 
-  const uint16 *src_p;
+  const zle16_t *src_p;
   if (item == kHudItem_BottleOld && !kNewStyleInventory && link_item_bottle_index) {
     src_p = &kHudBottlesItemText[(link_bottle_info[link_item_bottle_index - 1] - 1) * 16];
   } else if (item == 5 && link_item_mushroom != 1) {
@@ -1240,15 +1240,15 @@ void Hud_DrawSelectedYButtonItem() {  // 8deb3a
 }
 
 void Hud_DrawEquipmentBox() {  // 8ded29
-  uint16 *dst = uvram_screen.row[0].col + (kNewStyleInventory ? 1 : 0);
+  zle16_t *dst = uvram_screen.row[0].col + (kNewStyleInventory ? 1 : 0);
 
   Hud_DrawBox(dst, 21, 21, 30, 29, 2);
 
   // Draw dotted lines
   for (int i = 0; i < 8; i++)
-    dst[HUDXY(22 + i, 25)] = 0x28D7;
+    dst[HUDXY(22 + i, 25)].v = 0x28D7;
 
-  static const uint16 kHudEquipmentDungeonItemText[16] = {
+  static const zle16_t kHudEquipmentDungeonItemText[16]= {
     0x2479, 0x247a, 0x247b, 0x247c, 0x248c, 0x24f5, 0x24f5, 0x24f5,
     0x2469, 0x246a, 0x246b, 0x246c, 0x246d, 0x246e, 0x246f, 0x24f5,
   };
@@ -1263,7 +1263,7 @@ void Hud_DrawEquipmentBox() {  // 8ded29
   };
   if (cur_palace_index_x2 == 0xff) {
     for (int i = 0; i < 8; i++)
-      dst[HUDXY(22 + i, 26)] = 0x24F5;
+      dst[HUDXY(22 + i, 26)].v = 0x24F5;
     Hud_DrawItem(dst + HUDXY(25, 27), &kHudItemHeartPieces[link_heart_pieces]);
   }
   Hud_DrawItem(dst + HUDXY(22, 23), &kHudItemSword[link_sword_type == 0xff ? 0 : link_sword_type]);
@@ -1315,7 +1315,7 @@ void Hud_AnimateHeartRefill() {  // 8df14f
   if (--animate_heart_refill_countdown)
     return;
   uint16 n = ((uint16)((link_health_current & ~7) - 1) >> 3) << 1;
-  uint16 *p = RAM16P(g_ram+0xC700) + HUDXY(20, 1);
+  zle16_t *p = RAM16P(g_ram+0xC700) + HUDXY(20, 1);
   if (n >= 20) {
     n -= 20;
     p += 0x20;
@@ -1324,7 +1324,7 @@ void Hud_AnimateHeartRefill() {  // 8df14f
   animate_heart_refill_countdown = 1;
 
   static const uint16 kAnimHeartPartial[4] = { 0x24A3, 0x24A4, 0x24A3, 0x24A0 };
-  p[n >> 1] = kAnimHeartPartial[animate_heart_refill_countdown_subpos];
+  p[n >> 1].v = kAnimHeartPartial[animate_heart_refill_countdown_subpos];
 
   animate_heart_refill_countdown_subpos = (animate_heart_refill_countdown_subpos + 1) & 3;
   if (!animate_heart_refill_countdown_subpos) {
@@ -1361,45 +1361,45 @@ static void Hud_UpdateItemBox() {  // 8dfafd
     Hud_DrawItem((RAM16P(g_ram+0xC700) + (HUDXY(5, 1))), Hud_GetIconForItem(hud_cur_item));
 }
 
-static void Hud_UpdateHearts_Inner(uint16 *dst, const uint16 *src, int n) {  // 8dfdab
+static void Hud_UpdateHearts_Inner(zle16_t *dst, const zle16_t *src, int n) {  // 8dfdab
   int x = 0;
   while (n > 0) {
     if (x >= 10) {
       dst += 0x20;
       x = 0;
     }
-    dst[x] = src[n >= 5 ? 2 : 1];
+    dst[x].v = src[n >= 5 ? 2 : 1].v;
     x++;
     n -= 8;
   }
 }
 
-static void DrawHudComponents(uint16 *dst, const uint16 *src, int w, int h) {
+static void DrawHudComponents(zle16_t *dst, const zle16_t *src, int w, int h) {
   do {
     memcpy(dst, src, w * sizeof(uint16));
   } while (src += w, dst += 32, --h);
 }
 
 static void Hud_Update_Hearts() {  // 8dfb94
-  static const uint16 kHudItemBoxTab1[] = { 0x24A2, 0x24A2, 0x24A2 };
-  static const uint16 kHudItemBoxTab2[] = { 0x24A2, 0x24A1, 0x24A0 };
+  static const zle16_t kHudItemBoxTab1[]= { 0x24A2, 0x24A2, 0x24A2 };
+  static const zle16_t kHudItemBoxTab2[]= { 0x24A2, 0x24A1, 0x24A0 };
   // The life meter
   Hud_UpdateHearts_Inner((RAM16P(g_ram+0xC700) + (HUDXY(20, 1))), kHudItemBoxTab1, link_health_capacity);
   Hud_UpdateHearts_Inner((RAM16P(g_ram+0xC700) + (HUDXY(20, 1))), kHudItemBoxTab2, (link_health_current + 3) & ~3);
 }
 
 static void Hud_Update_Magic() {  // 8dfc09
-  uint16 *dst = (RAM16P(g_ram+0xC700) + (HUDXY(2, 0)));
+  zle16_t *dst = (RAM16P(g_ram+0xC700) + (HUDXY(2, 0)));
   if (link_magic_consumption >= 1) {
-    dst[HUDXY(0, 0)] = 0x28F7;
-    dst[HUDXY(1, 0)] = 0x2851;
-    dst[HUDXY(2, 0)] = 0x28FA;
+    dst[HUDXY(0, 0)].v = 0x28F7;
+    dst[HUDXY(1, 0)].v = 0x2851;
+    dst[HUDXY(2, 0)].v = 0x28FA;
   }
-  const uint16 *src = kUpdateMagicPowerTilemap[(link_magic_power + 7) >> 3];
-  dst[HUDXY(1, 1)] = src[0];
-  dst[HUDXY(1, 2)] = src[1];
-  dst[HUDXY(1, 3)] = src[2];
-  dst[HUDXY(1, 4)] = src[3];
+  const zle16_t *src = kUpdateMagicPowerTilemap[(link_magic_power + 7) >> 3];
+  dst[HUDXY(1, 1)].v = src[0].v;
+  dst[HUDXY(1, 2)].v = src[1].v;
+  dst[HUDXY(1, 3)].v = src[2].v;
+  dst[HUDXY(1, 4)].v = src[3].v;
 }
 
 static void Hud_Update_Inventory() {  // 8dfc09
@@ -1413,12 +1413,12 @@ static void Hud_Update_Inventory() {  // 8dfc09
 
   int inv_offs = (d[0] == 0x90) ? 1 : 0;
 
-  static const uint16 kHudInventoryBg[26] = {
+  static const zle16_t kHudInventoryBg[26]= {
     0x207f, 0x207f, 0x3ca8, 0x207f, 0x207f, 0x2c88, 0x2c89, 0x207f, 0x20a7, 0x20a9, 0x207f, 0x2871, 0x207f,
     0x207f, 0x207f, 0x207f, 0x207f, 0x207f, 0x207f, 0x207f, 0x207f, 0x207f, 0x207f, 0x207f, 0x207f, 0x207f,
   };
 
-  uint16 *dst = (RAM16P(g_ram+0xC700) + (HUDXY(8, 0)));
+  zle16_t *dst = (RAM16P(g_ram+0xC700) + (HUDXY(8, 0)));
   memcpy(dst + HUDXY(0, 0), kHudInventoryBg +  0 + inv_offs, 12 * sizeof(uint16));
   memcpy(dst + HUDXY(0, 1), kHudInventoryBg + 13 + inv_offs, 12 * sizeof(uint16));
 
@@ -1436,29 +1436,29 @@ static void Hud_Update_Inventory() {  // 8dfc09
   int base_tile = base_tiles[link_rupees_actual == MaxRupees()];
   if (inv_offs == 0) {
     dst++;
-    dst[HUDXY(-1, 1)] = base_tile | d[0];
+    dst[HUDXY(-1, 1)].v = base_tile | d[0];
   }
-  dst[HUDXY(0, 1)] = base_tile | d[1];
-  dst[HUDXY(1, 1)] = base_tile | d[2];
-  dst[HUDXY(2, 1)] = base_tile | d[3];
+  dst[HUDXY(0, 1)].v = base_tile | d[1];
+  dst[HUDXY(1, 1)].v = base_tile | d[2];
+  dst[HUDXY(2, 1)].v = base_tile | d[3];
 
   Hud_IntToDecimal(link_item_bombs, d);
   base_tile = base_tiles[link_item_bombs == kMaxBombsForLevel[link_bomb_upgrades]];
-  dst[HUDXY(4, 1)] = base_tile | d[2];
-  dst[HUDXY(5, 1)] = base_tile | d[3];
+  dst[HUDXY(4, 1)].v = base_tile | d[2];
+  dst[HUDXY(5, 1)].v = base_tile | d[3];
 
   Hud_IntToDecimal(link_num_arrows, d);
   base_tile = base_tiles[link_num_arrows == kMaxArrowsForLevel[link_arrow_upgrades]];
-  dst[HUDXY(7, 1)] = base_tile | d[2];
-  dst[HUDXY(8, 1)] = base_tile | d[3];
+  dst[HUDXY(7, 1)].v = base_tile | d[2];
+  dst[HUDXY(8, 1)].v = base_tile | d[3];
 
   // Show keys
   d[3] = 0x7f;
   if (link_num_keys != 0xff)
     Hud_IntToDecimal(link_num_keys, d);
-  dst[HUDXY(10, 1)] = 0x2400 | d[3];
-  if (dst[HUDXY(10, 1)] == 0x247f)
-    dst[HUDXY(10, 0)] = 0x247f;
+  dst[HUDXY(10, 1)].v = 0x2400 | d[3];
+  if (dst[HUDXY(10, 1)].v == 0x247f)
+    dst[HUDXY(10, 0)].v = 0x247f;
 }
 
 void Hud_Rebuild() {  // 8dfa70
@@ -1471,7 +1471,7 @@ void Hud_Rebuild() {  // 8dfa70
 
 
   // The magic meter and item box
-  static const uint16 kHudTilemapLeftPart[8 * 6] = {
+  static const zle16_t kHudTilemapLeftPart[8 * 6]= {
     0x207f, 0x207f, 0x2850, 0xa856, 0x2852, 0x285b, 0x285b, 0x285c,
     0x207f, 0x207f, 0x2854, 0x2871, 0x2858, 0x207f, 0x207f, 0x285d,
     0x207f, 0x207f, 0x2854, 0x304e, 0x2858, 0x207f, 0x207f, 0x285d,
@@ -1481,7 +1481,7 @@ void Hud_Rebuild() {  // 8dfa70
   };
   DrawHudComponents(RAM16P(g_ram+0xC700), kHudTilemapLeftPart, 8, 6);
 
-  static const uint16 kHudTilemapRightPart[12 * 5] = {
+  static const zle16_t kHudTilemapRightPart[12 * 5]= {
     0x207f, 0x207f, 0x288b, 0x288f, 0x24ab, 0x24ac, 0x688f, 0x688b, 0x207f, 0x207f, 0x207f, 0x207f,
     0x207f, 0x207f, 0x207f, 0x207f, 0x207f, 0x207f, 0x207f, 0x207f, 0x207f, 0x207f, 0x207f, 0x207f,
     0x207f, 0x207f, 0x207f, 0x207f, 0x207f, 0x207f, 0x207f, 0x207f, 0x207f, 0x207f, 0x207f, 0x207f,
@@ -1499,7 +1499,7 @@ void Hud_Rebuild() {  // 8dfa70
 }
 
 
-const uint16 *Hud_GetItemBoxPtr(int item) {
+const zle16_t *Hud_GetItemBoxPtr(int item) {
   return kHudItemBoxGfxPtrs[item]->v;
 }
 

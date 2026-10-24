@@ -405,7 +405,7 @@ void Attract_Fade() {  // 8cede6
 }
 
 void Attract_InitGraphics() {  // 8cee0c
-  memset((g_ram+0x20), 0, 0x51);
+  memset(RAM16P(g_ram+0x20), 0, 0x51);
   EraseTileMaps_normal();
   Attract_LoadBG3GFX();
   overworld_palette_mode = 4;
@@ -981,8 +981,8 @@ void Attract_ControlMapZoom() {  // 8cf783
 }
 
 void Attract_BuildBackgrounds() {  // 8cf7e6
-  static const uint16 kAttract_CopyToVram_Tab0[16] = { 0x1a0, 0x9a6, 0x89a5, 0x1a0, 0x9a5, 0x1a0, 0x1a0, 0x89a6, 0x49a5, 0x1a0, 0x1a0, 0x49a5, 0x1a0, 0x89a5, 0xc9a5, 0x1a0 };
-  static const uint16 kAttract_CopyToVram_Tab1[4] = { 0x9a1, 0x9a2, 0x9a3, 0x9a4 };
+  static const zle16_t kAttract_CopyToVram_Tab0[16]= { 0x1a0, 0x9a6, 0x89a5, 0x1a0, 0x9a5, 0x1a0, 0x1a0, 0x89a6, 0x49a5, 0x1a0, 0x1a0, 0x49a5, 0x1a0, 0x89a5, 0xc9a5, 0x1a0 };
+  static const zle16_t kAttract_CopyToVram_Tab1[4]= { 0x9a1, 0x9a2, 0x9a3, 0x9a4 };
 
   BGMODE_copy = 9;
   TM_copy = 0x17;
@@ -993,12 +993,12 @@ void Attract_BuildBackgrounds() {  // 8cf7e6
 
   {
     int k = 0;
-    const uint16 *p = kAttract_CopyToVram_Tab0;
-    uint16 *dst = (zle16_t *)&g_ram[0x1006];
+    const zle16_t *p = kAttract_CopyToVram_Tab0;
+    zle16_t *dst = (zle16_t *)&g_ram[0x1006];
     do {
       int j = k & 3;
       do {
-        dst[k++] = p[j++];
+        dst[k++].v = p[j++].v;
       } while (j & 3);
     } while (k & 0x1f || (p += 4, k != 0x80));
     Attract_TriggerBGDMA(0x1000);
@@ -1006,12 +1006,12 @@ void Attract_BuildBackgrounds() {  // 8cf7e6
 
   {
     int k = 0;
-    uint16 *dst = (zle16_t *)&g_ram[0x1006];
+    zle16_t *dst = (zle16_t *)&g_ram[0x1006];
     do {
       int j = k & 1;
-      const uint16 *p = kAttract_CopyToVram_Tab1 + ((k & 0x20) >> 4);
+      const zle16_t *p = kAttract_CopyToVram_Tab1 + ((k & 0x20) >> 4);
       do {
-        dst[k++] = p[j++];
+        dst[k++].v = p[j++].v;
       } while (j & 1);
     } while (k != 0x80);
     Attract_TriggerBGDMA(0);
@@ -1020,7 +1020,7 @@ void Attract_BuildBackgrounds() {  // 8cf7e6
 }
 
 void Attract_TriggerBGDMA(uint16 dstv) {  // 8cf879
-  uint16 *dst = &g_zenv.vram[dstv];
+  zle16_t *dst = &g_zenv.vram[dstv];
   for (int i = 0; i < 8; i++) {
     memcpy(dst, &g_ram[0x1006], 0x100);
     dst += 0x80;

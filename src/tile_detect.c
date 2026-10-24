@@ -19,7 +19,7 @@ uint8 Overworld_GetTileAttributeAtLocation(uint16 x, uint16 y) {  // 80882e
   t = overworld_tileattr[t >> 1] * 4;
   t |= (y & 8) >> 2;
   t |= (x & 1);
-  t = GetMap16toMap8Table()[t];
+  t = GetMap16toMap8Table()[t].v;
 
   uint8 rv = GetMap8toTileAttr()[t & 0x1ff];
   if (rv >= 0x10 && rv < 0x1C) {

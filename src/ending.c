@@ -15,7 +15,7 @@
 #include "hud.h"
 #include "assets.h"
 
-static const uint16 kPolyhedralPalette[8] = { 0, 0x14d, 0x1b0, 0x1f3, 0x256, 0x279, 0x2fd, 0x35f };
+static const zle16_t kPolyhedralPalette[8]= { 0, 0x14d, 0x1b0, 0x1f3, 0x256, 0x279, 0x2fd, 0x35f };
 
 #define ending_which_dung RAM16(g_ram+0xcc)
 #define kPolyThreadRam (g_ram + 0x1f00)
@@ -26,7 +26,7 @@ static const uint8 kIntroSprite3_Y[4] = { 0x7c, 0x54, 0x7c, 0x57 };
 static const uint8 kIntroSprite3_State[8] = { 0, 1, 2, 3, 2, 1, 0xff, 0xff };
 static const uint8 kTriforce_Xfinal[3] = { 0x59, 0x5f, 0x67 };
 static const uint8 kTriforce_Yfinal[3] = { 0x74, 0x68, 0x74 };
-static const uint16 kEndingSprites_X[] = {
+static const zle16_t kEndingSprites_X[]= {
   0x1e0, 0x200, 0x1ed, 0x203, 0x1da, 0x216, 0x1c8, 0x228, 0x1c0, 0x1e0, 0x208, 0x228,
   0xf8, 0xf0,
   0x278, 0x298, 0x1e0, 0x200, 0x220, 0x288, 0x1e2,
@@ -44,7 +44,7 @@ static const uint16 kEndingSprites_X[] = {
   0x2e8, 0x270, 0x270, 0x2a0, 0x2a0, 0x2a4, 0x2fc,
   0x76, 0x73, 0x76, 0x0, 0xd0, 0x80,
 };
-static const uint16 kEndingSprites_Y[] = {
+static const zle16_t kEndingSprites_Y[]= {
   0x158, 0x158, 0x138, 0x138, 0x140, 0x140, 0x150, 0x150, 0x120, 0x120, 0x120, 0x120,
   0x60, 0x37,
   0xc2, 0xc2, 0x16b, 0x16c, 0x16b, 0xb8, 0x16b,
@@ -148,7 +148,7 @@ void Intro_SetupScreen() {  // 828000
     main_palette_buffer[144 + i] = 0x7fff;
 
   for (int i = 0; i < 17; i++)
-    g_zenv.vram[0x27f0 + i] = 0;
+    g_zenv.vram[0x27f0 + i].v = 0;
 
   R16 = 0x1ffe;
   R18 = 0x1bfe;
@@ -654,7 +654,7 @@ void FadeMusicAndResetSRAMMirror() {  // 8cc2f0
   music_control = 0xf1;
   SetBackdropcolorBlack();
 
-  memset((g_ram+0x20), 0, 0x70);
+  memset(RAM16P(g_ram+0x20), 0, 0x70);
   memset(RAM16P(g_ram+0xF000), 0, 256 * 5);
 
   main_module_index = 1;
@@ -1076,7 +1076,7 @@ void TriforceRoom_HandlePoly() {  // 8ccabc
     break;
   case 3:
     if (!--intro_step_timer) {
-      main_palette_buffer[0xd7] = kPolyhedralPalette[7];
+      main_palette_buffer[0xd7] = kPolyhedralPalette[7].v;
       flag_update_cgram_in_nmi++;
       intro_step_index++;
     }
@@ -1307,12 +1307,12 @@ init_sprites_0:
   case 0: case 4: case 5: case 8: case 13: {
     int idx = kEndingSprites_Idx[k];
     int num = kEndingSprites_Idx[k + 1] - idx;
-    const uint16 *px = kEndingSprites_X + idx;
-    const uint16 *py = kEndingSprites_Y + idx;
+    const zle16_t *px = kEndingSprites_X + idx;
+    const zle16_t *py = kEndingSprites_Y + idx;
     for (k = num - 1; k >= 0; k--) {
       sprcoll_x_size = sprcoll_y_size = 0xffff;
-      uint16 x = (swap16(overworld_area_index << 1) & 0xf00) + px[k];
-      uint16 y = (swap16(overworld_area_index >> 2) & 0xe00) + py[k];
+      uint16 x = (swap16(overworld_area_index << 1) & 0xf00) + px[k].v;
+      uint16 y = (swap16(overworld_area_index >> 2) & 0xe00) + py[k].v;
       Sprite_SetX(k, x);
       Sprite_SetY(k, y);
     }
@@ -1322,14 +1322,14 @@ init_sprites_1:
   case 1: {
     int idx = kEndingSprites_Idx[k];
     int num = kEndingSprites_Idx[k + 1] - idx;
-    const uint16 *px = kEndingSprites_X + idx;
-    const uint16 *py = kEndingSprites_Y + idx;
+    const zle16_t *px = kEndingSprites_X + idx;
+    const zle16_t *py = kEndingSprites_Y + idx;
     byte_7E0FB1 = dungeon_room_index2 >> 3 & 254;
     byte_7E0FB0 = (dungeon_room_index2 & 15) << 1;
     for (k = num - 1; k >= 0; k--) {
       sprcoll_x_size = sprcoll_y_size = 0xffff;
-      uint16 x = byte_7E0FB0 * 256 + px[k];
-      uint16 y = byte_7E0FB1 * 256 + py[k];
+      uint16 x = byte_7E0FB0 * 256 + px[k].v;
+      uint16 y = byte_7E0FB1 * 256 + py[k].v;
       Sprite_SetX(k, x);
       Sprite_SetY(k, y);
     }
@@ -2335,13 +2335,13 @@ void Credits_HandleCameraScrollControl() {  // 8eaea6
   if (link_y_vel != 0) {
     uint8 yvel = link_y_vel;
     BG2VOFS_copy2 += (int8)yvel;
-    uint16 *which = sign8(yvel) ? (g_ram+0x624) : (g_ram+0x626);
-    *which += abs8(yvel);
-    if (!sign16(*which - 0x10)) {
-      *which -= 0x10;
+    zle16_t *which = sign8(yvel) ? RAM16P(g_ram+0x624) : RAM16P(g_ram+0x626);
+    which->v += abs8(yvel);
+    if (!sign16(which->v - 0x10)) {
+      which->v -= 0x10;
       overworld_screen_trans_dir_bits2 |= sign8(yvel) ? 8 : 4;
     }
-    *(sign8(yvel) ? (g_ram+0x626) : (g_ram+0x624)) = -*which;
+    (sign8(yvel) ? RAM16P(g_ram+0x626) : RAM16P(g_ram+0x624))->v = -which->v;
     uint16 r4 = (int8)yvel, subp;
     WORD(byte_7E069E[0]) = r4;
     uint8 oi = (*(uint8*)(g_ram+(0x8C)));
@@ -2367,13 +2367,13 @@ void Credits_HandleCameraScrollControl() {  // 8eaea6
   if (link_x_vel != 0) {
     uint8 xvel = link_x_vel;
     BG2HOFS_copy2 += (int8)xvel;
-    uint16 *which = sign8(xvel) ? (g_ram+0x628) : (g_ram+0x62A);
-    *which += abs8(xvel);
-    if (!sign16(*which - 0x10)) {
-      *which -= 0x10;
+    zle16_t *which = sign8(xvel) ? RAM16P(g_ram+0x628) : RAM16P(g_ram+0x62A);
+    which->v += abs8(xvel);
+    if (!sign16(which->v - 0x10)) {
+      which->v -= 0x10;
       overworld_screen_trans_dir_bits2 |= sign8(xvel) ? 2 : 1;
     }
-    *(sign8(xvel) ? (g_ram+0x62A) : (g_ram+0x628)) = -*which;
+    (sign8(xvel) ? RAM16P(g_ram+0x62A) : RAM16P(g_ram+0x628))->v = -which->v;
 
     uint16 r4 = (int8)xvel, subp;
     WORD(byte_7E069E[1]) = r4;
@@ -2519,22 +2519,22 @@ void Credits_AddNextAttribution() {  // 8ebe24
   static const uint16 kEnding_Digits_ScrollY[14] = { 0x290, 0x298, 0x2a0, 0x2a8, 0x2b0, 0x2ba, 0x2c2, 0x2ca, 0x2d2, 0x2da, 0x2e2, 0x2ea, 0x2f2, 0x310 };
   static const uint16 kEnding_Credits_DigitChar[2] = { 0x3ce6, 0x3cf6 };
 
-  uint16 *dst = RAM16P(g_ram+0x1002) + (vram_upload_offset >> 1);
+  zle16_t *dst = RAM16P(g_ram+0x1002) + (vram_upload_offset >> 1);
 
-  dst[0] = swap16(R16);
-  dst[1] = 0x3e40;
-  dst[2] = kEnding_MapData[159];
+  dst[0].v = swap16(R16);
+  dst[1].v = 0x3e40;
+  dst[2].v = kEnding_MapData[159];
   dst += 3;
 
   if (R18 < 394) {
     const uint8 *src = &kEnding_Credits_Text[kEnding_Credits_Offs[R18]];
     if (*src != 0xff) {
-      *dst++ = swap16(R16 + *src++);
+      (dst++)->v = swap16(R16 + *src++);
       int n = *src++;
-      *dst++ = swap16(n);
+      (dst++)->v = swap16(n);
       n = (n + 1) >> 1;
       do {
-        *dst++ = kEnding_MapData[*src++];
+        (dst++)->v = kEnding_MapData[*src++];
       } while (--n);
     }
 
@@ -2542,16 +2542,16 @@ void Credits_AddNextAttribution() {  // 8ebe24
       int t = kEnding_Credits_DigitChar[ending_which_dung & 1];
       WORD(g_ram[0xce]) = t;
 
-      dst[0] = swap16(R16 + 0x19);
-      dst[1] = 0x500;
+      dst[0].v = swap16(R16 + 0x19);
+      dst[1].v = 0x500;
 
       uint16 deaths = deaths_per_palace[kEnding_Func9_Tab2[ending_which_dung >> 1]];
       if (deaths >= 1000)
         deaths = 999;
 
-      dst[4] = t + deaths % 10, deaths /= 10;
-      dst[3] = t + deaths % 10, deaths /= 10;
-      dst[2] = t + deaths;
+      dst[4].v = t + deaths % 10, deaths /= 10;
+      dst[3].v = t + deaths % 10, deaths /= 10;
+      dst[2].v = t + deaths;
       dst += 5;
       ending_which_dung++;
     }
@@ -2561,32 +2561,32 @@ void Credits_AddNextAttribution() {  // 8ebe24
   if (!(R16 & 0x3ff))
     R16 = (R16 & 0x6800) ^ 0x800;
   vram_upload_offset = (char *)dst - (char *)RAM16P(g_ram+0x1002);
-  BYTE(*dst) = 0xff;
+  (*(uint8*)(dst)) = 0xff;
   nmi_load_bg_from_vram = 1;
 }
 
 void Credits_AddEndingSequenceText() {  // 8ec303
 
-  uint16 *dst = RAM16P(g_ram+0x1002);
-  dst[0] = 0x60;
-  dst[1] = 0xfe47;
-  dst[2] = kEnding_MapData[159];
+  zle16_t *dst = RAM16P(g_ram+0x1002);
+  dst[0].v = 0x60;
+  dst[1].v = 0xfe47;
+  dst[2].v = kEnding_MapData[159];
   dst += 3;
 
   const uint8 *curo = &kEnding0_Data[kEnding0_Offs[submodule_index >> 1]];
   const uint8 *endo = &kEnding0_Data[kEnding0_Offs[(submodule_index >> 1) + 1]];
   do {
-    dst[0] = WORD(curo[0]);
-    dst[1] = WORD(curo[2]);
-    int m = (dst[1] >> 9) & 0x7f;
+    dst[0].v = WORD(curo[0]);
+    dst[1].v = WORD(curo[2]);
+    int m = (dst[1].v >> 9) & 0x7f;
     dst += 2, curo += 4;
     do {
-      *dst++ = kEnding_MapData[*curo++];
+      (dst++)->v = kEnding_MapData[*curo++];
     } while (--m >= 0);
   } while (curo != endo);
 
   vram_upload_offset = (char *)dst - (char *)RAM16P(g_ram+0x1002);
-  BYTE(*dst) = 0xff;
+  (*(uint8*)(dst)) = 0xff;
   nmi_load_bg_from_vram = 1;
 }
 

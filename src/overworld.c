@@ -247,7 +247,7 @@ const uint8 *GetMap8toTileAttr() {
   return kMap8DataToTileAttr;
 }
 
-const uint16 *GetMap16toMap8Table() {
+const zle16_t *GetMap16toMap8Table() {
   return RAM16P(g_asset_ptrs[70]);
 }
 
@@ -876,8 +876,8 @@ void ScrollAndCheckForSOWExit() {  // 82ab7b
   if ((*(uint8*)(g_ram+(0x416))))
     OverworldHandleMapScroll();
 
-  const uint16 *map8 = Overworld_GetMap16OfLink_Mult8();
-  int a = map8[0] & 0x1ff;
+  const zle16_t *map8 = Overworld_GetMap16OfLink_Mult8();
+  int a = map8[0].v & 0x1ff;
   for (int i = 2; i >= 0; i--) {
     if (kSpecialSwitchAreaB_Map8[i] == a && kSpecialSwitchAreaB_Screen[i] == overworld_screen_index) {
       link_direction = kSpecialSwitchAreaB_Direction[i];
@@ -1633,24 +1633,24 @@ void Overworld_OperateCameraScroll() {  // 82bb90
 int OverworldCameraBoundaryCheck(int xa, int ya, int vd, int r8) {  // 82bd62
   ya >>= 1, r8 >>= 1;
 
-  uint16 *xp = (xa ? (g_ram+0xE8) : (g_ram+0xE2));
-  uint16 *yp = ((zle16_t*)((uint8*)&ow_scroll_vars0 + offsetof(OwScrollVars, ystart)) + (ya));
-  if (*xp == *yp) {
-    ((g_ram+0x624))[ya] = 0;
-    ((g_ram+0x624))[ya ^ 1] = 0;
+  zle16_t *xp = (xa ? RAM16P(g_ram+0xE8) : RAM16P(g_ram+0xE2));
+  zle16_t *yp = ((zle16_t*)((uint8*)&ow_scroll_vars0 + offsetof(OwScrollVars, ystart)) + (ya));
+  if (xp->v == yp->v) {
+    (RAM16P(g_ram+0x624))[ya].v = 0;
+    (RAM16P(g_ram+0x624))[ya ^ 1].v = 0;
     return 0;
   }
-  *xp += vd;
+  xp->v += vd;
 
-  int tt = vd + ((g_ram+0x61A))[r8];
-  ((g_ram+0x61A))[r8] = tt;
-  ((g_ram+0x618))[r8] = tt + 2;
-  uint16 *op = ((g_ram+0x624)) + ya;
-  if (!sign16(++(*op) - 0x10)) {
-    (*op) -= 0x10;
+  int tt = vd + (RAM16P(g_ram+0x61A))[r8].v;
+  (RAM16P(g_ram+0x61A))[r8].v = tt;
+  (RAM16P(g_ram+0x618))[r8].v = tt + 2;
+  zle16_t *op = (RAM16P(g_ram+0x624)) + ya;
+  if (!sign16(++(op->v) - 0x10)) {
+    (op->v) -= 0x10;
     overworld_screen_trans_dir_bits2 |= kOverworld_Func2_Tab[ya];
   }
-  ((g_ram+0x624))[ya ^ 1] = -((g_ram+0x624))[ya];
+  (RAM16P(g_ram+0x624))[ya ^ 1].v = -(RAM16P(g_ram+0x624))[ya].v;
   return vd;
 }
 
@@ -1665,7 +1665,7 @@ int OverworldScrollTransition() {  // 82c001
       BG1VOFS_copy2 = BG2VOFS_copy2;
     if (transition_counter >= kOverworld_Func6B_Tab2[y])
       link_y_coord += d;
-    if (rv != ((g_ram+0x610))[y])
+    if (rv != (RAM16P(g_ram+0x610))[y].v)
       return rv;
     if (y == 0)
       BG2VOFS_copy2 -= 2;
@@ -1680,7 +1680,7 @@ int OverworldScrollTransition() {  // 82c001
       BG1HOFS_copy2 = BG2HOFS_copy2;
     if (transition_counter >= kOverworld_Func6B_Tab2[y])
       link_x_coord += d;
-    if (rv != ((g_ram+0x610))[y])
+    if (rv != (RAM16P(g_ram+0x610))[y].v)
       return rv;
     link_x_coord &= ~7;
     camera_x_coord_scroll_hi = link_x_coord + kOverworld_Func6B_Tab3[y] + 11;
@@ -2106,27 +2106,27 @@ void Overworld_HandleOverlaysAndBombDoors() {  // 82ef29
 void TriggerAndFinishMapLoadStripe_Y(int n) {  // 82ef7a
   (*(uint8*)(g_ram+(0x416))) = 8;
   nmi_subroutine_index = 3;
-  uint16 *dst = uvram.data;
-  *dst++ = 0x80;
+  zle16_t *dst = uvram.data;
+  (dst++)->v = 0x80;
   do {
     dst = BufferAndBuildMap16Stripes_Y(dst);
     map16_load_src_off -= 0x80;
     map16_load_var2 = (map16_load_var2 - 1) & 0x1f;
   } while (--n);
-  *dst = 0xffff;
+  dst->v = 0xffff;
 }
 
 void TriggerAndFinishMapLoadStripe_X(int n) {  // 82efb3
   (*(uint8*)(g_ram+(0x416))) = 2;
   nmi_subroutine_index = 3;
-  uint16 *dst = uvram.data;
-  *dst++ = 0x8040;
+  zle16_t *dst = uvram.data;
+  (dst++)->v = 0x8040;
   do {
     dst = BufferAndBuildMap16Stripes_X(dst);
     map16_load_src_off -= 2;
     map16_load_dst_off = (map16_load_dst_off - 1) & 0x1f;
   } while (--n);
-  *dst = 0xffff;
+  dst->v = 0xffff;
 }
 
 void SomeTileMapChange() {  // 82efe8
@@ -2237,7 +2237,7 @@ void CreateInitialOWScreenView_Small_East() {  // 82f1b7
 }
 
 void OverworldTransitionScrollAndLoadMap() {  // 82f20e
-  uint16 *dst = uvram.data;
+  zle16_t *dst = uvram.data;
   switch ((*(uint8*)(g_ram+(0x416)))) {
   case 1: dst = BuildFullStripeDuringTransition_East(dst); break;
   case 2: dst = BuildFullStripeDuringTransition_West(dst); break;
@@ -2247,37 +2247,37 @@ void OverworldTransitionScrollAndLoadMap() {  // 82f20e
     assert(0);
     submodule_index = 0;
   }
-  dst[0] = dst[1] = 0xffff;
+  dst[0].v = dst[1].v = 0xffff;
   if (dst != uvram.data)
     nmi_subroutine_index = 3;
 }
 
-uint16 *BuildFullStripeDuringTransition_North(uint16 *dst) {  // 82f218
-  *dst++ = 0x80;
+zle16_t *BuildFullStripeDuringTransition_North(zle16_t *dst) {  // 82f218
+  (dst++)->v = 0x80;
   dst = BufferAndBuildMap16Stripes_Y(dst);
   map16_load_src_off -= 0x80;
   map16_load_var2 = (map16_load_var2 - 1) & 0x1f;
   return dst;
 }
 
-uint16 *BuildFullStripeDuringTransition_South(uint16 *dst) {  // 82f238
-  *dst++ = 0x80;
+zle16_t *BuildFullStripeDuringTransition_South(zle16_t *dst) {  // 82f238
+  (dst++)->v = 0x80;
   dst = BufferAndBuildMap16Stripes_Y(dst);
   map16_load_src_off += 0x80;
   map16_load_var2 = (map16_load_var2 + 1) & 0x1f;
   return dst;
 }
 
-uint16 *BuildFullStripeDuringTransition_West(uint16 *dst) {  // 82f241
-  *dst++ = 0x8040;
+zle16_t *BuildFullStripeDuringTransition_West(zle16_t *dst) {  // 82f241
+  (dst++)->v = 0x8040;
   dst = BufferAndBuildMap16Stripes_X(dst);
   map16_load_src_off -= 2;
   map16_load_dst_off = (map16_load_dst_off - 1) & 0x1f;
   return dst;
 }
 
-uint16 *BuildFullStripeDuringTransition_East(uint16 *dst) {  // 82f24a
-  *dst++ = 0x8040;
+zle16_t *BuildFullStripeDuringTransition_East(zle16_t *dst) {  // 82f24a
+  (dst++)->v = 0x8040;
   dst = BufferAndBuildMap16Stripes_X(dst);
   map16_load_src_off += 2;
   map16_load_dst_off = (map16_load_dst_off + 1) & 0x1f;
@@ -2285,7 +2285,7 @@ uint16 *BuildFullStripeDuringTransition_East(uint16 *dst) {  // 82f24a
 }
 
 void OverworldHandleMapScroll() {  // 82f273
-  uint16 *dst = uvram.data;
+  zle16_t *dst = uvram.data;
   switch ((*(uint8*)(g_ram+(0x416)))) {
   case 1:
     dst = CheckForNewlyLoadedMapAreas_East(dst);
@@ -2317,17 +2317,17 @@ void OverworldHandleMapScroll() {  // 82f273
     assert(0);
     submodule_index = 0;
   }
-  dst[0] = dst[1] = 0xffff;
+  dst[0].v = dst[1].v = 0xffff;
   if (dst != uvram.data)
     nmi_subroutine_index = 3;
   overworld_screen_transition = overworld_screen_trans_dir_bits2;
 }
 
-uint16 *CheckForNewlyLoadedMapAreas_North(uint16 *dst) {  // 82f2dd
+zle16_t *CheckForNewlyLoadedMapAreas_North(zle16_t *dst) {  // 82f2dd
   if (sign16(map16_load_src_off - 0x80))
     return dst;
   if (!kOverworldMapIsSmall[overworld_screen_index]) {
-    *dst++ = 0x80;
+    (dst++)->v = 0x80;
     dst = BufferAndBuildMap16Stripes_Y(dst);
   }
   map16_load_src_off -= 0x80;
@@ -2335,11 +2335,11 @@ uint16 *CheckForNewlyLoadedMapAreas_North(uint16 *dst) {  // 82f2dd
   return dst;
 }
 
-uint16 *CheckForNewlyLoadedMapAreas_South(uint16 *dst) {  // 82f311
+zle16_t *CheckForNewlyLoadedMapAreas_South(zle16_t *dst) {  // 82f311
   if (map16_load_src_off >= 0x1800)
     return dst;
   if (!kOverworldMapIsSmall[overworld_screen_index]) {
-    *dst++ = 0x80;
+    (dst++)->v = 0x80;
     dst = BufferAndBuildMap16Stripes_Y(dst);
   }
   map16_load_src_off += 0x80;
@@ -2347,14 +2347,14 @@ uint16 *CheckForNewlyLoadedMapAreas_South(uint16 *dst) {  // 82f311
   return dst;
 }
 
-uint16 *CheckForNewlyLoadedMapAreas_West(uint16 *dst) {  // 82f345
+zle16_t *CheckForNewlyLoadedMapAreas_West(zle16_t *dst) {  // 82f345
   uint16 pos = map16_load_src_off;
   while (pos >= 0x80)
     pos -= 0x80;
   if (pos == 0)
     return dst;
   if (!kOverworldMapIsSmall[overworld_screen_index]) {
-    *dst++ = 0x8040;
+    (dst++)->v = 0x8040;
     dst = BufferAndBuildMap16Stripes_X(dst);
   }
   map16_load_src_off -= 2;
@@ -2362,14 +2362,14 @@ uint16 *CheckForNewlyLoadedMapAreas_West(uint16 *dst) {  // 82f345
   return dst;
 }
 
-uint16 *CheckForNewlyLoadedMapAreas_East(uint16 *dst) {  // 82f37f
+zle16_t *CheckForNewlyLoadedMapAreas_East(zle16_t *dst) {  // 82f37f
   uint16 pos = map16_load_src_off;
   while (pos >= 0x80)
     pos -= 0x80;
   if (pos >= 0x60)
     return dst;
   if (!kOverworldMapIsSmall[overworld_screen_index]) {
-    *dst++ = 0x8040;
+    (dst++)->v = 0x8040;
     dst = BufferAndBuildMap16Stripes_X(dst);
   }
   map16_load_src_off += 2;
@@ -2377,31 +2377,31 @@ uint16 *CheckForNewlyLoadedMapAreas_East(uint16 *dst) {  // 82f37f
   return dst;
 }
 
-uint16 *BufferAndBuildMap16Stripes_X(uint16 *dst) {  // 82f3b9
+zle16_t *BufferAndBuildMap16Stripes_X(zle16_t *dst) {  // 82f3b9
   uint16 pos = map16_load_src_off - kOverworld_DrawStrip_Tab[overworld_screen_trans_dir_bits2 >> 1 & 1];
   int d = map16_load_var2;
-  uint16 *tmp = RAM16P(g_ram+0x500);
+  zle16_t *tmp = RAM16P(g_ram+0x500);
   for (int i = 0; i < 32; i++) {
-    tmp[d] = (pos >= 0x2000) ? 0 : dung_bg2[pos >> 1];
+    tmp[d].v = (pos >= 0x2000) ? 0 : dung_bg2[pos >> 1];
     d = (d + 1) & 0x1f, pos += 128;
   }
-  const uint16 *map8 = GetMap16toMap8Table();
+  const zle16_t *map8 = GetMap16toMap8Table();
   uint16 r0 = 0, of = map16_load_dst_off;
   if (of >= 0x10)
     of &= 0xf, r0 = 0x400;
   r0 += of * 2;
   for (int i = 0; i < 2; i++, r0 += 0x800) {
-    dst[0] = r0;
-    dst[33] = r0 + 1;
+    dst[0].v = r0;
+    dst[33].v = r0 + 1;
     dst++;
     for (int j = 0; j < 16; j++) {
-      int k = *tmp++;
+      int k = (tmp++)->v;
       assert(k < 0xea8);
-      const uint16 *s = map8 + k * 4;
-      dst[0] = s[0];
-      dst[33] = s[1];
-      dst[1] = s[2];
-      dst[34] = s[3];
+      const zle16_t *s = map8 + k * 4;
+      dst[0].v = s[0].v;
+      dst[33].v = s[1].v;
+      dst[1].v = s[2].v;
+      dst[34].v = s[3].v;
       dst += 2;
     }
     dst += 33;
@@ -2409,30 +2409,30 @@ uint16 *BufferAndBuildMap16Stripes_X(uint16 *dst) {  // 82f3b9
   return dst;
 }
 
-uint16 *BufferAndBuildMap16Stripes_Y(uint16 *dst) {  // 82f482
+zle16_t *BufferAndBuildMap16Stripes_Y(zle16_t *dst) {  // 82f482
   uint16 pos = map16_load_src_off - kOverworld_DrawStrip_Tab[1 + (overworld_screen_trans_dir_bits2 >> 2 & 1)];
   int d = map16_load_dst_off;
-  uint16 *tmp = RAM16P(g_ram+0x500);
+  zle16_t *tmp = RAM16P(g_ram+0x500);
   for (int i = 0; i < 32; i++) {
-    tmp[d] = (pos >= 0x2000) ? 0 : dung_bg2[pos >> 1]; // fixed bug warning. can go negative
+    tmp[d].v = (pos >= 0x2000) ? 0 : dung_bg2[pos >> 1]; // fixed bug warning. can go negative
     pos += 2;
     d = (d + 1) & 0x1f;
   }
-  const uint16 *map8 = GetMap16toMap8Table();
+  const zle16_t *map8 = GetMap16toMap8Table();
   uint16 r0 = 0, of = map16_load_var2;
   if (of >= 0x10)
     of &= 0xf, r0 = 0x800;
   r0 += of * 64;
   for (int i = 0; i < 2; i++, r0 += 0x400) {
-    *dst++ = r0;
+    (dst++)->v = r0;
     for (int j = 0; j < 16; j++) {
-      int k = *tmp++;
+      int k = (tmp++)->v;
       assert(k < 0xea8);
-      const uint16 *s = map8 + k * 4;
-      dst[0] = s[0];
-      dst[32] = s[2];
-      dst[1] = s[1];
-      dst[33] = s[3];
+      const zle16_t *s = map8 + k * 4;
+      dst[0].v = s[0].v;
+      dst[32].v = s[2].v;
+      dst[1].v = s[1].v;
+      dst[33].v = s[3].v;
       dst += 2;
     }
     dst += 32;
@@ -2457,7 +2457,7 @@ static const uint8 *GetOverworldLobytes(int i) {
 }
 
 
-void Overworld_DecompressAndDrawOneQuadrant(uint16 *dst, int screen) {  // 82f595
+void Overworld_DecompressAndDrawOneQuadrant(zle16_t *dst, int screen) {  // 82f595
   Decompress_bank02(&g_ram[0x14400], GetOverworldHibytes(screen));
   for (int i = 0; i < 256; i++)
     g_ram[0x14001 + i * 2] = g_ram[0x14400 + i];
@@ -2468,17 +2468,17 @@ void Overworld_DecompressAndDrawOneQuadrant(uint16 *dst, int screen) {  // 82f59
 
   map16_decode_last = 0xffff;
 
-  uint16 *src = (zle16_t *)&g_ram[0x14000];
+  zle16_t *src = (zle16_t *)&g_ram[0x14000];
   for (int j = 0; j < 16; j++) {
     for (int i = 0; i < 16; i++) {
-      Overworld_ParseMap32Definition(dst, *src++ * 2);
+      Overworld_ParseMap32Definition(dst, (src++)->v * 2);
       dst += 2;
     }
     dst += 96;
   }
 }
 
-void Overworld_ParseMap32Definition(uint16 *dst, uint16 input) {  // 82f691
+void Overworld_ParseMap32Definition(zle16_t *dst, uint16 input) {  // 82f691
   uint16 a = input & ~7;
   if (a != map16_decode_last) {
     map16_decode_last = a;
@@ -2523,10 +2523,10 @@ void Overworld_ParseMap32Definition(uint16 *dst, uint16 input) {  // 82f691
     map16_decode_3[5] = ov[5] >> 4;
     map16_decode_3[7] = ov[5] & 0xf;
   }
-  dst[0] = WORD(map16_decode_0[input & 7]);
-  dst[64] = WORD(map16_decode_2[input & 7]);
-  dst[1] = WORD(map16_decode_1[input & 7]);
-  dst[65] = WORD(map16_decode_3[input & 7]);
+  dst[0].v = WORD(map16_decode_0[input & 7]);
+  dst[64].v = WORD(map16_decode_2[input & 7]);
+  dst[1].v = WORD(map16_decode_1[input & 7]);
+  dst[65].v = WORD(map16_decode_3[input & 7]);
 }
 
 void OverworldLoad_LoadSubOverlayMap32() {  // 82f7cb
@@ -2545,7 +2545,7 @@ void Map16ToMap8(const uint8 *src, int r20) {  // 82fd46
   map16_load_src_off += 0x1000;
   int n = 32;
   int r14 = 0;
-  uint16 *r10 = (g_ram+0x14000);
+  zle16_t *r10 = RAM16P(g_ram+0x14000);
   do {
     OverworldCopyMap16ToBuffer(src, r20, r14, r10);
     r14 += 0x100, r10 += 2;
@@ -2554,15 +2554,15 @@ void Map16ToMap8(const uint8 *src, int r20) {  // 82fd46
   } while (--n);
 }
 
-void OverworldCopyMap16ToBuffer(const uint8 *src, uint16 r20, int r14, uint16 *r10) {  // 82fd87
-  const uint16 *map8 = GetMap16toMap8Table();
+void OverworldCopyMap16ToBuffer(const uint8 *src, uint16 r20, int r14, zle16_t *r10) {  // 82fd87
+  const zle16_t *map8 = GetMap16toMap8Table();
 
   int yr = map16_load_src_off - 0x410 & 0x1fff;
   int xr = map16_load_dst_off;
-  uint16 *tmp = (zle16_t *)(g_ram + 0x500);
+  zle16_t *tmp = (zle16_t *)(g_ram + 0x500);
   int n = 32;
   do {
-    WORD(tmp[xr]) = WORD(src[yr]);
+    tmp[xr].v = WORD(src[yr]);
     xr = (xr + 1) & 0x1f;
     yr = (yr + 2) & 0x1fff;
   } while (--n);
@@ -2573,13 +2573,13 @@ void OverworldCopyMap16ToBuffer(const uint8 *src, uint16 r20, int r14, uint16 *r
   r0 += of * 64;
 
   for (int i = 0; i < 2; i++, r0 += 0x400, r14 += 0x40) {
-    *r10++ = r0 | r20;
+    (r10++)->v = r0 | r20;
     for (int j = 0; j < 16; j++, r14 += 4) {
-      const uint16 *m = map8 + 4 * *tmp++;
-      WORD(dung_bg2_attr_table[r14]) = WORD(m[0]);
-      WORD(dung_bg2_attr_table[r14 + 64]) = WORD(m[2]);
-      WORD(dung_bg2_attr_table[r14 + 2]) = WORD(m[1]);
-      WORD(dung_bg2_attr_table[r14 + 66]) = WORD(m[3]);
+      const zle16_t *m = map8 + 4 * (tmp++)->v;
+      WORD(dung_bg2_attr_table[r14]) = m[0].v;
+      WORD(dung_bg2_attr_table[r14 + 64]) = m[2].v;
+      WORD(dung_bg2_attr_table[r14 + 2]) = m[1].v;
+      WORD(dung_bg2_attr_table[r14 + 66]) = m[3].v;
     }
   }
 
@@ -2780,8 +2780,8 @@ void GanonTowerEntrance_Func1() {  // 8eddfc
 }
 
 void Overworld_CheckSpecialSwitchArea() {  // 8ede49
-  const uint16 *map8 = Overworld_GetMap16OfLink_Mult8();
-  int a = map8[0] & 0x1ff;
+  const zle16_t *map8 = Overworld_GetMap16OfLink_Mult8();
+  int a = map8[0].v & 0x1ff;
   for (int i = 3; i >= 0; i--) {
     if (kSpecialSwitchArea_Map8[i] == a && kSpecialSwitchArea_Screen[i] == overworld_screen_index) {
       dungeon_room_index = kSpecialSwitchArea_Exit[i];
@@ -2794,8 +2794,8 @@ void Overworld_CheckSpecialSwitchArea() {  // 8ede49
   }
 }
 
-const uint16 *Overworld_GetMap16OfLink_Mult8() {  // 8ede9a
-  const uint16 *map8 = GetMap16toMap8Table();
+const zle16_t *Overworld_GetMap16OfLink_Mult8() {  // 8ede9a
+  const zle16_t *map8 = GetMap16toMap8Table();
   uint16 xc = (link_x_coord + 8) >> 3, yc = link_y_coord + 12;
   uint16 pos = ((yc - overworld_offset_base_y) & overworld_offset_mask_y) * 8 +
                ((xc - overworld_offset_base_x) & overworld_offset_mask_x);
@@ -2875,64 +2875,64 @@ void Overworld_DwDeathMountainPaletteAnimation() {  // 8ef582
 
 void Overworld_LoadEventOverlay() {  // 8ef652
   int x;
-  uint16 *dst = RAM16P(g_ram+0x2000);
+  zle16_t *dst = RAM16P(g_ram+0x2000);
   switch (overworld_screen_index) {
   case 0: case 1: case 2:
-    dst[XY(11, 16)] = 0xe32;
-    dst[XY(12, 16)] = 0xe32;
-    dst[XY(13, 16)] = 0xe32;
-    dst[XY(14, 16)] = 0xe32;
-    dst[XY(11, 17)] = 0xe32;
-    dst[XY(14, 17)] = 0xe32;
-    dst[XY(12, 17)] = 0xe33;
-    dst[XY(13, 17)] = 0xe34;
-    dst[XY(11, 18)] = 0xe35;
-    dst[XY(12, 18)] = 0xe36;
-    dst[XY(13, 18)] = 0xe37;
-    dst[XY(14, 18)] = 0xe38;
-    dst[XY(11, 19)] = 0xe39;
-    dst[XY(12, 19)] = 0xe3a;
-    dst[XY(13, 19)] = 0xe3b;
-    dst[XY(14, 19)] = 0xe3c;
-    dst[XY(12, 20)] = 0xe3d;
-    dst[XY(13, 20)] = 0xe3e;
+    dst[XY(11, 16)].v = 0xe32;
+    dst[XY(12, 16)].v = 0xe32;
+    dst[XY(13, 16)].v = 0xe32;
+    dst[XY(14, 16)].v = 0xe32;
+    dst[XY(11, 17)].v = 0xe32;
+    dst[XY(14, 17)].v = 0xe32;
+    dst[XY(12, 17)].v = 0xe33;
+    dst[XY(13, 17)].v = 0xe34;
+    dst[XY(11, 18)].v = 0xe35;
+    dst[XY(12, 18)].v = 0xe36;
+    dst[XY(13, 18)].v = 0xe37;
+    dst[XY(14, 18)].v = 0xe38;
+    dst[XY(11, 19)].v = 0xe39;
+    dst[XY(12, 19)].v = 0xe3a;
+    dst[XY(13, 19)].v = 0xe3b;
+    dst[XY(14, 19)].v = 0xe3c;
+    dst[XY(12, 20)].v = 0xe3d;
+    dst[XY(13, 20)].v = 0xe3e;
     break;
   case 3: case 4: case 5: case 6: case 7:
-    dst[XY(16, 14)] = 0x212;
+    dst[XY(16, 14)].v = 0x212;
     break;
   case 8: case 9: case 10: case 11: case 12: case 13: case 14: case 15: case 16: case 17: case 18: case 19:
     x = XY(3, 10);
 loc_8EF7B4:
-    dst[x + XY(0, 0)] = 0x918;
-    dst[x + XY(1, 0)] = 0x919;
-    dst[x + XY(0, 1)] = 0x91a;
-    dst[x + XY(1, 1)] = 0x91b;
+    dst[x + XY(0, 0)].v = 0x918;
+    dst[x + XY(1, 0)].v = 0x919;
+    dst[x + XY(0, 1)].v = 0x91a;
+    dst[x + XY(1, 1)].v = 0x91b;
     break;
   case 20:
-    dst[XY(25, 10)] = 0xdd1;
-    dst[XY(26, 10)] = 0xdd2;
-    dst[XY(25, 11)] = 0xdd7;
-    dst[XY(26, 11)] = 0xdd8;
-    dst[XY(25, 12)] = 0xdd9;
-    dst[XY(26, 12)] = 0xdda;
+    dst[XY(25, 10)].v = 0xdd1;
+    dst[XY(26, 10)].v = 0xdd2;
+    dst[XY(25, 11)].v = 0xdd7;
+    dst[XY(26, 11)].v = 0xdd8;
+    dst[XY(25, 12)].v = 0xdd9;
+    dst[XY(26, 12)].v = 0xdda;
     break;
   case 21: case 22: case 23: case 24: case 25: case 32: case 33:
-    dst[XY(31, 24)] = 0xe21;
-    dst[XY(33, 24)] = 0xe21;
-    dst[XY(32, 24)] = 0xe22;
-    dst[XY(31, 25)] = 0xe23;
-    dst[XY(32, 25)] = 0xe24;
-    dst[XY(33, 25)] = 0xe25;
+    dst[XY(31, 24)].v = 0xe21;
+    dst[XY(33, 24)].v = 0xe21;
+    dst[XY(32, 24)].v = 0xe22;
+    dst[XY(31, 25)].v = 0xe23;
+    dst[XY(32, 25)].v = 0xe24;
+    dst[XY(33, 25)].v = 0xe25;
     break;
   case 26: case 27: case 28: case 35: case 36:
-    dst[XY(30, 39)] = 0xdc1;
-    dst[XY(31, 39)] = 0xdc2;
-    dst[XY(30, 40)] = 0xdbe;
-    dst[XY(31, 40)] = 0xdbf;
-    dst[XY(32, 39)] = 0xdc2;
-    dst[XY(33, 39)] = 0xdc3;
-    dst[XY(32, 40)] = 0xdbf;
-    dst[XY(33, 40)] = 0xdc0;
+    dst[XY(30, 39)].v = 0xdc1;
+    dst[XY(31, 39)].v = 0xdc2;
+    dst[XY(30, 40)].v = 0xdbe;
+    dst[XY(31, 40)].v = 0xdbf;
+    dst[XY(32, 39)].v = 0xdc2;
+    dst[XY(33, 39)].v = 0xdc3;
+    dst[XY(32, 40)].v = 0xdbf;
+    dst[XY(33, 40)].v = 0xdc0;
     break;
   case 29: case 30: case 31: case 34: case 37: case 38: case 39: case 40: case 41: case 42: case 43: case 107:
     x = XY(24, 6);
@@ -2947,234 +2947,234 @@ loc_8EF7B4:
     x = XY(15, 20);
     goto loc_8EF7B4;
   case 59: case 123:
-    dst[XY(22, 7)] = 0xddf;
-    dst[XY(18, 8)] = 0xddf;
-    dst[XY(16, 9)] = 0xddf;
-    dst[XY(15, 10)] = 0xddf;
-    dst[XY(14, 12)] = 0xddf;
-    dst[XY(26, 14)] = 0xddf;
-    dst[XY(23, 7)] = 0xde0;
-    dst[XY(17, 9)] = 0xde0;
-    dst[XY(24, 7)] = 0xde1;
-    dst[XY(28, 8)] = 0xde1;
-    dst[XY(29, 9)] = 0xde1;
-    dst[XY(21, 11)] = 0xde1;
-    dst[XY(29, 14)] = 0xde1;
-    dst[XY(19, 8)] = 0xde2;
-    dst[XY(20, 8)] = 0xde2;
-    dst[XY(21, 8)] = 0xde2;
-    dst[XY(25, 8)] = 0xde2;
-    dst[XY(26, 8)] = 0xde2;
-    dst[XY(27, 8)] = 0xde2;
-    dst[XY(22, 8)] = 0xde3;
-    dst[XY(18, 9)] = 0xde3;
-    dst[XY(16, 10)] = 0xde3;
-    dst[XY(15, 12)] = 0xde3;
-    dst[XY(23, 8)] = 0xde4;
-    dst[XY(19, 9)] = 0xde4;
-    dst[XY(20, 9)] = 0xde4;
-    dst[XY(24, 9)] = 0xde4;
-    dst[XY(27, 9)] = 0xde4;
-    dst[XY(17, 10)] = 0xde4;
-    dst[XY(18, 10)] = 0xde4;
-    dst[XY(19, 10)] = 0xde4;
-    dst[XY(28, 10)] = 0xde4;
-    dst[XY(16, 11)] = 0xde4;
-    dst[XY(17, 11)] = 0xde4;
-    dst[XY(18, 11)] = 0xde4;
-    dst[XY(19, 11)] = 0xde4;
-    dst[XY(16, 12)] = 0xde4;
-    dst[XY(17, 12)] = 0xde4;
-    dst[XY(15, 13)] = 0xde4;
-    dst[XY(16, 13)] = 0xde4;
-    dst[XY(15, 14)] = 0xde4;
-    dst[XY(16, 14)] = 0xde4;
-    dst[XY(19, 16)] = 0xde4;
-    dst[XY(19, 17)] = 0xde4;
-    dst[XY(20, 17)] = 0xde4;
-    dst[XY(19, 18)] = 0xde4;
-    dst[XY(24, 8)] = 0xde5;
-    dst[XY(28, 9)] = 0xde5;
-    dst[XY(20, 11)] = 0xde5;
-    dst[XY(21, 12)] = 0xde5;
-    dst[XY(21, 9)] = 0xde6;
-    dst[XY(25, 9)] = 0xde6;
-    dst[XY(20, 10)] = 0xde6;
-    dst[XY(28, 11)] = 0xde6;
-    dst[XY(21, 17)] = 0xde6;
-    dst[XY(20, 18)] = 0xde6;
-    dst[XY(22, 9)] = 0xde7;
-    dst[XY(24, 10)] = 0xde7;
-    dst[XY(15, 15)] = 0xde7;
-    dst[XY(16, 15)] = 0xde7;
-    dst[XY(19, 19)] = 0xde7;
-    dst[XY(28, 19)] = 0xde7;
-    dst[XY(23, 9)] = 0xde8;
-    dst[XY(26, 9)] = 0xde8;
-    dst[XY(27, 10)] = 0xde8;
-    dst[XY(17, 15)] = 0xde8;
-    dst[XY(18, 16)] = 0xde8;
-    dst[XY(23, 10)] = 0xde9;
-    dst[XY(26, 10)] = 0xde9;
-    dst[XY(14, 15)] = 0xde9;
-    dst[XY(17, 16)] = 0xde9;
-    dst[XY(26, 18)] = 0xde9;
-    dst[XY(27, 19)] = 0xde9;
-    dst[XY(29, 10)] = 0xdea;
-    dst[XY(28, 12)] = 0xdea;
-    dst[XY(28, 13)] = 0xdea;
-    dst[XY(29, 18)] = 0xdea;
-    dst[XY(15, 11)] = 0xdeb;
-    dst[XY(27, 11)] = 0xdeb;
-    dst[XY(27, 12)] = 0xdeb;
-    dst[XY(14, 13)] = 0xdeb;
-    dst[XY(27, 13)] = 0xdeb;
-    dst[XY(14, 14)] = 0xdeb;
-    dst[XY(18, 17)] = 0xdeb;
-    dst[XY(18, 18)] = 0xdeb;
-    dst[XY(18, 12)] = 0xdec;
-    dst[XY(17, 13)] = 0xdec;
-    dst[XY(19, 12)] = 0xded;
-    dst[XY(20, 12)] = 0xdee;
-    dst[XY(18, 13)] = 0xdef;
-    dst[XY(27, 15)] = 0xdef;
-    dst[XY(19, 13)] = 0xdf0;
-    dst[XY(19, 14)] = 0xdf0;
-    dst[XY(20, 14)] = 0xdf0;
-    dst[XY(21, 14)] = 0xdf0;
-    dst[XY(21, 15)] = 0xdf0;
-    dst[XY(27, 16)] = 0xdf0;
-    dst[XY(28, 16)] = 0xdf0;
-    dst[XY(20, 13)] = 0xdf1;
-    dst[XY(28, 15)] = 0xdf1;
-    dst[XY(21, 13)] = 0xdf2;
-    dst[XY(17, 14)] = 0xdf3;
-    dst[XY(18, 15)] = 0xdf3;
-    dst[XY(20, 16)] = 0xdf3;
-    dst[XY(18, 14)] = 0xdf4;
-    dst[XY(19, 15)] = 0xdf5;
-    dst[XY(20, 15)] = 0xdf6;
-    dst[XY(27, 17)] = 0xdf6;
-    dst[XY(26, 15)] = 0xdf7;
-    dst[XY(29, 15)] = 0xdf8;
-    dst[XY(21, 16)] = 0xdf9;
-    dst[XY(26, 16)] = 0xdfa;
-    dst[XY(29, 16)] = 0xdfb;
-    dst[XY(26, 17)] = 0xdfc;
-    dst[XY(28, 17)] = 0xdfd;
-    dst[XY(29, 17)] = 0xdfe;
-    dst[XY(27, 18)] = 0xdff;
-    dst[XY(28, 18)] = 0xe00;
-    dst[XY(21, 10)] = 0xe01;
-    dst[XY(25, 10)] = 0xe01;
-    dst[XY(21, 18)] = 0xe01;
-    dst[XY(29, 11)] = 0xe02;
-    dst[XY(20, 19)] = 0xe02;
-    dst[XY(29, 19)] = 0xe02;
-    dst[XY(18, 19)] = 0xe03;
-    dst[XY(27, 14)] = 0xe04;
-    dst[XY(28, 14)] = 0xe05;
+    dst[XY(22, 7)].v = 0xddf;
+    dst[XY(18, 8)].v = 0xddf;
+    dst[XY(16, 9)].v = 0xddf;
+    dst[XY(15, 10)].v = 0xddf;
+    dst[XY(14, 12)].v = 0xddf;
+    dst[XY(26, 14)].v = 0xddf;
+    dst[XY(23, 7)].v = 0xde0;
+    dst[XY(17, 9)].v = 0xde0;
+    dst[XY(24, 7)].v = 0xde1;
+    dst[XY(28, 8)].v = 0xde1;
+    dst[XY(29, 9)].v = 0xde1;
+    dst[XY(21, 11)].v = 0xde1;
+    dst[XY(29, 14)].v = 0xde1;
+    dst[XY(19, 8)].v = 0xde2;
+    dst[XY(20, 8)].v = 0xde2;
+    dst[XY(21, 8)].v = 0xde2;
+    dst[XY(25, 8)].v = 0xde2;
+    dst[XY(26, 8)].v = 0xde2;
+    dst[XY(27, 8)].v = 0xde2;
+    dst[XY(22, 8)].v = 0xde3;
+    dst[XY(18, 9)].v = 0xde3;
+    dst[XY(16, 10)].v = 0xde3;
+    dst[XY(15, 12)].v = 0xde3;
+    dst[XY(23, 8)].v = 0xde4;
+    dst[XY(19, 9)].v = 0xde4;
+    dst[XY(20, 9)].v = 0xde4;
+    dst[XY(24, 9)].v = 0xde4;
+    dst[XY(27, 9)].v = 0xde4;
+    dst[XY(17, 10)].v = 0xde4;
+    dst[XY(18, 10)].v = 0xde4;
+    dst[XY(19, 10)].v = 0xde4;
+    dst[XY(28, 10)].v = 0xde4;
+    dst[XY(16, 11)].v = 0xde4;
+    dst[XY(17, 11)].v = 0xde4;
+    dst[XY(18, 11)].v = 0xde4;
+    dst[XY(19, 11)].v = 0xde4;
+    dst[XY(16, 12)].v = 0xde4;
+    dst[XY(17, 12)].v = 0xde4;
+    dst[XY(15, 13)].v = 0xde4;
+    dst[XY(16, 13)].v = 0xde4;
+    dst[XY(15, 14)].v = 0xde4;
+    dst[XY(16, 14)].v = 0xde4;
+    dst[XY(19, 16)].v = 0xde4;
+    dst[XY(19, 17)].v = 0xde4;
+    dst[XY(20, 17)].v = 0xde4;
+    dst[XY(19, 18)].v = 0xde4;
+    dst[XY(24, 8)].v = 0xde5;
+    dst[XY(28, 9)].v = 0xde5;
+    dst[XY(20, 11)].v = 0xde5;
+    dst[XY(21, 12)].v = 0xde5;
+    dst[XY(21, 9)].v = 0xde6;
+    dst[XY(25, 9)].v = 0xde6;
+    dst[XY(20, 10)].v = 0xde6;
+    dst[XY(28, 11)].v = 0xde6;
+    dst[XY(21, 17)].v = 0xde6;
+    dst[XY(20, 18)].v = 0xde6;
+    dst[XY(22, 9)].v = 0xde7;
+    dst[XY(24, 10)].v = 0xde7;
+    dst[XY(15, 15)].v = 0xde7;
+    dst[XY(16, 15)].v = 0xde7;
+    dst[XY(19, 19)].v = 0xde7;
+    dst[XY(28, 19)].v = 0xde7;
+    dst[XY(23, 9)].v = 0xde8;
+    dst[XY(26, 9)].v = 0xde8;
+    dst[XY(27, 10)].v = 0xde8;
+    dst[XY(17, 15)].v = 0xde8;
+    dst[XY(18, 16)].v = 0xde8;
+    dst[XY(23, 10)].v = 0xde9;
+    dst[XY(26, 10)].v = 0xde9;
+    dst[XY(14, 15)].v = 0xde9;
+    dst[XY(17, 16)].v = 0xde9;
+    dst[XY(26, 18)].v = 0xde9;
+    dst[XY(27, 19)].v = 0xde9;
+    dst[XY(29, 10)].v = 0xdea;
+    dst[XY(28, 12)].v = 0xdea;
+    dst[XY(28, 13)].v = 0xdea;
+    dst[XY(29, 18)].v = 0xdea;
+    dst[XY(15, 11)].v = 0xdeb;
+    dst[XY(27, 11)].v = 0xdeb;
+    dst[XY(27, 12)].v = 0xdeb;
+    dst[XY(14, 13)].v = 0xdeb;
+    dst[XY(27, 13)].v = 0xdeb;
+    dst[XY(14, 14)].v = 0xdeb;
+    dst[XY(18, 17)].v = 0xdeb;
+    dst[XY(18, 18)].v = 0xdeb;
+    dst[XY(18, 12)].v = 0xdec;
+    dst[XY(17, 13)].v = 0xdec;
+    dst[XY(19, 12)].v = 0xded;
+    dst[XY(20, 12)].v = 0xdee;
+    dst[XY(18, 13)].v = 0xdef;
+    dst[XY(27, 15)].v = 0xdef;
+    dst[XY(19, 13)].v = 0xdf0;
+    dst[XY(19, 14)].v = 0xdf0;
+    dst[XY(20, 14)].v = 0xdf0;
+    dst[XY(21, 14)].v = 0xdf0;
+    dst[XY(21, 15)].v = 0xdf0;
+    dst[XY(27, 16)].v = 0xdf0;
+    dst[XY(28, 16)].v = 0xdf0;
+    dst[XY(20, 13)].v = 0xdf1;
+    dst[XY(28, 15)].v = 0xdf1;
+    dst[XY(21, 13)].v = 0xdf2;
+    dst[XY(17, 14)].v = 0xdf3;
+    dst[XY(18, 15)].v = 0xdf3;
+    dst[XY(20, 16)].v = 0xdf3;
+    dst[XY(18, 14)].v = 0xdf4;
+    dst[XY(19, 15)].v = 0xdf5;
+    dst[XY(20, 15)].v = 0xdf6;
+    dst[XY(27, 17)].v = 0xdf6;
+    dst[XY(26, 15)].v = 0xdf7;
+    dst[XY(29, 15)].v = 0xdf8;
+    dst[XY(21, 16)].v = 0xdf9;
+    dst[XY(26, 16)].v = 0xdfa;
+    dst[XY(29, 16)].v = 0xdfb;
+    dst[XY(26, 17)].v = 0xdfc;
+    dst[XY(28, 17)].v = 0xdfd;
+    dst[XY(29, 17)].v = 0xdfe;
+    dst[XY(27, 18)].v = 0xdff;
+    dst[XY(28, 18)].v = 0xe00;
+    dst[XY(21, 10)].v = 0xe01;
+    dst[XY(25, 10)].v = 0xe01;
+    dst[XY(21, 18)].v = 0xe01;
+    dst[XY(29, 11)].v = 0xe02;
+    dst[XY(20, 19)].v = 0xe02;
+    dst[XY(29, 19)].v = 0xe02;
+    dst[XY(18, 19)].v = 0xe03;
+    dst[XY(27, 14)].v = 0xe04;
+    dst[XY(28, 14)].v = 0xe05;
     break;
   case 60: case 61: case 62: case 63: case 64: case 65: case 72: case 73:
-    dst[XY(8, 11)] = 0xe13;
-    dst[XY(11, 11)] = 0xe14;
-    dst[XY(8, 12)] = 0xe15;
-    dst[XY(9, 12)] = 0xe16;
-    dst[XY(10, 12)] = 0xe17;
-    dst[XY(11, 12)] = 0xe18;
-    dst[XY(9, 13)] = 0xe19;
-    dst[XY(10, 13)] = 0xe1a;
-    dst[XY(9, 16)] = 0xe06;
-    dst[XY(10, 16)] = 0xe06;
-    dst[XY(8, 14)] = 0xe07;
-    dst[XY(8, 15)] = 0xe07;
-    dst[XY(9, 14)] = 0xe08;
-    dst[XY(9, 15)] = 0xe08;
-    dst[XY(10, 14)] = 0xe09;
-    dst[XY(10, 15)] = 0xe09;
-    dst[XY(11, 14)] = 0xe0a;
-    dst[XY(11, 15)] = 0xe0a;
+    dst[XY(8, 11)].v = 0xe13;
+    dst[XY(11, 11)].v = 0xe14;
+    dst[XY(8, 12)].v = 0xe15;
+    dst[XY(9, 12)].v = 0xe16;
+    dst[XY(10, 12)].v = 0xe17;
+    dst[XY(11, 12)].v = 0xe18;
+    dst[XY(9, 13)].v = 0xe19;
+    dst[XY(10, 13)].v = 0xe1a;
+    dst[XY(9, 16)].v = 0xe06;
+    dst[XY(10, 16)].v = 0xe06;
+    dst[XY(8, 14)].v = 0xe07;
+    dst[XY(8, 15)].v = 0xe07;
+    dst[XY(9, 14)].v = 0xe08;
+    dst[XY(9, 15)].v = 0xe08;
+    dst[XY(10, 14)].v = 0xe09;
+    dst[XY(10, 15)].v = 0xe09;
+    dst[XY(11, 14)].v = 0xe0a;
+    dst[XY(11, 15)].v = 0xe0a;
     break;
   case 66: case 67: case 68: case 75: case 76:
-    dst[XY(47, 8)] = 0xe96;
-    dst[XY(48, 8)] = 0xe97;
-    dst[XY(47, 9)] = 0xe9c;
-    dst[XY(47, 10)] = 0xe9c;
-    dst[XY(48, 9)] = 0xe9d;
-    dst[XY(48, 10)] = 0xe9d;
-    dst[XY(47, 11)] = 0xe9a;
-    dst[XY(48, 11)] = 0xe9b;
+    dst[XY(47, 8)].v = 0xe96;
+    dst[XY(48, 8)].v = 0xe97;
+    dst[XY(47, 9)].v = 0xe9c;
+    dst[XY(47, 10)].v = 0xe9c;
+    dst[XY(48, 9)].v = 0xe9d;
+    dst[XY(48, 10)].v = 0xe9d;
+    dst[XY(47, 11)].v = 0xe9a;
+    dst[XY(48, 11)].v = 0xe9b;
     break;
   case 69: case 70: case 77: case 78:
     x = XY(52, 16);
     goto loc_8EF7B4;
   case 71:
-    dst[XY(15, 19)] = 0xe78;
-    dst[XY(16, 19)] = 0xe79;
-    dst[XY(17, 19)] = 0xe7a;
-    dst[XY(18, 19)] = 0xe7b;
-    dst[XY(15, 20)] = 0xe7c;
-    dst[XY(16, 20)] = 0xe7d;
-    dst[XY(17, 20)] = 0xe7e;
-    dst[XY(18, 20)] = 0xe7f;
-    dst[XY(15, 21)] = 0xe80;
-    dst[XY(16, 21)] = 0xe81;
-    dst[XY(17, 21)] = 0xe82;
-    dst[XY(18, 21)] = 0xe83;
-    dst[XY(15, 22)] = 0xe84;
-    dst[XY(16, 22)] = 0xe85;
-    dst[XY(17, 22)] = 0xe86;
-    dst[XY(18, 22)] = 0xe87;
+    dst[XY(15, 19)].v = 0xe78;
+    dst[XY(16, 19)].v = 0xe79;
+    dst[XY(17, 19)].v = 0xe7a;
+    dst[XY(18, 19)].v = 0xe7b;
+    dst[XY(15, 20)].v = 0xe7c;
+    dst[XY(16, 20)].v = 0xe7d;
+    dst[XY(17, 20)].v = 0xe7e;
+    dst[XY(18, 20)].v = 0xe7f;
+    dst[XY(15, 21)].v = 0xe80;
+    dst[XY(16, 21)].v = 0xe81;
+    dst[XY(17, 21)].v = 0xe82;
+    dst[XY(18, 21)].v = 0xe83;
+    dst[XY(15, 22)].v = 0xe84;
+    dst[XY(16, 22)].v = 0xe85;
+    dst[XY(17, 22)].v = 0xe86;
+    dst[XY(18, 22)].v = 0xe87;
     break;
   case 74: case 79: case 80: case 81: case 82: case 83: case 84: case 85: case 86: case 87: case 88: case 89: case 96: case 97:
-    dst[XY(31, 26)] = 0xe1b;
-    dst[XY(32, 26)] = 0xe1c;
-    dst[XY(31, 27)] = 0xe1d;
-    dst[XY(32, 27)] = 0xe1e;
-    dst[XY(31, 28)] = 0xe1f;
-    dst[XY(32, 28)] = 0xe20;
+    dst[XY(31, 26)].v = 0xe1b;
+    dst[XY(32, 26)].v = 0xe1c;
+    dst[XY(31, 27)].v = 0xe1d;
+    dst[XY(32, 27)].v = 0xe1e;
+    dst[XY(31, 28)].v = 0xe1f;
+    dst[XY(32, 28)].v = 0xe20;
     break;
   case 90: case 91: case 92: case 99: case 100:
-    dst[XY(30, 7)] = 0xe3f;
-    dst[XY(31, 7)] = 0xe40;
-    dst[XY(32, 7)] = 0xe41;
-    dst[XY(30, 8)] = 0xe42;
-    dst[XY(31, 8)] = 0xe43;
-    dst[XY(32, 8)] = 0xe44;
-    dst[XY(30, 9)] = 0xe45;
-    dst[XY(31, 9)] = 0xe46;
-    dst[XY(32, 9)] = 0xe47;
+    dst[XY(30, 7)].v = 0xe3f;
+    dst[XY(31, 7)].v = 0xe40;
+    dst[XY(32, 7)].v = 0xe41;
+    dst[XY(30, 8)].v = 0xe42;
+    dst[XY(31, 8)].v = 0xe43;
+    dst[XY(32, 8)].v = 0xe44;
+    dst[XY(30, 9)].v = 0xe45;
+    dst[XY(31, 9)].v = 0xe46;
+    dst[XY(32, 9)].v = 0xe47;
     break;
   case 93: case 94: case 95: case 102: case 103:
-    dst[XY(51, 3)] = 0xe31;
-    dst[XY(53, 4)] = 0xe2d;
-    dst[XY(53, 5)] = 0xe2e;
-    dst[XY(53, 6)] = 0xe2f;
+    dst[XY(51, 3)].v = 0xe31;
+    dst[XY(53, 4)].v = 0xe2d;
+    dst[XY(53, 5)].v = 0xe2e;
+    dst[XY(53, 6)].v = 0xe2f;
     break;
   case 98:
     x = XY(16, 26);
     goto loc_8EF7B4;
   case 101: case 104: case 105: case 106: case 108: case 109: case 110: case 111: case 112: case 113: case 120: case 121:
-    dst[XY(17, 10)] = 0xe64;
-    dst[XY(18, 10)] = 0xe65;
-    dst[XY(19, 10)] = 0xe66;
-    dst[XY(20, 10)] = 0xe67;
-    dst[XY(17, 11)] = 0xe68;
-    dst[XY(18, 11)] = 0xe69;
-    dst[XY(19, 11)] = 0xe6a;
-    dst[XY(20, 11)] = 0xe6b;
-    dst[XY(17, 12)] = 0xe6c;
-    dst[XY(18, 12)] = 0xe6d;
-    dst[XY(19, 12)] = 0xe6e;
-    dst[XY(20, 12)] = 0xe6f;
-    dst[XY(17, 13)] = 0xe70;
-    dst[XY(18, 13)] = 0xe71;
-    dst[XY(19, 13)] = 0xe72;
-    dst[XY(20, 13)] = 0xe73;
-    dst[XY(17, 14)] = 0xe74;
-    dst[XY(18, 14)] = 0xe75;
-    dst[XY(19, 14)] = 0xe76;
-    dst[XY(20, 14)] = 0xe77;
+    dst[XY(17, 10)].v = 0xe64;
+    dst[XY(18, 10)].v = 0xe65;
+    dst[XY(19, 10)].v = 0xe66;
+    dst[XY(20, 10)].v = 0xe67;
+    dst[XY(17, 11)].v = 0xe68;
+    dst[XY(18, 11)].v = 0xe69;
+    dst[XY(19, 11)].v = 0xe6a;
+    dst[XY(20, 11)].v = 0xe6b;
+    dst[XY(17, 12)].v = 0xe6c;
+    dst[XY(18, 12)].v = 0xe6d;
+    dst[XY(19, 12)].v = 0xe6e;
+    dst[XY(20, 12)].v = 0xe6f;
+    dst[XY(17, 13)].v = 0xe70;
+    dst[XY(18, 13)].v = 0xe71;
+    dst[XY(19, 13)].v = 0xe72;
+    dst[XY(20, 13)].v = 0xe73;
+    dst[XY(17, 14)].v = 0xe74;
+    dst[XY(18, 14)].v = 0xe75;
+    dst[XY(19, 14)].v = 0xe76;
+    dst[XY(20, 14)].v = 0xe77;
     break;
   case 114: case 115: case 116: case 117: case 118: case 122: case 124: case 125: case 126: case 127:
     assert(0);
@@ -3200,7 +3200,7 @@ void Overworld_GetPitDestination() {  // 9bb860
 
   int i = 36 / 2;
   for (;;) {
-    if (kFallHole_Pos[i] == pos &(RAM16P(g_asset_ptrs[127]) + (i)) == overworld_area_index)
+    if (kFallHole_Pos[i] == pos && kFallHole_Area[i] == overworld_area_index)
       break;
     if (--i < 0) {
       savegame_is_darkworld = 0;
@@ -3220,10 +3220,10 @@ void Overworld_UseEntrance() {  // 9bbbf4
     ((xc - overworld_offset_base_x) & overworld_offset_mask_x);
 
   int x = dung_bg2[pos >> 1] * 4;
-  const uint16 *map8p = GetMap16toMap8Table();
+  const zle16_t *map8p = GetMap16toMap8Table();
 
   if (!link_direction_facing) {
-    uint16 a = map8p[x + 1] & 0x41ff;
+    uint16 a = map8p[x + 1].v & 0x41ff;
     if (a == 0xe9)
       goto do_draw;
 
@@ -3231,7 +3231,7 @@ void Overworld_UseEntrance() {  // 9bbbf4
       goto is_149_or_169;
 
     x = dung_bg2[(pos >> 1) + 1] * 4;
-    a = map8p[x] & 0x41ff;
+    a = map8p[x].v & 0x41ff;
     if (a == 0x40e9) {
       pos -= 2;
 do_draw:
@@ -3260,7 +3260,7 @@ is_149_or_169:
     }
   }
 after:
-  if (!LookupInOwEntranceTab(map8p[x + 2] & 0x1ff, map8p[x + 3] & 0x1ff)) {
+  if (!LookupInOwEntranceTab(map8p[x + 2].v & 0x1ff, map8p[x + 3].v & 0x1ff)) {
     big_key_door_message_triggered = 0;
     return;
   }
@@ -3333,7 +3333,7 @@ memoize_getout:
         nmi_load_bg_from_vram = 1;
       }
       uint16 t;
-      t = GetMap16toMap8Table()[attr * 4 + ((y & 8) >> 2) + (x & 1)];
+      t = GetMap16toMap8Table()[attr * 4 + ((y & 8) >> 2) + (x & 1)].v;
       attr = kMap8DataToTileAttr[t & 0x1ff];
       if (index_of_interacting_tile) {
         Sprite_SpawnImmediatelySmashedTerrain(index_of_interacting_tile, scratch_0, scratch_1);
@@ -3358,7 +3358,7 @@ memoize_getout:
 }
 
 void Overworld_PickHammerSfx(uint16 a) {  // 9bbf1e
-  uint16 attr = kMap8DataToTileAttr[GetMap16toMap8Table()[a * 4] & 0x1ff];
+  uint16 attr = kMap8DataToTileAttr[GetMap16toMap8Table()[a * 4].v & 0x1ff];
   uint8 y;
   if (attr < 0x50) {
     return;
@@ -3394,7 +3394,7 @@ uint8 Overworld_HandleLiftableTiles(Point16U *pt_arg) {  // 9bbf9d
     return Overworld_LiftingSmallObj(a, pos, y, pt);
   } else {
     uint16 t = a * 4 + (pt.x & 8 ? 2 : 0) + (pt.y & 8 ? 1 : 0);
-    return kMap8DataToTileAttr[GetMap16toMap8Table()[t] & 0x1ff];
+    return kMap8DataToTileAttr[GetMap16toMap8Table()[t].v & 0x1ff];
   }
 }
 
@@ -3407,7 +3407,7 @@ uint8 Overworld_LiftingSmallObj(uint16 a, uint16 pos, uint16 y, Point16U pt) {  
   Overworld_DrawMap16(pos, y);
   nmi_load_bg_from_vram = 1;
   uint16 t = a * 4 + (pt.x & 8 ? 2 : 0) + (pt.y & 8 ? 1 : 0);
-  return kMap8DataToTileAttr[GetMap16toMap8Table()[t] & 0x1ff];
+  return kMap8DataToTileAttr[GetMap16toMap8Table()[t].v & 0x1ff];
 }
 
 int Overworld_SmashRockPile(bool down_one_tile, Point16U *pt) {  // 9bc055
@@ -3452,7 +3452,7 @@ uint8 SmashRockPile_fromLift(uint16 a, uint16 pos, uint16 y, Point16U pt) {  // 
   Overworld_DoMapUpdate32x32_B(); // WARNING: The original destroys ram[0] and ram[2]
 
   uint16 t = a * 4 + (pt.x & 8 ? 2 : 0) + (pt.y & 8 ? 1 : 0);
-  return kMap8DataToTileAttr[GetMap16toMap8Table()[t] & 0x1ff];
+  return kMap8DataToTileAttr[GetMap16toMap8Table()[t].v & 0x1ff];
 }
 
 void Overworld_BombTiles32x32(uint16 x, uint16 y) {  // 9bc0f8
@@ -3564,7 +3564,7 @@ fail:
 
   const uint8 *ptr = kOverworldSecrets + kOverworldSecrets_Offs[overworld_screen_index];
   for (;;) {
-    uint16 x = *(uint16 *)ptr;
+    uint16 x = ((zle16_t *)ptr)->v;
     if (x == 0xffff)
       goto fail;
     if ((x & 0x7fff) == pos)
@@ -3606,34 +3606,34 @@ void Overworld_DrawMap16_Persist(uint16 pos, uint16 value) {  // 9bc97c
 
 void Overworld_DrawMap16(uint16 pos, uint16 value) {  // 9bc980
   pos = Overworld_FindMap16VRAMAddress(pos);
-  uint16 *dst = (RAM16P(g_ram+0x1002) + (vram_upload_offset >> 1));
-  const uint16 *src = GetMap16toMap8Table() + value * 4;
-  dst[0] = swap16(pos);
-  dst[1] = 0x300;
-  dst[2] = src[0];
-  dst[3] = src[1];
-  dst[4] = swap16(pos + 0x20);
-  dst[5] = 0x300;
-  dst[6] = src[2];
-  dst[7] = src[3];
-  dst[8] = 0xffff;
+  zle16_t *dst = (RAM16P(g_ram+0x1002) + (vram_upload_offset >> 1));
+  const zle16_t *src = GetMap16toMap8Table() + value * 4;
+  dst[0].v = swap16(pos);
+  dst[1].v = 0x300;
+  dst[2].v = src[0].v;
+  dst[3].v = src[1].v;
+  dst[4].v = swap16(pos + 0x20);
+  dst[5].v = 0x300;
+  dst[6].v = src[2].v;
+  dst[7].v = src[3].v;
+  dst[8].v = 0xffff;
   vram_upload_offset += 16;
 }
 
 void Overworld_AlterTileHardcore(uint16 pos, uint16 value) {  // 9bc9de
   dung_bg2[pos >> 1] = value;
   pos = Overworld_FindMap16VRAMAddress(pos);
-  uint16 *dst = (RAM16P(g_ram+0x1002) + (vram_upload_offset >> 1));
-  const uint16 *src = GetMap16toMap8Table() + value * 4;
-  dst[0] = swap16(pos);
-  dst[1] = 0x300;
-  dst[2] = src[0];
-  dst[3] = src[1];
-  dst[4] = swap16(pos + 0x20);
-  dst[5] = 0x300;
-  dst[6] = src[2];
-  dst[7] = src[3];
-  dst[8] = 0xffff;
+  zle16_t *dst = (RAM16P(g_ram+0x1002) + (vram_upload_offset >> 1));
+  const zle16_t *src = GetMap16toMap8Table() + value * 4;
+  dst[0].v = swap16(pos);
+  dst[1].v = 0x300;
+  dst[2].v = src[0].v;
+  dst[3].v = src[1].v;
+  dst[4].v = swap16(pos + 0x20);
+  dst[5].v = 0x300;
+  dst[6].v = src[2].v;
+  dst[7].v = src[3].v;
+  dst[8].v = 0xffff;
   vram_upload_offset += 16;
 }
 
@@ -3883,13 +3883,13 @@ common:
     TS_copy = 1;
     CGWSEL_copy = 2;
     CGADSUB_copy = 0x22;
-    uint16 *vram = RAM16P(g_ram+0x1002), *vram_end = vram + (vram_upload_offset >> 1);
+    zle16_t *vram = RAM16P(g_ram+0x1002), *vram_end = vram + (vram_upload_offset >> 1);
     do {
-      vram[0] |= 0x10;
-      if (vram[2] == 0x8aa)
-        vram[2] = 0x1e3;
-      if (vram[3] == 0x8aa)
-        vram[3] = 0x1e3;
+      vram[0].v |= 0x10;
+      if (vram[2].v == 0x8aa)
+        vram[2].v = 0x1e3;
+      if (vram[3].v == 0x8aa)
+        vram[3].v = 0x1e3;
     } while ((vram += 4) != vram_end);
     turtlerock_ctr = 0;
     subsubmodule_index++;
