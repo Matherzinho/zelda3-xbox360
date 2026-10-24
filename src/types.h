@@ -74,7 +74,7 @@ typedef struct ZELDA_LE_STRUCT { uint32 a[0x10000]; } zle32_array_t;
 #define RAMS16A(p) (((zles16_array_t*)(p))->a)
 #define RAM32A(p) (((zle32_array_t*)(p))->a)
 #define ZELDA_LOW_IDX(x) (sizeof(x) - 1)
-#define ZELDA_HIGH_IDX(x) (sizeof(x) - 2)
+#define ZELDA_HIGH_IDX(x) (sizeof(x) == 1 ? 1 : sizeof(x) - 2)  // a byte's HIBYTE is the next byte, as on the SNES
 #else
 #define ZELDA_LE_STRUCT
 #define RAM16(p) (*(uint16*)(p))
