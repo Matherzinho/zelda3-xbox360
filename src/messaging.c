@@ -2381,19 +2381,27 @@ void RenderText_Draw_CharacterTilemap() {  // 8ec97d
 }
 
 void RenderText_Draw_MessageCharacters() {  // 8ec984
+  int fast_letters = 0;  // letters drawn this frame by kFeatures0_TextFast
 RESTART:;
   uint32 cmd = Text_DecodeCmd(messaging_text_buffer[dialogue_msg_read_pos],
       &messaging_text_buffer[dialogue_msg_read_pos + 1]);
 
   switch (TEXTCMD_CMD(cmd)) {
   case kTextCmd_IsLetter:
-    if (vwf_line_speed_cur >= 2) {
+    if (enhanced_features0 & kFeatures0_TextInstant) {
+      VWF_RenderSingle(TEXTCMD_PARAM(cmd));
+      dialogue_msg_read_pos += 1 + TEXTCMD_MULTIBYTE(cmd);
+      goto RESTART;
+    }
+    if (vwf_line_speed_cur >= 2 && !(enhanced_features0 & kFeatures0_TextFast)) {
       vwf_line_speed_cur--;
       break;
     }
     VWF_RenderSingle(TEXTCMD_PARAM(cmd));
     dialogue_msg_read_pos += 1 + TEXTCMD_MULTIBYTE(cmd);
     if (vwf_line_speed_cur == 0)
+      goto RESTART;
+    if ((enhanced_features0 & kFeatures0_TextFast) && ++fast_letters < 2)
       goto RESTART;
     break;
   case kTextCmd_NextPic:  // RenderText_Draw_NextImage
@@ -2448,7 +2456,8 @@ RESTART:;
     vwf_flag_next_line = 1;
     goto COMMAND_DONE;
   case kTextCmd_Wait:  // RenderText_Draw_Wait
-    switch (joypad1L_last & 0x80 ? 1 : text_wait_countdown) {
+    // TextInstant skips timed pauses, except in the intro story (module 0x14), which scrolls by its own clock.
+    switch ((joypad1L_last & 0x80) || ((enhanced_features0 & kFeatures0_TextInstant) && main_module_index != 0x14) ? 1 : text_wait_countdown) {
     case 0:
       text_wait_countdown = kText_WaitDurations[TEXTCMD_PARAM(cmd)] - 1;
       break;

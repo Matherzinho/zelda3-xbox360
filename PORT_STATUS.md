@@ -12,14 +12,19 @@ Nintendo or Microsoft.
 - Verified under QEMU: a big-endian PowerPC build matches the original x86 build byte for byte (RAM, VRAM, CGRAM,
   OAM, SRAM and every frame's pixels) while replaying the upstream reference playthroughs in `saves/ref`
   (`tests/endian/`). The PC build's output is unchanged.
-- Xbox frontend: controller mapping in the game's input format, 4:3 picture centred on 720p, pixel format converted
-  to what Xenos displays, audio through SDL-xenon, in-game saves in `saves\sram.dat`.
+- Xbox frontend (`xbox360/platform`, reusable as snes360): controller mapping in the game's input format, picture
+  modes for 720p, audio through SDL-xenon, in-game saves in `saves\sram.dat`. Runs at full speed on a console with
+  zelda3's faster renderer.
+- In-game options menu (click the right stick), saved to `zelda3.ini`: picture mode, widescreen, language, text speed,
+  high-resolution world map, no sprite limit and zelda3's optional fixes and quality-of-life features. Every option
+  defaults to the original game.
+- The high-resolution (4x) Mode 7 renderer also matches between the big-endian and x86 builds.
 
 ## Not yet confirmed on hardware
 
-- The frontend changes above were checked against xsdk's and SDL-xenon's headers and documentation, not yet on a
-  console.
-- MSU-1 audio, widescreen, enhanced Mode 7 and the PC's snapshot/replay hotkeys are not enabled on Xbox.
+- The options menu, widescreen and text speeds were tested in a simulator of the frontend, not yet on a console.
+- MSU-1 audio and the PC's snapshot/replay hotkeys are not enabled on Xbox.
+- Other languages need assets built from a translated ROM (see BUILDING_XBOX360.md).
 
 ## Legal assets
 

@@ -44,9 +44,11 @@ int main(int argc, char **argv) {
   char err[256];
   if (!ZeldaGameLoadAssets(assets, err, sizeof err)) { fprintf(stderr, "assets: %s\n", err); return 2; }
   ZeldaGameInitialize(0, 0, "us");
-  ZeldaGameSetWantedFeatures(0);
+  ZeldaGameSetWantedFeatures(getenv("ZFEATURES") ? (uint32)strtoul(getenv("ZFEATURES"), NULL, 0) : 0);
   int replay = getenv("ZREPLAY") ? atoi(getenv("ZREPLAY")) : -1;  // replay saves/ref chapter N (0-12)
   if (replay >= 0) SaveLoadSlot(kSaveLoad_Replay, 256 + replay);
+  int load = getenv("ZLOAD") ? atoi(getenv("ZLOAD")) : -1;  // start from a chapter's state and play it live (features apply)
+  if (load >= 0) SaveLoadSlot(kSaveLoad_Load, 256 + load);
   if (getenv("ZDSP_DUMP")) {
     Dsp *d = g_zenv.player->dsp;
     for (int c = 0; c < 8; c++) {
@@ -75,7 +77,14 @@ int main(int argc, char **argv) {
   int16 audio_buf[801 * 2];
   FILE *st = getenv("ZSTATE") ? fopen(getenv("ZSTATE"), "wb") : NULL;
   for (int f = 0; f < frames; f++) {
-    ZeldaGameUpdate(PadForFrame(f));
+    static int stop_at = -2;
+    if (stop_at == -2) stop_at = getenv("ZSTOP") ? atoi(getenv("ZSTOP")) : -1;  // leave the replay here and play live
+    if (f == stop_at) PatchCommand('l');
+    if (getenv("ZFORCE_FEATURES")) {  // set the features inside a replay too (its inputs may then desync); bytes in LE order
+      uint32 v = (uint32)strtoul(getenv("ZFORCE_FEATURES"), NULL, 0);
+      for (int i = 0; i < 4; i++) g_ram[0x64c + i] = (uint8)(v >> (8 * i));
+    }
+    ZeldaGameUpdate(stop_at >= 0 && f >= stop_at ? (getenv("ZSTOP_A") && f % 40 < 3 ? kJoypadL_A : 0) : PadForFrame(f));
     int scale = PpuGetCurrentRenderScale(g_zenv.ppu, render_flags);
     int w = 256 * scale, h = 224 * scale;
     ZeldaGameRender(pix, PITCH, render_flags);
@@ -101,6 +110,17 @@ int main(int argc, char **argv) {
            (unsigned long long)hp, (unsigned long long)hr, (unsigned long long)hv, (unsigned long long)hc, (unsigned long long)hs,
            (unsigned long long)ha);
     fflush(stdout);
+    int dump_every = getenv("ZDUMP_EVERY") ? atoi(getenv("ZDUMP_EVERY")) : 0;  // also write frame%05d.ppm files
+    if (dump_every && f % dump_every == 0) {
+      char name[64]; snprintf(name, sizeof name, "frame%05d.ppm", f);
+      FILE *o = fopen(name, "wb");
+      fprintf(o, "P6\n%d %d\n255\n", w, h);
+      for (int y = 0; y < h; y++) for (int x = 0; x < w; x++) {
+        uint32 p; memcpy(&p, pix + (size_t)y * PITCH + x * 4, 4);
+        fputc((p >> 16) & 255, o); fputc((p >> 8) & 255, o); fputc(p & 255, o);
+      }
+      fclose(o);
+    }
     int st_from = getenv("ZSTATE_FROM") ? atoi(getenv("ZSTATE_FROM")) : 0;
     if (st && f >= st_from) {  // raw state, written in little-endian order on every host so files are comparable
       fwrite(g_ram, 1, 0x20000, st);

@@ -46,6 +46,11 @@ enum {
   kFeatures0_SwitchLRLimit = 32768,
 
   kFeatures0_DimFlashes = 65536,
+
+  // Dialogue: letters without the per-letter delay, two a frame (port option).
+  kFeatures0_TextFast = 131072,
+  // Dialogue: each text box appears at once and timed pauses are skipped (port option).
+  kFeatures0_TextInstant = 262144,
 };
 
 #define enhanced_features0 RAM32(g_ram+0x64c)

@@ -53,6 +53,21 @@ line when it ends normally. In-game saves are written to `saves\sram.dat` in the
 Controls follow the SNES pad by position: Xbox A/B/X/Y = SNES B/A/Y/X, LB/LT = L, RB/RT = R, Start = Start,
 Back = Select, D-pad or left stick = D-pad. Hold Back+Start for one second to quit.
 
+Click the right stick for the options menu (the game pauses): D-pad up/down chooses, left/right or A changes a value
+and applies it at once, B or Start returns to the game. Choices are saved to `zelda3.ini` beside the `.xex`; delete
+that file to return to the defaults, which are always the original game.
+
+- Picture: TV 4:3 (as on a CRT), square pixels, whole-number scale, or stretched to 16:9.
+- Widescreen: shows more of the world each side (zelda3's extended view); it fills 16:9 in the TV and square modes.
+- Text speed: normal, fast (no delay between letters) or instant (whole box at once; pauses skipped). A still
+  advances a box as on the SNES.
+- Language: the languages present in `zelda3_assets.dat`. To add one, build the assets with a translation, for
+  example `python3 assets/restool.py --extract-dialogue -r <translated ROM>` then
+  `python3 assets/restool.py --languages=<code>` (see the upstream README); restool knows which translations it
+  supports by their checksum.
+- The rest are zelda3's optional fixes and conveniences (switch items with L/R, turn while dashing, collect items
+  with the sword, more bombs and rupees, bug fixes, dimmer flashes, ...).
+
 While starting, the screen briefly turns blue (renderer up), then green (assets loaded); a red screen means
 `zelda3_assets.dat` was not found or is invalid, and the log says which.
 

@@ -79,7 +79,7 @@ void ZeldaGameInitialize(uint8 extra_left_right, uint8 msu_mode, const char *lan
   ZeldaInitialize();
   g_zenv.ppu->extraLeftRight = UintMin(extra_left_right, kPpuExtraLeftRight);
   ZeldaEnableMsu(msu_mode);
-  ZeldaSetLanguage(language ? language : "en");
+  ZeldaSetLanguage(language);  // NULL: the language the assets were built from
 }
 void ZeldaGameSetWantedFeatures(uint32 wanted_features) {
   g_wanted_zelda_features = wanted_features;
