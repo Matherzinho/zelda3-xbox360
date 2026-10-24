@@ -11,6 +11,9 @@ set(CMAKE_C_FLAGS_RELEASE "-O2")
 add_compile_options(-fno-strict-aliasing)
 set(ZELDA_ROOT "${CMAKE_CURRENT_LIST_DIR}/..")
 set(ZELDA_SDL_XENON_DIR "$ENV{HOME}/SDL-xenon" CACHE PATH "Path to the external SDL-xenon checkout")
+# SDL-xenon's build folder holds its CMake package, as its test/xsdk title uses (-DSDL3_DIR=build-xsdk).
+set(SDL3_DIR "${ZELDA_SDL_XENON_DIR}/build-xsdk" CACHE PATH "SDL-xenon build folder")
+find_package(SDL3 REQUIRED CONFIG)
 
 # Build the Xenon Xenos presentation backend and frontend without changing the PC Makefile.
 add_library(zelda_xenon_renderer OBJECT renderer.c)
@@ -32,5 +35,5 @@ target_compile_definitions(zelda_xenon_core PRIVATE SDL_ENABLE_OLD_NAMES=1)
 add_executable(zelda3_xbox360 main.c $<TARGET_OBJECTS:zelda_xenon_renderer>)
 target_include_directories(zelda3_xbox360 PRIVATE "${ZELDA_ROOT}" "${ZELDA_ROOT}/src" "${CMAKE_CURRENT_BINARY_DIR}" "${ZELDA_SDL_XENON_DIR}/include" "${ZELDA_SDL_XENON_DIR}/include/SDL3")
 target_compile_options(zelda3_xbox360 PRIVATE -Wall -Wextra)
-target_link_libraries(zelda3_xbox360 PRIVATE zelda_xenon_core ${ZELDA_SDL_XENON_DIR}/build-xsdk/libSDL3.a m)
+target_link_libraries(zelda3_xbox360 PRIVATE zelda_xenon_core SDL3::SDL3-static m)
 xsdk_add_xex(zelda3_xbox360)

@@ -6,6 +6,7 @@
 #include "game.h"
 #include "config.h"
 #include "zelda_rtl.h"
+#include "audio.h"
 #include "snes/ppu.h"
 #include "util.h"
 #include "zelda_rtl.h"
@@ -47,6 +48,8 @@ int main(int argc, char **argv) {
   enum { PITCH = 1024 * 4 };
   uint8 *pix = calloc(1024, PITCH);
   extern uint8 g_ram[131072];
+  bool audio = getenv("ZAUDIO") != NULL;  // also generate 48 kHz stereo audio each frame, as the Xbox frontend does
+  int16 audio_buf[801 * 2];
   FILE *st = getenv("ZSTATE") ? fopen(getenv("ZSTATE"), "wb") : NULL;
   for (int f = 0; f < frames; f++) {
     ZeldaGameUpdate(PadForFrame(f));
@@ -63,8 +66,15 @@ int main(int argc, char **argv) {
     uint64_t hv = fnv((uint8 *)pp->vram, 0x10000, 1469598103934665603ull);
     uint64_t hc = fnv((uint8 *)pp->cgram, 0x200, fnv((uint8 *)pp->oam, 0x220, 1469598103934665603ull));
     uint64_t hs = fnv(g_zenv.sram, 0x2000, 1469598103934665603ull);
-    printf("frame %5d scale %d pix %016llx ram %016llx vram %016llx cgoam %016llx sram %016llx\n", f, scale,
-           (unsigned long long)hp, (unsigned long long)hr, (unsigned long long)hv, (unsigned long long)hc, (unsigned long long)hs);
+    uint64_t ha = 0;
+    if (audio) {
+      ZeldaRenderAudio(audio_buf, 801, 2);
+      ZeldaDiscardUnusedAudioFrames();
+      for (int i = 0; i < 801 * 2; i++) { ha = (ha ^ (uint16)audio_buf[i]) * 0x100000001b3ull; ha ^= ha >> 29; }
+    }
+    printf("frame %5d scale %d pix %016llx ram %016llx vram %016llx cgoam %016llx sram %016llx audio %016llx\n", f, scale,
+           (unsigned long long)hp, (unsigned long long)hr, (unsigned long long)hv, (unsigned long long)hc, (unsigned long long)hs,
+           (unsigned long long)ha);
     fflush(stdout);
     int st_from = getenv("ZSTATE_FROM") ? atoi(getenv("ZSTATE_FROM")) : 0;
     if (st && f >= st_from) {  // raw state, written in little-endian order on every host so files are comparable
