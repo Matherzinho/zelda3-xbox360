@@ -85,10 +85,10 @@ static const uint8 *SimpleHdma_GetPtr(uint32 p) {
   case 0x1b00: return (uint8 *)RAM16P(g_ram+0x1DBA0);
   case 0x1be0: return (uint8 *)RAM16P(g_ram+0x1DBA0) + 0xe0;
   case 0x1bf0: return (uint8 *)RAM16P(g_ram+0x1DBA0) + 0xf0;
-  case 0xadd27: return (uint8*)kMapMode_Zooms1;
-  case 0xade07: return (uint8*)kMapMode_Zooms1 + 0xe0;
-  case 0xadee7: return (uint8*)kMapMode_Zooms2;
-  case 0xadfc7: return (uint8*)kMapMode_Zooms2 + 0xe0;
+  case 0xadd27: return (uint8*)ZELDA_OPAQUE(kMapMode_Zooms1);
+  case 0xade07: return (uint8*)ZELDA_OPAQUE(kMapMode_Zooms1) + 0xe0;
+  case 0xadee7: return (uint8*)ZELDA_OPAQUE(kMapMode_Zooms2);
+  case 0xadfc7: return (uint8*)ZELDA_OPAQUE(kMapMode_Zooms2) + 0xe0;
   case 0x600: return &g_ram[0x600];
   case 0x602: return &g_ram[0x602];
   case 0x604: return &g_ram[0x604];

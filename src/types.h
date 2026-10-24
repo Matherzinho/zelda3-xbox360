@@ -67,16 +67,21 @@ static FORCEINLINE uint UintMax(uint a, uint b) { return a > b ? a : b; }
 typedef struct ZELDA_LE_STRUCT { uint16 a[0x10000]; } zle16_array_t;
 typedef struct ZELDA_LE_STRUCT { int16 a[0x10000]; } zles16_array_t;
 typedef struct ZELDA_LE_STRUCT { uint32 a[0x10000]; } zle32_array_t;
-#define RAM16(p) (((zle16_t*)(p))->v)
-#define RAM32(p) (((zle32_t*)(p))->v)
-#define RAMS16(p) (((zles16_t*)(p))->v)
-#define RAM16A(p) (((zle16_array_t*)(p))->a)
-#define RAMS16A(p) (((zles16_array_t*)(p))->a)
-#define RAM32A(p) (((zle32_array_t*)(p))->a)
+// GCC folds a little-endian read of a constant *byte* object at a known offset in the wrong byte order (seen with
+// GCC 13 for powerpc: a static const uint8 table read through a zle16_t pointer). Passing every pointer through an
+// empty asm keeps the compiler from knowing where it points, so such reads happen at run time, correctly.
+#define ZELDA_OPAQUE(p) __extension__({ __typeof__((p) + 0) zelda_opaque_ = (p); __asm__("" : "+r"(zelda_opaque_)); zelda_opaque_; })
+#define RAM16(p) (((zle16_t*)ZELDA_OPAQUE(p))->v)
+#define RAM32(p) (((zle32_t*)ZELDA_OPAQUE(p))->v)
+#define RAMS16(p) (((zles16_t*)ZELDA_OPAQUE(p))->v)
+#define RAM16A(p) (((zle16_array_t*)ZELDA_OPAQUE(p))->a)
+#define RAMS16A(p) (((zles16_array_t*)ZELDA_OPAQUE(p))->a)
+#define RAM32A(p) (((zle32_array_t*)ZELDA_OPAQUE(p))->a)
 #define ZELDA_LOW_IDX(x) (sizeof(x) - 1)
 #define ZELDA_HIGH_IDX(x) (sizeof(x) == 1 ? 1 : sizeof(x) - 2)  // a byte's HIBYTE is the next byte, as on the SNES
 #else
 #define ZELDA_LE_STRUCT
+#define ZELDA_OPAQUE(p) (p)
 #define RAM16(p) (*(uint16*)(p))
 #define RAM32(p) (*(uint32*)(p))
 #define RAMS16(p) (*(int16*)(p))
@@ -91,8 +96,8 @@ typedef struct ZELDA_LE_STRUCT { uint32 a[0x10000]; } zle32_array_t;
 typedef struct ZELDA_LE_STRUCT { uint16 v; } zle16_t;
 typedef struct ZELDA_LE_STRUCT { int16 v; } zles16_t;
 typedef struct ZELDA_LE_STRUCT { uint32 v; } zle32_t;
-#define RAM16P(p) ((zle16_t*)(p))
-#define RAMS16P(p) ((zles16_t*)(p))
+#define RAM16P(p) ((zle16_t*)ZELDA_OPAQUE(p))
+#define RAMS16P(p) ((zles16_t*)ZELDA_OPAQUE(p))
 
 #if defined(ZELDA_XENON) && !defined(ZELDA_BIG_ENDIAN_HOST)
 #error "Xbox 360 builds must be detected as big-endian (check __BYTE_ORDER__)"

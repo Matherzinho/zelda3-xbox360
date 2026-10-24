@@ -683,7 +683,7 @@ void LoadType1ObjectSubtype1(uint8 idx, zle16_t *dst, uint16 dsto) {
     } while (--dung_draw_width_indicator);
     break;
   case 0x38:  // 38 -  Statue [L-R]
-    src = (zle16_t *)((uint8 *)src - param1 + 0xe26);
+    src = ((zle16_t *)ZELDA_OPAQUE(((uint8 *)src - param1 + 0xe26)));
     RoomDraw_GetObjectSize_1to16();
     do {
       RoomDraw_1x3_rightwards(2, src, dst), dst += XY(4, 0);
@@ -2254,7 +2254,7 @@ void Door_Draw_Helper4(uint8 door_type, uint16 dsto) {
 }
 
 const zle16_t *GetRoomDoorInfo(int room) {
-  return (zle16_t *)(kDungeonRoom + kDungeonRoomDoorOffs[room]);
+  return ((zle16_t *)ZELDA_OPAQUE((kDungeonRoom + kDungeonRoomDoorOffs[room])));
 }
 
 const uint8 *GetRoomHeaderPtr(int room) {
@@ -2405,7 +2405,7 @@ void Dungeon_PrepareNextRoomQuadrantUpload() {  // 80913f
       d->row[2].col[1].v = src[XY(1, 2)].v;
       d->row[3].col[0].v = src[XY(0, 3)].v;
       d->row[3].col[1].v = src[XY(1, 3)].v;
-      d = (UploadVram_32x32 *)((zle16_t *)d + 2);
+      d = (UploadVram_32x32 *)(((zle16_t *)ZELDA_OPAQUE(d)) + 2);
       src += 2, p += 2;
     } while (p & 0x1f);
     src += 224;
@@ -2439,7 +2439,7 @@ void TileMapPrep_NotWaterOnTag() {  // 8091d3
       d->row[2].col[1].v = src[XY(1, 2)].v;
       d->row[3].col[0].v = src[XY(0, 3)].v;
       d->row[3].col[1].v = src[XY(1, 3)].v;
-      d = (UploadVram_32x32 *)((zle16_t *)d + 2);
+      d = (UploadVram_32x32 *)(((zle16_t *)ZELDA_OPAQUE(d)) + 2);
       src += 2, p += 2;
     } while (p & 0x1f);
     src += 224;
@@ -5326,11 +5326,11 @@ void Dungeon_LoadSingleDoorTileAttribute() {  // 81d51f
   for (int i = 0; i != dung_num_toggle_floor; i += 2) {
     int j = dung_toggle_floor_pos[i >> 1];
     if ((dung_bg2_attr_table[j] & 0xf0) == 0x80) {
-      uint16 attr = ((zle16_t *)&dung_bg2_attr_table[j])->v;
+      uint16 attr = (((zle16_t *)ZELDA_OPAQUE(&dung_bg2_attr_table[j])))->v;
       WriteAttr2(j + XY(0, 0), attr | 0x1010);
       WriteAttr2(j + XY(0, 1), attr | 0x1010);
     } else {
-      uint16 attr = ((zle16_t *)&dung_bg1_attr_table[j])->v;
+      uint16 attr = (((zle16_t *)ZELDA_OPAQUE(&dung_bg1_attr_table[j])))->v;
       WriteAttr1(j + XY(0, 0), attr | 0x1010);
       WriteAttr1(j + XY(0, 1), attr | 0x1010);
     }
@@ -5338,11 +5338,11 @@ void Dungeon_LoadSingleDoorTileAttribute() {  // 81d51f
   for (int i = 0; i != dung_num_toggle_palace; i += 2) {
     int j = dung_toggle_palace_pos[i >> 1];
     if ((dung_bg2_attr_table[j] & 0xf0) == 0x80) {
-      uint16 attr = ((zle16_t *)&dung_bg2_attr_table[j])->v;
+      uint16 attr = (((zle16_t *)ZELDA_OPAQUE(&dung_bg2_attr_table[j])))->v;
       WriteAttr2(j + XY(0, 0), attr | 0x2020);
       WriteAttr2(j + XY(0, 1), attr | 0x2020);
     } else {
-      uint16 attr = ((zle16_t *)&dung_bg1_attr_table[j])->v;
+      uint16 attr = (((zle16_t *)ZELDA_OPAQUE(&dung_bg1_attr_table[j])))->v;
       WriteAttr1(j + XY(0, 0), attr | 0x2020);
       WriteAttr1(j + XY(0, 1), attr | 0x2020);
     }
@@ -5602,7 +5602,7 @@ void RevealPotItem(uint16 pos6, uint16 pos4) {  // 81e6b2
 
   int index = 0;
   for (;;) {
-    uint16 test_pos = ((zle16_t *)src_ptr)->v;
+    uint16 test_pos = (((zle16_t *)ZELDA_OPAQUE(src_ptr)))->v;
     if (test_pos == 0xffff)
       return;
     assert(!(test_pos & 0x8000));
@@ -5736,7 +5736,7 @@ uint8 OpenChestForItem(uint8 tile, int *chest_position) {  // 81eb66
     int i;
     chest_data = kDungeonRoomChests;
     for (i = 0; i < kDungeonRoomChests_SIZE; i += 3, chest_data += 3) {
-      chest_room = ((zle16_t *)chest_data)->v;
+      chest_room = (((zle16_t *)ZELDA_OPAQUE(chest_data)))->v;
       if ((chest_room & 0x7fff) == dungeon_room_index && --chest_idx < 0) {
         data = chest_data[2];
         if (chest_room & 0x8000) {

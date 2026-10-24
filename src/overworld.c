@@ -1634,7 +1634,7 @@ int OverworldCameraBoundaryCheck(int xa, int ya, int vd, int r8) {  // 82bd62
   ya >>= 1, r8 >>= 1;
 
   zle16_t *xp = (xa ? RAM16P(g_ram+0xE8) : RAM16P(g_ram+0xE2));
-  zle16_t *yp = ((zle16_t*)((uint8*)&ow_scroll_vars0 + offsetof(OwScrollVars, ystart)) + (ya));
+  zle16_t *yp = (((zle16_t*)ZELDA_OPAQUE(((uint8*)&ow_scroll_vars0 + offsetof(OwScrollVars, ystart)))) + (ya));
   if (xp->v == yp->v) {
     (RAM16P(g_ram+0x624))[ya].v = 0;
     (RAM16P(g_ram+0x624))[ya ^ 1].v = 0;
@@ -2442,10 +2442,10 @@ zle16_t *BufferAndBuildMap16Stripes_Y(zle16_t *dst) {  // 82f482
 
 void Overworld_DecompressAndDrawAllQuadrants() {  // 82f54a
   int si = overworld_screen_index;
-  Overworld_DecompressAndDrawOneQuadrant((zle16_t *)&g_ram[0x2000], si + 0);
-  Overworld_DecompressAndDrawOneQuadrant((zle16_t *)&g_ram[0x2040], si + 1);
-  Overworld_DecompressAndDrawOneQuadrant((zle16_t *)&g_ram[0x3000], si + 8);
-  Overworld_DecompressAndDrawOneQuadrant((zle16_t *)&g_ram[0x3040], si + 9);
+  Overworld_DecompressAndDrawOneQuadrant(((zle16_t *)ZELDA_OPAQUE(&g_ram[0x2000])), si + 0);
+  Overworld_DecompressAndDrawOneQuadrant(((zle16_t *)ZELDA_OPAQUE(&g_ram[0x2040])), si + 1);
+  Overworld_DecompressAndDrawOneQuadrant(((zle16_t *)ZELDA_OPAQUE(&g_ram[0x3000])), si + 8);
+  Overworld_DecompressAndDrawOneQuadrant(((zle16_t *)ZELDA_OPAQUE(&g_ram[0x3040])), si + 9);
 }
 
 static const uint8 *GetOverworldHibytes(int i) {
@@ -2468,7 +2468,7 @@ void Overworld_DecompressAndDrawOneQuadrant(zle16_t *dst, int screen) {  // 82f5
 
   map16_decode_last = 0xffff;
 
-  zle16_t *src = (zle16_t *)&g_ram[0x14000];
+  zle16_t *src = ((zle16_t *)ZELDA_OPAQUE(&g_ram[0x14000]));
   for (int j = 0; j < 16; j++) {
     for (int i = 0; i < 16; i++) {
       Overworld_ParseMap32Definition(dst, (src++)->v * 2);
@@ -2531,7 +2531,7 @@ void Overworld_ParseMap32Definition(zle16_t *dst, uint16 input) {  // 82f691
 
 void OverworldLoad_LoadSubOverlayMap32() {  // 82f7cb
   int si = overworld_screen_index;
-  Overworld_DecompressAndDrawOneQuadrant((zle16_t *)&g_ram[0x4000], si);
+  Overworld_DecompressAndDrawOneQuadrant(((zle16_t *)ZELDA_OPAQUE(&g_ram[0x4000])), si);
 }
 
 void LoadOverworldOverlay() {  // 82fd0d
@@ -2559,7 +2559,7 @@ void OverworldCopyMap16ToBuffer(const uint8 *src, uint16 r20, int r14, zle16_t *
 
   int yr = map16_load_src_off - 0x410 & 0x1fff;
   int xr = map16_load_dst_off;
-  zle16_t *tmp = (zle16_t *)(g_ram + 0x500);
+  zle16_t *tmp = ((zle16_t *)ZELDA_OPAQUE((g_ram + 0x500)));
   int n = 32;
   do {
     tmp[xr].v = WORD(src[yr]);
@@ -3564,7 +3564,7 @@ fail:
 
   const uint8 *ptr = kOverworldSecrets + kOverworldSecrets_Offs[overworld_screen_index];
   for (;;) {
-    uint16 x = ((zle16_t *)ptr)->v;
+    uint16 x = (((zle16_t *)ZELDA_OPAQUE(ptr)))->v;
     if (x == 0xffff)
       goto fail;
     if ((x & 0x7fff) == pos)

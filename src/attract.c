@@ -994,7 +994,7 @@ void Attract_BuildBackgrounds() {  // 8cf7e6
   {
     int k = 0;
     const zle16_t *p = kAttract_CopyToVram_Tab0;
-    zle16_t *dst = (zle16_t *)&g_ram[0x1006];
+    zle16_t *dst = ((zle16_t *)ZELDA_OPAQUE(&g_ram[0x1006]));
     do {
       int j = k & 3;
       do {
@@ -1006,7 +1006,7 @@ void Attract_BuildBackgrounds() {  // 8cf7e6
 
   {
     int k = 0;
-    zle16_t *dst = (zle16_t *)&g_ram[0x1006];
+    zle16_t *dst = ((zle16_t *)ZELDA_OPAQUE(&g_ram[0x1006]));
     do {
       int j = k & 1;
       const zle16_t *p = kAttract_CopyToVram_Tab1 + ((k & 0x20) >> 4);

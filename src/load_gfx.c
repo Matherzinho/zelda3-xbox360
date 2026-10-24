@@ -847,7 +847,7 @@ void LoadDefaultGraphics() {  // 80e2d0
   const uint8 *src = GetCompSpritePtr(0);
 
   zle16_t *vram_ptr = &g_zenv.vram[0x4000];
-  zle16_t *tmp = (zle16_t *)&g_ram[0xbf];
+  zle16_t *tmp = ((zle16_t *)ZELDA_OPAQUE(&g_ram[0xbf]));
   int num = 64;
   do {
     for (int i = 7; i >= 0; i--, src += 2) {
@@ -937,9 +937,9 @@ void TransferFontToVRAM() {  // 80e556
 
 void Do3To4High(zle16_t *vram_ptr, const uint8 *decomp_addr) {  // 80e5af
   for (int j = 0; j < 64; j++) {
-    zle16_t *t = (zle16_t *)(g_ram+0xbf);
+    zle16_t *t = ((zle16_t *)ZELDA_OPAQUE((g_ram+0xbf)));
     for (int i = 7; i >= 0; i--, decomp_addr += 2) {
-      uint16 d = ((zle16_t *)decomp_addr)->v;
+      uint16 d = (((zle16_t *)ZELDA_OPAQUE(decomp_addr)))->v;
       t[i].v = (d | (d >> 8)) & 0xff;
       (vram_ptr++)->v = d;
     }
@@ -953,7 +953,7 @@ void Do3To4High(zle16_t *vram_ptr, const uint8 *decomp_addr) {  // 80e5af
 void Do3To4Low(zle16_t *vram_ptr, const uint8 *decomp_addr) {  // 80e63c
   for (int j = 0; j < 64; j++) {
     for (int i = 0; i < 8; i++, decomp_addr += 2)
-      (vram_ptr++)->v = ((zle16_t *)decomp_addr)->v;
+      (vram_ptr++)->v = (((zle16_t *)ZELDA_OPAQUE(decomp_addr)))->v;
     for (int i = 0; i < 8; i++, decomp_addr += 1)
       (vram_ptr++)->v = *decomp_addr;
   }
@@ -1647,7 +1647,7 @@ void Module07_16_UpdatePegs_Step2() {  // 82974d
 }
 
 void Dungeon_UpdatePegGFXBuffer(int x, int y) {  // 829773
-  zle16_t *src = (zle16_t *)&g_ram[0xb340];
+  zle16_t *src = ((zle16_t *)ZELDA_OPAQUE(&g_ram[0xb340]));
   for (int i = 0; i < 64; i++)
     messaging_buf[i] = src[(x >> 1) + i].v;
   for (int i = 0; i < 64; i++)

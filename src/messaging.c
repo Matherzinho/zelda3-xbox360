@@ -260,7 +260,7 @@ void SaveGameFile() {  // 80894a
   memcpy(g_zenv.sram + offs + 0xf00, RAM16P(g_ram+0xF000), 0x500);
   uint16 t = 0x5a5a;
   for (int i = 0; i < 0x4fe; i += 2)
-    t -= ((zle16_t *)((char *)RAM16P(g_ram+0xF000) + i))->v;
+    t -= (((zle16_t *)ZELDA_OPAQUE(((char *)RAM16P(g_ram+0xF000) + i))))->v;
   word_7EF4FE = t;
   WORD(g_zenv.sram[offs + 0x4fe]) = t;
   WORD(g_zenv.sram[offs + 0x4fe + 0xf00]) = t;
@@ -2529,7 +2529,7 @@ void VWF_RenderSingle(int c) {  // 8ecab8
   vwf_arr[i + 1] = arrval + width;
   uint16 r10 = (c & 0x70) * 2 + (c & 0xf);
   uint16 r0 = arrval * 2;
-  const zle16_t *src2 = (zle16_t *)(kFontData + r10 * 16);
+  const zle16_t *src2 = ((zle16_t *)ZELDA_OPAQUE((kFontData + r10 * 16)));
   uint8 *mbuf = (uint8 *)RAM16P(g_ram+0x10000);
   for (int i = 0; i != 16; i += 2) {
     uint16 r4 = (src2++)->v;
@@ -2554,7 +2554,7 @@ void VWF_RenderSingle(int c) {  // 8ecab8
       WORD(mbuf[x + 0]) = r4;
   }
   uint16 r8 = vwf_line_ptr + 0x150;
-  const zle16_t *src3 = (zle16_t *)(kFontData + (r10 + 16) * 16);
+  const zle16_t *src3 = ((zle16_t *)ZELDA_OPAQUE((kFontData + (r10 + 16) * 16)));
   for (int i = 0; i != 16; i += 2) {
     uint16 r4 = (src3++)->v;
     int y = r8 + r0;
@@ -2716,7 +2716,7 @@ bool RenderText_Draw_Scroll() {  // 8ecfe2
   uint8 r2 = dialogue_scroll_speed;
   do {
     for (int i = 0; i < 0x7e0; i += 16) {
-      zle16_t *p = (zle16_t *)((uint8 *)RAM16P(g_ram+0x10000) + i);
+      zle16_t *p = ((zle16_t *)ZELDA_OPAQUE(((uint8 *)RAM16P(g_ram+0x10000) + i)));
       p[0].v = p[1].v;
       p[1].v = p[2].v;
       p[2].v = p[3].v;
@@ -2763,7 +2763,7 @@ zle16_t *RenderText_DrawBorderRow(zle16_t *d, int y) {  // 8ed2ab
 }
 
 void Text_BuildCharacterTilemap() {  // 8ed2ec
-  zle16_t *vwf300 = (zle16_t *)&g_ram[0x1300];
+  zle16_t *vwf300 = ((zle16_t *)ZELDA_OPAQUE(&g_ram[0x1300]));
   for (int i = 0; i < 126; i++)
     vwf300[i].v = text_tilemap_cur++;
   RenderText_Refresh();
@@ -2773,7 +2773,7 @@ void RenderText_Refresh() {  // 8ed307
   RenderText_DrawBorderInitialize();
   text_msgbox_topleft_copy += 0x21;
   zle16_t *d = RAM16P(g_ram+0x1002);
-  zle16_t *s = (zle16_t *)&g_ram[0x1300];
+  zle16_t *s = ((zle16_t *)ZELDA_OPAQUE(&g_ram[0x1300]));
   for (int j = 0; j != 6; j++) {
     (d++)->v = swap16(text_msgbox_topleft_copy);
     text_msgbox_topleft_copy += 0x20;

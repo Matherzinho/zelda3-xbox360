@@ -484,7 +484,7 @@ void Hud_Module_Run() {  // 8ddd36
 }
 
 void Hud_ClearTileMap() {  // 8ddd5a
-  zle16_t *target = (zle16_t *)&g_ram[0x1000];
+  zle16_t *target = ((zle16_t *)ZELDA_OPAQUE(&g_ram[0x1000]));
   for (int i = 0; i < 1024; i++)
     target[i].v = 0x207f;
   sound_effect_2 = 17;

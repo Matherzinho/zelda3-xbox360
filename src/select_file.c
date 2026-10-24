@@ -13,7 +13,7 @@
 #define selectfile_R20 WORD(g_ram[0xcc])
 static const uint8 kSelectFile_Draw_Y[3] = {0x43, 0x63, 0x83};
 bool Intro_CheckCksum(const uint8 *s) {
-  const zle16_t *src = (const zle16_t *)s;
+  const zle16_t *src = ((const zle16_t *)ZELDA_OPAQUE(s));
   uint16 sum = 0;
   for (int i = 0; i < 0x280; i++)
     sum += src[i].v;
@@ -23,7 +23,7 @@ bool Intro_CheckCksum(const uint8 *s) {
 
 zle16_t *SelectFile_Func1() {
   static const uint16 kSelectFile_Func1_Tab[4] = {0x3581, 0x3582, 0x3591, 0x3592};
-  zle16_t *dst = (zle16_t *)&g_ram[0x1002];
+  zle16_t *dst = ((zle16_t *)ZELDA_OPAQUE(&g_ram[0x1002]));
   (dst++)->v = 0x10;
   (dst++)->v = 0xff07;
   for (int i = 0; i < 1024; i++)
@@ -93,7 +93,7 @@ void SelectFile_Func17(int k) {
   static const uint16 kSelectFile_DrawName_VramOffs[3] = {8, 0x5c, 0xb0};
   static const uint16 kSelectFile_DrawName_HealthVramOffs[3] = {0x16, 0x6a, 0xbe};
   uint8 *sram = g_zenv.sram + 0x500 * k;
-  zle16_t *name = (zle16_t *)(sram + kSrmOffs_Name);
+  zle16_t *name = ((zle16_t *)ZELDA_OPAQUE((sram + kSrmOffs_Name)));
   zle16_t *dst = RAM16P(g_ram+0x1002) + kSelectFile_DrawName_VramOffs[k] / 2;
   for (int i = 5; i >= 0; i--) {
     uint16 t = (name++)->v + 0x1800;
@@ -155,7 +155,7 @@ void Module_NamePlayer_2() {
 }
 
 void Intro_FixCksum(uint8 *s) {
-  zle16_t *src = (zle16_t *)s;
+  zle16_t *src = ((zle16_t *)ZELDA_OPAQUE(s));
   uint16 sum = 0;
   for (int i = 0; i < 0x27f; i++)
     sum += src[i].v;
@@ -315,7 +315,7 @@ void FileSelect_Main() {  // 8ccebd
     selectfile_var2 = selectfile_R16;
 
   for (int k = 0; k < 3; k++) {
-    if (((zle16_t *)(cart + k * 0x500 + 0x3E5))->v == 0x55AA) {
+    if ((((zle16_t *)ZELDA_OPAQUE((cart + k * 0x500 + 0x3E5))))->v == 0x55AA) {
       selectfile_arr1[k] = 1;
       SelectFile_Func5_DrawOams(k);
       SelectFile_Func6_DrawOams2(k);
@@ -442,7 +442,7 @@ void CopyFile_SelectionAndBlinker() {  // 8cd13f
 
   for (int k = 0; k != 3; k++) {
     if (selectfile_arr1[k] & 1) {
-      const zle16_t *name = (zle16_t *)(g_zenv.sram + 0x500 * k + kSrmOffs_Name);
+      const zle16_t *name = ((zle16_t *)ZELDA_OPAQUE((g_zenv.sram + 0x500 * k + kSrmOffs_Name)));
       zle16_t *dst = RAM16P(g_ram+0x1002) + kCopyFile_SelectionAndBlinker_Dst[k] / 2;
       for (int i = 0; i != 6; i++) {
         uint16 t = (name++)->v + 0x1800;
@@ -540,7 +540,7 @@ void CopyFile_TargetSelectionAndBlink() {  // 8cd27b
     dst[10].v = t + 0x10;
     dst += 2;
     if (selectfile_arr1[k]) {
-      const zle16_t *name = (zle16_t *)(g_zenv.sram + 0x500 * k + kSrmOffs_Name);
+      const zle16_t *name = ((zle16_t *)ZELDA_OPAQUE((g_zenv.sram + 0x500 * k + kSrmOffs_Name)));
       for (int i = 0; i != 6; i++) {
         uint16 t = (name++)->v + 0x1800;
         dst[0].v = t;
@@ -748,7 +748,7 @@ void NameFile_EraseSave() {  // 8cd89c
   int offs = selectfile_R16 * 0x500;
   attract_legend_ctr = offs;
   memset(g_zenv.sram + offs, 0, 0x500);
-  zle16_t *name = (zle16_t *)(g_zenv.sram + offs + kSrmOffs_Name);
+  zle16_t *name = ((zle16_t *)ZELDA_OPAQUE((g_zenv.sram + offs + kSrmOffs_Name)));
   name[0].v = name[1].v = name[2].v = name[3].v = name[4].v = name[5].v = 0xa9;
 }
 
