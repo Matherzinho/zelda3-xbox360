@@ -363,6 +363,22 @@ class LangPT(LangUS):
   def __init__(self):
     assert len(self.alphabet) == 121
 
+# Brazilian Portuguese on the US engine ("A LENDA DE ZELDA (BR)"): the US message format, with accented letters drawn
+# over glyphs the translation does not need, and two glyphs added after [Y]. The text uses no dictionary entries, so it is
+# stored here with Portuguese ones (the dictionary is part of each language's assets).
+def _pt_br_alphabet():
+  a = list(kTextAlphabet_US) + ["[I]", "ç", "á"]
+  for code, letter in {0x17: "â", 0x18: "õ", 0x45: "ê", 0x46: "ã", 0x47: "é", 0x48: "ú", 0x49: "ó", 0x51: "í"}.items():
+    a[code] = letter
+  return a
+
+class LangPT_BR(LangUS):
+  alphabet = _pt_br_alphabet()
+  # The ROM keeps the US dictionary bytes, which read through this alphabet (e.g. "'s " is "ís ").
+  decode_dictionary = [''.join(_pt_br_alphabet()[kTextAlphabet_US.index(c)] for c in w) for w in kTextDictionary_US]
+  dictionary = [w for w in LangPT.dictionary if all(c in _pt_br_alphabet() for c in w)]
+  rom_addrs = [0x9c8000, 0x8edf40]
+
 class LangEU:
   command_lengths = kText_CommandLengths_EU
   command_names = kText_CommandNames_EU
@@ -397,6 +413,7 @@ kLanguages = {
   'es' : LangES(),
   'pl' : LangPL(),
   'pt' : LangPT(),
+  'pt-br' : LangPT_BR(),
   'redux' : LangUS(),
   'nl' : LangNL(),
   'sv' : LangSV(),
@@ -445,8 +462,9 @@ def decode_strings_generic(get_byte, lang):
         if lang != 'pt':
           assert 0
       else:
-        s += info.dictionary[c - info.DICT_BASE_DEC]
-        dict_expansion.append(len(info.dictionary[c - info.DICT_BASE_DEC]))
+        dictionary = getattr(info, 'decode_dictionary', info.dictionary)
+        s += dictionary[c - info.DICT_BASE_DEC]
+        dict_expansion.append(len(dictionary[c - info.DICT_BASE_DEC]))
     result.append((s, srcdata)) 
     if len(result) >= 397 and lang == 'pt':
       return result

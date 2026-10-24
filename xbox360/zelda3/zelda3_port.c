@@ -6,6 +6,7 @@
 #include <string.h>
 #include <sys/stat.h>
 #include "snes360.h"
+#include "s360_jobs.h"
 #include "assets.h"
 #include "audio.h"
 #include "features.h"
@@ -49,23 +50,43 @@ static S360Setting g_opts[kNumOpts] = {
 };
 
 static uint32 g_render_flags;
+static int g_language = -1, g_wanted_language;  // index into kLanguageChoices
+extern uint8 g_ram[131072];
+
+// A text box keeps the bytes of its message as they were decoded, so a new language (whose glyphs differ) waits
+// until the box is closed: module 14, submodule 2 is the game's dialogue.
+static void UpdateLanguage(void) {
+  if (g_language == g_wanted_language || (g_ram[0x10] == 14 && g_ram[0x11] == 2)) return;
+  g_language = g_wanted_language;
+  ZeldaSetLanguage(g_language ? g_language_codes[g_language] : NULL);
+  s360_log("zelda3: language %s", kLanguageChoices[g_language]);
+}
 
 // Display names for the languages zelda3's asset tool can extract (assets/restool.py --languages).
 static const char *LanguageName(const char *code) {
   static const char *const kNames[][2] = {
     { "de", "Deutsch" }, { "fr", "Fran\xC3\xA7" "ais" }, { "fr-c", "Fran\xC3\xA7" "ais CA" }, { "es", "Espa\xC3\xB1ol" },
-    { "pl", "Polski" }, { "pt", "Portugu\xC3\xAAs" }, { "nl", "Nederlands" }, { "sv", "Svenska" },
-    { "redux", "English Redux" }, { "en", "English" },
+    { "pl", "Polski" }, { "pt", "Portugu\xC3\xAAs" }, { "pt-br", "Portugu\xC3\xAAs (BR)" }, { "nl", "Nederlands" }, { "sv", "Svenska" },
+    { "redux", "English Redux" }, { "en", "English (EU)" }, { "us", "English" },
   };
   for (unsigned i = 0; i < sizeof kNames / sizeof kNames[0]; i++)
     if (strcmp(kNames[i][0], code) == 0) return kNames[i][1];
   return code;
 }
 
-// The assets hold the default language's text plus any extra languages they were built with.
+// The assets hold the default language's text (entry 0, chosen by passing NULL) plus any languages added to them
+// (restool.py --languages or add_language.py); the menu lists them in that order.
 static void FindLanguages(void) {
+  MemBlk first = kDialogueMap(0);
+  if (first.ptr) {
+    MemBlk name = FindIndexInMemblk(first, 0);
+    if (name.size > 0 && name.size < sizeof g_language_codes[0]) {
+      memcpy(g_language_codes[0], name.ptr, name.size);
+      kLanguageChoices[0] = LanguageName(g_language_codes[0]);
+    }
+  }
   int n = 1;
-  for (int i = 0; n < 15; i++) {
+  for (int i = 1; n < 15; i++) {
     MemBlk mb = kDialogueMap(i);
     if (mb.ptr == 0) break;
     MemBlk name = FindIndexInMemblk(mb, 0);
@@ -79,11 +100,21 @@ static void FindLanguages(void) {
   s360_log("zelda3: %d language(s) in the assets", n);
 }
 
+// The high-resolution world map draws its lines on the platform's worker threads (snes/ppu.c, PpuSetMode7Parallel).
+typedef struct { void (*draw)(Ppu *, int); Ppu *ppu; } Mode7Job;
+static void Mode7Item(void *arg, int i) { Mode7Job *j = arg; j->draw(j->ppu, i); }
+static void Mode7Parallel(void *ctx, void (*draw)(Ppu *, int), Ppu *ppu, int count) {
+  (void)ctx;
+  Mode7Job job = { draw, ppu };
+  s360_jobs_run(Mode7Item, &job, count);
+}
+
 // ---- Game interface ------------------------------------------------------------------------------------------------
 static bool Init(char *error, size_t error_size) {
   const char *path = getenv("ZELDA3_ASSETS");
   if (!ZeldaGameLoadAssets(path && *path ? path : "zelda3_assets.dat", error, error_size)) return false;
   ZeldaGameInitialize(0, 0, NULL);
+  if (s360_jobs_workers() > 0) PpuSetMode7Parallel(g_zenv.ppu, Mode7Parallel, NULL);
   FindLanguages();
   // In-game saves go to saves\sram.dat (ZeldaWriteSram); the folder must exist.
   if (mkdir("saves", 0777) != 0 && errno != EEXIST) s360_log("zelda3: mkdir saves failed errno=%d", errno);
@@ -130,12 +161,14 @@ static void ApplySettings(S360Aspect aspect) {
 
   int lang = o[kOptLanguage].value;
   if (lang >= ChoiceCount(&o[kOptLanguage])) lang = 0;
-  ZeldaSetLanguage(lang ? g_language_codes[lang] : NULL);
+  g_wanted_language = lang;
+  UpdateLanguage();
   s360_log("zelda3: settings extra=%d features=0x%X render=0x%X language=%s", extra, (unsigned)f,
            (unsigned)g_render_flags, kLanguageChoices[lang]);
 }
 
 static void RunFrame(uint16_t buttons) {
+  UpdateLanguage();
   ZeldaGameUpdate(buttons);  // zelda3 reads the same 12-bit order as kS360_*
 }
 

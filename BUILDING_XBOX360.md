@@ -61,12 +61,24 @@ that file to return to the defaults, which are always the original game.
 - Widescreen: shows more of the world each side (zelda3's extended view); it fills 16:9 in the TV and square modes.
 - Text speed: normal, fast (no delay between letters) or instant (whole box at once; pauses skipped). A still
   advances a box as on the SNES.
-- Language: the languages present in `zelda3_assets.dat`. To add one, build the assets with a translation, for
-  example `python3 assets/restool.py --extract-dialogue -r <translated ROM>` then
-  `python3 assets/restool.py --languages=<code>` (see the upstream README); restool knows which translations it
-  supports by their checksum.
+- Language: the languages present in `zelda3_assets.dat` (English first). A change waits for an open text box to
+  close. See "Adding a language" below.
 - The rest are zelda3's optional fixes and conveniences (switch items with L/R, turn while dashing, collect items
   with the sword, more bombs and rupees, bug fixes, dimmer flashes, ...).
+
+## Adding a language
+
+Extract the text and font from a translated ROM you own, then add them to the `zelda3_assets.dat` you already built
+(no US ROM needed for this step; the file keeps working with the same `.xex`):
+
+```sh
+python3 assets/restool.py --extract-dialogue -r <translated ROM>    # writes assets/dialogue_<code>.txt, font_<code>.png
+python3 assets/add_language.py zelda3_assets.dat <code>             # adds it, or replaces it if already there
+```
+
+`restool.py` recognises the translations it supports by checksum (`assets/util.py`): `pt-br` is "A LENDA DE ZELDA
+(BR)" on the US ROM, header or not; the others are listed in the upstream README. Building everything at once also
+works: `python3 assets/restool.py --languages=pt-br`. Do not commit or share the extracted text, font or assets.
 
 While starting, the screen briefly turns blue (renderer up), then green (assets loaded); a red screen means
 `zelda3_assets.dat` was not found or is invalid, and the log says which.

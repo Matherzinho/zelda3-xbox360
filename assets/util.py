@@ -22,6 +22,7 @@ ZELDA3_SHA1 = {
   '461FCBD700D1332009C0E85A7A136E2A8E4B111E' : ('es',  'Spanish - https://www.romhacking.net/translations/2195/'),
   '3C4D605EEFDA1D76F101965138F238476655B11D' : ('pl',  'Polish - https://www.romhacking.net/translations/5760/'),
   'D0D09ED41F9C373FE6AFDCCAFBF0DA8C88D3D90D' : ('pt',  'Portuguese - https://www.romhacking.net/translations/6530/'),
+  '3B3FEB7D34AA7EF3A544157A584131A07D99B98A' : ('pt-br', 'Portuguese (Brazil) - "A LENDA DE ZELDA (BR)", US ROM with accents drawn over unused glyphs'),
   'B2A07A59E64C498BC1B2F28728F9BF4014C8D582' : ('redux', 'English Redux - https://www.romhacking.net/translations/6657/'),
   '9325C22EB0A2A1F0017157C8B620BC3A605CEDE1' : ('redux', 'English Redux - https://www.romhacking.net/hacks/2594/'),
   'FA8ADFDBA2697C9A54D583A1284A22AC764C7637' : ('nl', 'Dutch - https://www.romhacking.net/translations/1124/'),

@@ -18,13 +18,19 @@ Nintendo or Microsoft.
 - In-game options menu (click the right stick), saved to `zelda3.ini`: picture mode, widescreen, language, text speed,
   high-resolution world map, no sprite limit and zelda3's optional fixes and quality-of-life features. Every option
   defaults to the original game.
-- The high-resolution (4x) Mode 7 renderer also matches between the big-endian and x86 builds.
+- The high-resolution (4x) Mode 7 renderer also matches between the big-endian and x86 builds, drawn on one thread
+  or shared between worker threads (the Xbox draws its lines on three worker threads on the other cores).
+- Brazilian Portuguese (`pt-br`) from "A LENDA DE ZELDA (BR)": text and font extracted from the translated ROM and
+  added to the assets with `assets/add_language.py`; switchable in the menu.
 
 ## Not yet confirmed on hardware
 
 - The options menu, widescreen and text speeds were tested in a simulator of the frontend, not yet on a console.
 - MSU-1 audio and the PC's snapshot/replay hotkeys are not enabled on Xbox.
-- Other languages need assets built from a translated ROM (see BUILDING_XBOX360.md).
+- Worker threads, picture-sized textures and the Portuguese text were tested in QEMU and a simulator of the frontend,
+  not yet on a console.
+- Only the dialogue font and text change with the language: graphics with words in them (title screen, item names
+  on the menu screen, the name entry screen) stay as in the US assets.
 
 ## Legal assets
 

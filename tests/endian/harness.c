@@ -1,3 +1,4 @@
+#include <time.h>
 // Headless determinism harness: runs the core for N frames, prints hash of frame and RAM per frame.
 // Build natively (reference) and for big-endian PowerPC under qemu-ppc; outputs must be identical.
 #include <stdio.h>
@@ -37,6 +38,13 @@ static uint16 PadForFrame(int f) {
   if (ph >= 50 && ph < 54) in |= kJoypadL_A;
   return in;
 }
+#include "../../xbox360/platform/s360_jobs.h"
+// ZTHREADS=n draws 4x4 Mode 7 lines on n worker threads, as the Xbox frontend does (the picture must not change).
+typedef struct { void (*draw)(Ppu *, int); Ppu *ppu; } Mode7Job;
+static void Mode7Item(void *arg, int i) { Mode7Job *j = arg; j->draw(j->ppu, i); }
+static void Mode7Parallel(void *ctx, void (*draw)(Ppu *, int), Ppu *ppu, int count) {
+  (void)ctx; Mode7Job j = { draw, ppu }; s360_jobs_run(Mode7Item, &j, count);
+}
 int main(int argc, char **argv) {
   const char *assets = argc > 1 ? argv[1] : "zelda3_assets.dat";
   int frames = argc > 2 ? atoi(argv[2]) : 60;
@@ -45,6 +53,7 @@ int main(int argc, char **argv) {
   if (!ZeldaGameLoadAssets(assets, err, sizeof err)) { fprintf(stderr, "assets: %s\n", err); return 2; }
   ZeldaGameInitialize(0, 0, "us");
   ZeldaGameSetWantedFeatures(getenv("ZFEATURES") ? (uint32)strtoul(getenv("ZFEATURES"), NULL, 0) : 0);
+  if (getenv("ZLANG")) ZeldaSetLanguage(getenv("ZLANG"));  // a language in the assets, e.g. pt-br
   int replay = getenv("ZREPLAY") ? atoi(getenv("ZREPLAY")) : -1;  // replay saves/ref chapter N (0-12)
   if (replay >= 0) SaveLoadSlot(kSaveLoad_Replay, 256 + replay);
   int load = getenv("ZLOAD") ? atoi(getenv("ZLOAD")) : -1;  // start from a chapter's state and play it live (features apply)
@@ -69,8 +78,10 @@ int main(int argc, char **argv) {
     unsigned long long hs = 0; for (int j = 0; j < 534 * 2; j++) hs = hs * 31 + (uint16)d->sampleBuffer[j]; printf("samplebuf %llx\n", hs);
     unsigned long long ha = 0; for (int j = 0; j < 0x10000; j++) ha = ha * 31 + g_zenv.player->ram[j]; printf("aram %llx\n", ha);
   }
-  enum { PITCH = 1024 * 4 };
+  enum { PITCH = 1792 * 4 };
   uint8 *pix = calloc(1024, PITCH);
+  if (getenv("ZTHREADS") && s360_jobs_start(atoi(getenv("ZTHREADS")), NULL) > 0) PpuSetMode7Parallel(g_zenv.ppu, Mode7Parallel, NULL);
+  if (getenv("ZEXTRA")) g_zenv.ppu->extraLeftRight = (uint8)atoi(getenv("ZEXTRA"));  // widescreen columns each side
   extern uint8 g_ram[131072];
   uint32 render_flags = getenv("ZRENDER_FLAGS") ? (uint32)atoi(getenv("ZRENDER_FLAGS")) : 0;  // 1 = new renderer
   bool audio = getenv("ZAUDIO") != NULL;  // also generate 48 kHz stereo audio each frame, as the Xbox frontend does
@@ -87,7 +98,14 @@ int main(int argc, char **argv) {
     ZeldaGameUpdate(stop_at >= 0 && f >= stop_at ? (getenv("ZSTOP_A") && f % 40 < 3 ? kJoypadL_A : 0) : PadForFrame(f));
     int scale = PpuGetCurrentRenderScale(g_zenv.ppu, render_flags);
     int w = 256 * scale, h = 224 * scale;
+    struct timespec t0, t1;
+    clock_gettime(CLOCK_MONOTONIC, &t0);
     ZeldaGameRender(pix, PITCH, render_flags);
+    clock_gettime(CLOCK_MONOTONIC, &t1);
+    static double render_us[5]; static int render_n[5];
+    render_us[scale] += (t1.tv_sec - t0.tv_sec) * 1e6 + (t1.tv_nsec - t0.tv_nsec) / 1e3; render_n[scale]++;
+    if (getenv("ZTIME") && f == frames - 1)
+      for (int k = 1; k <= 4; k *= 4) if (render_n[k]) fprintf(stderr, "render scale %d: %d frames, %.0f us avg\n", k, render_n[k], render_us[k] / render_n[k]);
     uint64_t hp = 1469598103934665603ull;
     for (int y = 0; y < h; y++) for (int x = 0; x < w; x += 2) {  // hash pixel values, not host byte order
       uint32 p0, p1; memcpy(&p0, pix + (size_t)y * PITCH + x * 4, 4); memcpy(&p1, pix + (size_t)y * PITCH + x * 4 + 4, 4);

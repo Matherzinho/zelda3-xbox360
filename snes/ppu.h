@@ -46,6 +46,21 @@ enum {
 };
 
 
+// One line of the 4x4 Mode 7 picture (kPpuRenderFlags_4x4Mode7), worked out while the frame's lines run and drawn
+// then, or later on other threads when a frontend sets Ppu.mode7Parallel: it depends only on these values, the VRAM
+// and colorMapRgb, none of which change during the rest of the frame.
+typedef struct PpuMode7Line {
+  uint8_t *row;             // the first of its four rows in the render buffer
+  uint32_t xcur[4], ycur[4], m0[4];
+  uint32_t m2;
+  uint16_t left_clear, right_clear, draw_width;  // columns blank at each side, columns drawn
+  bool half_color, has_sprites;
+  uint8_t sprites[kPpuXPixels];  // sprite colour per drawn column, 0 for none
+} PpuMode7Line;
+
+// Runs draw(ppu, i) for i in [0, count), in any order and on any threads, and returns when all are done.
+typedef void PpuParallelFunc(void *ctx, void (*draw)(struct Ppu *ppu, int i), struct Ppu *ppu, int count);
+
 struct Ppu {
   bool lineHasSprites;
   uint8_t lastBrightnessMult;
@@ -126,6 +141,12 @@ struct Ppu {
   PpuPixelPrioBufs bgBuffers[2];
   PpuPixelPrioBufs objBuffer;
   zle16_t vram[0x8000];  // little-endian, as SNES VRAM
+
+  // Deferred 4x4 Mode 7 lines (not saved in snapshots): with no mode7Parallel each line is drawn at once.
+  PpuParallelFunc *mode7Parallel;
+  void *mode7ParallelCtx;
+  PpuMode7Line *mode7Lines;
+  int mode7LineCount;
 };
 
 Ppu* ppu_init();
@@ -137,6 +158,10 @@ uint8_t ppu_read(Ppu* ppu, uint8_t adr);
 void ppu_write(Ppu* ppu, uint8_t adr, uint8_t val);
 void ppu_saveload(Ppu *ppu, SaveLoadFunc *func, void *ctx);
 void PpuBeginDrawing(Ppu *ppu, uint8_t *buffer, size_t pitch, uint32_t render_flags);
+// Finishes the lines PpuBeginDrawing started; the frame is complete in the buffer after it.
+void PpuEndDrawing(Ppu *ppu);
+// Lets the 4x4 Mode 7 lines of a frame be drawn by parallel(ctx, ...) at the end of the frame; NULL draws them in turn.
+void PpuSetMode7Parallel(Ppu *ppu, PpuParallelFunc *parallel, void *ctx);
 
 // Returns the current render scale, 1x = 256px, 2x=512px, 4x=1024px
 int PpuGetCurrentRenderScale(Ppu *ppu, uint32_t render_flags);

@@ -21,6 +21,7 @@ static int ppu_getPixelForMode7(Ppu* ppu, int x, int layer, bool priority);
 static bool ppu_getWindowState(Ppu* ppu, int layer, int x);
 static bool ppu_evaluateSprites(Ppu* ppu, int line);
 static void PpuDrawWholeLine(Ppu *ppu, uint y);
+static void PpuFlushMode7Lines(Ppu *ppu);
 
 #define IS_SCREEN_ENABLED(ppu, sub, layer) (ppu->screenEnabled[sub] & (1 << layer))
 #define IS_SCREEN_WINDOWED(ppu, sub, layer) (ppu->screenWindowed[sub] & (1 << layer))
@@ -36,10 +37,15 @@ enum {
 Ppu* ppu_init() {
   Ppu* ppu = (Ppu * )malloc(sizeof(Ppu));
   ppu->extraLeftRight = kPpuExtraLeftRight;
+  ppu->mode7Parallel = NULL;
+  ppu->mode7ParallelCtx = NULL;
+  ppu->mode7Lines = NULL;
+  ppu->mode7LineCount = 0;
   return ppu;
 }
 
 void ppu_free(Ppu* ppu) {
+  free(ppu->mode7Lines);
   free(ppu);
 }
 
@@ -180,6 +186,7 @@ void ppu_runLine(Ppu *ppu, int line) {
 
     // outside of visible range?
     if (line >= 225 + ppu->extraBottomCur) {
+      PpuFlushMode7Lines(ppu);
       memset(&ppu->renderBuffer[(line - 1) * ppu->renderPitch], 0, sizeof(uint32) * (256 + ppu->extraLeftRight * 2));
       return;
     }
@@ -187,6 +194,7 @@ void ppu_runLine(Ppu *ppu, int line) {
     if (ppu->renderFlags & kPpuRenderFlags_NewRenderer) {
       PpuDrawWholeLine(ppu, line);
     } else {
+      PpuFlushMode7Lines(ppu);
       if (ppu->mode == 7)
         ppu_calculateMode7Starts(ppu, line);
       for (int x = 0; x < 256; x++)
@@ -711,42 +719,17 @@ static FORCEINLINE float FloatInterpolate(float x, float xmin, float xmax, float
 // Upsampled version of mode7 rendering. Draws everything in 4x the normal resolution.
 // Draws directly to the pixel buffer and bypasses any math, and supports only
 // a subset of the normal features (all that zelda needs)
-static void PpuDrawMode7Upsampled(Ppu *ppu, uint y) {
-  // expand 13-bit values to signed values
-  uint32 xCenter = ((int16_t)(ppu->m7matrix[4] << 3)) >> 3, yCenter = ((int16_t)(ppu->m7matrix[5] << 3)) >> 3;
-  uint32 clippedH = (((int16_t)(ppu->m7matrix[6] << 3)) >> 3) - xCenter;
-  uint32 clippedV = (((int16_t)(ppu->m7matrix[7] << 3)) >> 3) - yCenter;
-  int32 m0v[4];
-  if (*(uint32*)&ppu->mode7PerspectiveLow == 0) {
-    m0v[0] = m0v[1] = m0v[2] = m0v[3] = ppu->m7matrix[0] << 12;
-  } else {
-    static const float kInterpolateOffsets[4] = { -1, -1 + 0.25f, -1 + 0.5f, -1 + 0.75f };
-    for (int i = 0; i < 4; i++)
-      m0v[i] = 4096.0f / FloatInterpolate((int)y + kInterpolateOffsets[i], 0, 223, ppu->mode7PerspectiveLow, ppu->mode7PerspectiveHigh);
-  }
+static void PpuDrawMode7Line(Ppu *ppu, int index) {
+  const PpuMode7Line *ln = &ppu->mode7Lines[index];
   size_t pitch = ppu->renderPitch;
-  uint8 *render_buffer_ptr = &ppu->renderBuffer[(y - 1) * 4 * pitch];
-  uint8 *dst_start = render_buffer_ptr + (ppu->extraLeftRight - ppu->extraLeftCur) * 16;
-  size_t draw_width = 256 + ppu->extraLeftCur + ppu->extraRightCur;
+  uint8 *dst_start = ln->row + ln->left_clear * 16;
   uint8 *dst_curline = dst_start;
-  uint32 m1 = ppu->m7matrix[1] << 12;  // xpos increment per vert movement
-  uint32 m2 = ppu->m7matrix[2] << 12;  // ypos increment per horiz movement
+  uint32 m2 = ln->m2;
   for (int j = 0; j < 4; j++) {
-    uint32 m0 = m0v[j], m3 = m0;
-    uint32 xpos = m0 * clippedH + m1 * (clippedV + y) + (xCenter << 20), xcur;
-    uint32 ypos = m2 * clippedH + m3 * (clippedV + y) + (yCenter << 20), ycur;
-
+    uint32 m0 = ln->m0[j], xcur = ln->xcur[j], ycur = ln->ycur[j];
     uint32 tile, pixel;
-    xpos -= (m0 + m1) >> 1;
-    ypos -= (m2 + m3) >> 1;
-    xcur = (xpos << 2) + j * m1;
-    ycur = (ypos << 2) + j * m3;
-
-    xcur -= ppu->extraLeftCur * 4 * m0;
-    ycur -= ppu->extraLeftCur * 4 * m2;
-
     uint8 *dst = dst_curline;
-    uint8 *dst_end = dst_curline + draw_width * 16;
+    uint8 *dst_end = dst_curline + ln->draw_width * 16;
 
 #define DRAW_PIXEL(mode) \
     tile = ppu->vram[(ycur >> 25 & 0x7f) * 128 + (xcur >> 25 & 0x7f)].v & 0xff;  \
@@ -755,7 +738,7 @@ static void PpuDrawMode7Upsampled(Ppu *ppu, uint y) {
     *(uint32*)dst = (mode ? (ppu->colorMapRgb[pixel] & 0xfefefe) >> 1 : ppu->colorMapRgb[pixel]); \
     xcur += m0, ycur += m2, dst += 4;
 
-    if (!ppu->halfColor) {
+    if (!ln->half_color) {
       do {
         DRAW_PIXEL(0);
         DRAW_PIXEL(0);
@@ -775,11 +758,10 @@ static void PpuDrawMode7Upsampled(Ppu *ppu, uint y) {
     dst_curline += pitch;
   }
 
-  if (ppu->lineHasSprites) {
+  if (ln->has_sprites) {
     uint8 *dst = dst_start;
-    PpuZbufType *pixels = ppu->objBuffer.data + (kPpuExtraLeftRight - ppu->extraLeftCur);
-    for (size_t i = 0; i < draw_width; i++, dst += 16) {
-      uint32 pixel = pixels[i] & 0xff;
+    for (size_t i = 0; i < ln->draw_width; i++, dst += 16) {
+      uint32 pixel = ln->sprites[i];
       if (pixel) {
         uint32 color = ppu->colorMapRgb[pixel];
         ((uint32 *)dst)[3] = ((uint32 *)dst)[2] = ((uint32 *)dst)[1] = ((uint32 *)dst)[0] = color;
@@ -790,17 +772,100 @@ static void PpuDrawMode7Upsampled(Ppu *ppu, uint y) {
     }
   }
 
-  if (ppu->extraLeftRight - ppu->extraLeftCur != 0) {
-    size_t n = 4 * sizeof(uint32) * (ppu->extraLeftRight - ppu->extraLeftCur);
+  if (ln->left_clear != 0) {
+    size_t n = 4 * sizeof(uint32) * ln->left_clear;
     for(int i = 0; i < 4; i++)
-      memset(render_buffer_ptr + pitch * i, 0, n);
+      memset(ln->row + pitch * i, 0, n);
   }
-  if (ppu->extraLeftRight - ppu->extraRightCur != 0) {
-    size_t n = 4 * sizeof(uint32) * (ppu->extraLeftRight - ppu->extraRightCur);
+  if (ln->right_clear != 0) {
+    size_t n = 4 * sizeof(uint32) * ln->right_clear;
     for (int i = 0; i < 4; i++)
-      memset(render_buffer_ptr + pitch * i + (256 + ppu->extraLeftRight * 2 - (ppu->extraLeftRight - ppu->extraRightCur)) * 4 * sizeof(uint32), 0, n);
+      memset(ln->row + pitch * i + (256 + ppu->extraLeftRight * 2 - ln->right_clear) * 4 * sizeof(uint32), 0, n);
   }
-#undef DRAW_PIXEL
+}
+
+// Draws the deferred 4x4 Mode 7 lines, on other threads when the frontend allows.
+static void PpuFlushMode7Lines(Ppu *ppu) {
+  int n = ppu->mode7LineCount;
+  if (n == 0)
+    return;
+  ppu->mode7LineCount = 0;
+  if (ppu->mode7Parallel) {
+    ppu->mode7Parallel(ppu->mode7ParallelCtx, PpuDrawMode7Line, ppu, n);
+  } else {
+    for (int i = 0; i < n; i++)
+      PpuDrawMode7Line(ppu, i);
+  }
+}
+
+void PpuSetMode7Parallel(Ppu *ppu, PpuParallelFunc *parallel, void *ctx) {
+  PpuFlushMode7Lines(ppu);
+  ppu->mode7Parallel = parallel;
+  ppu->mode7ParallelCtx = ctx;
+}
+
+void PpuEndDrawing(Ppu *ppu) {
+  PpuFlushMode7Lines(ppu);
+}
+
+// Works out a 4x4 Mode 7 line from the registers as they are for this line; it is drawn now, or at the end of the
+// frame with the others when they may go in parallel.
+static void PpuDrawMode7Upsampled(Ppu *ppu, uint y) {
+  enum { kMaxLines = 256 };
+  if (!ppu->mode7Lines) {
+    ppu->mode7Lines = (PpuMode7Line *)malloc(sizeof(PpuMode7Line) * kMaxLines);
+    if (!ppu->mode7Lines)
+      return;
+  }
+  if (ppu->mode7LineCount == kMaxLines)
+    PpuFlushMode7Lines(ppu);
+  PpuMode7Line *ln = &ppu->mode7Lines[ppu->mode7LineCount++];
+
+  // expand 13-bit values to signed values
+  uint32 xCenter = ((int16_t)(ppu->m7matrix[4] << 3)) >> 3, yCenter = ((int16_t)(ppu->m7matrix[5] << 3)) >> 3;
+  uint32 clippedH = (((int16_t)(ppu->m7matrix[6] << 3)) >> 3) - xCenter;
+  uint32 clippedV = (((int16_t)(ppu->m7matrix[7] << 3)) >> 3) - yCenter;
+  int32 m0v[4];
+  if (*(uint32*)&ppu->mode7PerspectiveLow == 0) {
+    m0v[0] = m0v[1] = m0v[2] = m0v[3] = ppu->m7matrix[0] << 12;
+  } else {
+    static const float kInterpolateOffsets[4] = { -1, -1 + 0.25f, -1 + 0.5f, -1 + 0.75f };
+    for (int i = 0; i < 4; i++)
+      m0v[i] = 4096.0f / FloatInterpolate((int)y + kInterpolateOffsets[i], 0, 223, ppu->mode7PerspectiveLow, ppu->mode7PerspectiveHigh);
+  }
+  size_t pitch = ppu->renderPitch;
+  ln->row = &ppu->renderBuffer[(y - 1) * 4 * pitch];
+  ln->left_clear = ppu->extraLeftRight - ppu->extraLeftCur;
+  ln->right_clear = ppu->extraLeftRight - ppu->extraRightCur;
+  ln->draw_width = 256 + ppu->extraLeftCur + ppu->extraRightCur;
+  ln->half_color = ppu->halfColor;
+  uint32 m1 = ppu->m7matrix[1] << 12;  // xpos increment per vert movement
+  uint32 m2 = ppu->m7matrix[2] << 12;  // ypos increment per horiz movement
+  ln->m2 = m2;
+  for (int j = 0; j < 4; j++) {
+    uint32 m0 = m0v[j], m3 = m0;
+    uint32 xpos = m0 * clippedH + m1 * (clippedV + y) + (xCenter << 20), xcur;
+    uint32 ypos = m2 * clippedH + m3 * (clippedV + y) + (yCenter << 20), ycur;
+
+    xpos -= (m0 + m1) >> 1;
+    ypos -= (m2 + m3) >> 1;
+    xcur = (xpos << 2) + j * m1;
+    ycur = (ypos << 2) + j * m3;
+
+    xcur -= ppu->extraLeftCur * 4 * m0;
+    ycur -= ppu->extraLeftCur * 4 * m2;
+    ln->xcur[j] = xcur, ln->ycur[j] = ycur, ln->m0[j] = m0;
+  }
+
+  ln->has_sprites = ppu->lineHasSprites;
+  if (ppu->lineHasSprites) {
+    PpuZbufType *pixels = ppu->objBuffer.data + (kPpuExtraLeftRight - ppu->extraLeftCur);
+    for (size_t i = 0; i < ln->draw_width; i++)
+      ln->sprites[i] = pixels[i] & 0xff;
+  }
+
+  if (!ppu->mode7Parallel)
+    PpuFlushMode7Lines(ppu);
 }
 
 static void PpuDrawBackgrounds(Ppu *ppu, int y, bool sub) {
@@ -846,6 +911,8 @@ static void PpuDrawBackgrounds(Ppu *ppu, int y, bool sub) {
 }
 
 static NOINLINE void PpuDrawWholeLine(Ppu *ppu, uint y) {
+  if (ppu->mode7LineCount && !(ppu->mode == 7 && !ppu->forcedBlank && (ppu->renderFlags & kPpuRenderFlags_4x4Mode7)))
+    PpuFlushMode7Lines(ppu);  // this line's rows may overlap the deferred lines', so those go first, in order
   if (ppu->forcedBlank) {
     uint8 *dst = &ppu->renderBuffer[(y - 1) * ppu->renderPitch];
     size_t n = sizeof(uint32) * (256 + ppu->extraLeftRight * 2);

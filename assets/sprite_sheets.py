@@ -154,6 +154,7 @@ kFontTypes = {
   'es'   : (0x8e8000, 256, 'font_es.png', (0x8ECADF, 99)),
   'pl'   : (0x8e8000, 256, 'font_pl.png', (0x8ECADF, 99)),
   'pt'   : (0x8e8000, 256, 'font_pt.png', (0x8ECADF, 121)),
+  'pt-br': (0x8e8000, 256, 'font_pt_br.png', (0x8ECADF, 99)),
   'redux': (0x8e8000, 256, 'font_redux.png', (0x8ECADF, 99)),
   'nl': (0x8e8000, 256, 'font_nl.png', (0x8ECADF, 99)),
   'sv': (0x8e8000, 256, 'font_sv.png', (0x8ECADF, 99)),

@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <time.h>
 #include "s360_internal.h"
+#include "s360_jobs.h"
 #include "xsdk/kernel.h"
 #include "xsdk/log.h"
 #include "xsdk/splash.h"
@@ -48,6 +49,9 @@ int s360_run(const S360Game *game) {
     s360_log("%s: video failed", game->name);
     return 1;
   }
+  // Workers for per-frame work, on the other two cores and the second thread of this one (audio is on 2).
+  static const int kWorkerThreads[] = { 4, 5, 3 };
+  s360_log("s360: %d worker threads", s360_jobs_start(3, kWorkerThreads));
   s360_video_show_color(kColorVideo, 20, 256, 224);
   char error[256] = "";
   if (!game->init(error, sizeof error)) {

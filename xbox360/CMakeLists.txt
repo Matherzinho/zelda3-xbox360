@@ -18,9 +18,10 @@ find_package(SDL3 REQUIRED CONFIG)
 # ---- snes360: the reusable Xbox 360 platform layer for SNES ports (video, audio, input, settings, menu) ----
 add_library(snes360 STATIC
   platform/s360_main.c platform/s360_video.c platform/s360_audio.c platform/s360_input.c
-  platform/s360_settings.c platform/s360_draw.c platform/s360_menu.c)
+  platform/s360_settings.c platform/s360_draw.c platform/s360_menu.c platform/s360_jobs.c)
 target_include_directories(snes360 PUBLIC "${CMAKE_CURRENT_LIST_DIR}/platform")
 target_compile_options(snes360 PRIVATE -Wall -Wextra -Werror)
+target_compile_definitions(snes360 PRIVATE S360_HAVE_XSDK=1)
 target_link_libraries(snes360 PUBLIC SDL3::SDL3-static)
 xsdk_add_shaders(snes360 platform/blit.vert platform/blit.frag)
 
