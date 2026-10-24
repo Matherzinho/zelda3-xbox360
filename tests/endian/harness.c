@@ -15,8 +15,17 @@ void NORETURN Die(const char *error) { fprintf(stderr, "Die: %s\n", error); exit
 void ZeldaApuLock(void) {}
 void ZeldaApuUnlock(void) {}
 
+// Hash of a byte region, 8 bytes at a time, read as little-endian words so every host gets the same value.
 static uint64_t fnv(const uint8 *p, size_t n, uint64_t h) {
-  for (size_t i = 0; i < n; i++) { h ^= p[i]; h *= 1099511628211ull; }
+  size_t i = 0;
+  for (; i + 8 <= n; i += 8) {
+    uint64_t w; memcpy(&w, p + i, 8);
+#if defined(__BYTE_ORDER__) && __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+    w = __builtin_bswap64(w);
+#endif
+    h = (h ^ w) * 0x100000001b3ull; h ^= h >> 29;
+  }
+  for (; i < n; i++) { h ^= p[i]; h *= 1099511628211ull; }
   return h;
 }
 static uint16 PadForFrame(int f) {
@@ -45,10 +54,9 @@ int main(int argc, char **argv) {
     int w = 256 * scale, h = 224 * scale;
     ZeldaGameRender(pix, PITCH, 0);
     uint64_t hp = 1469598103934665603ull;
-    for (int y = 0; y < h; y++) for (int x = 0; x < w; x++) {  // hash pixel values, not host byte order
-      uint32 p; memcpy(&p, pix + (size_t)y * PITCH + x * 4, 4);
-      uint8 b[4] = { p, p >> 8, p >> 16, p >> 24 };
-      hp = fnv(b, 4, hp);
+    for (int y = 0; y < h; y++) for (int x = 0; x < w; x += 2) {  // hash pixel values, not host byte order
+      uint32 p0, p1; memcpy(&p0, pix + (size_t)y * PITCH + x * 4, 4); memcpy(&p1, pix + (size_t)y * PITCH + x * 4 + 4, 4);
+      hp = (hp ^ (p0 | (uint64_t)p1 << 32)) * 0x100000001b3ull; hp ^= hp >> 29;
     }
     uint64_t hr = fnv(g_ram, 0x20000, 1469598103934665603ull);
     Ppu *pp = g_zenv.ppu;

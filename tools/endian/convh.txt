@@ -1,1 +1,0 @@
-src/ancilla.h src/attract.h src/dungeon.h src/ending.h src/game.h src/glsl_shader.h src/hud.h src/load_gfx.h src/messaging.h src/misc.h src/nmi.h src/overlord.h src/overworld.h src/player.h src/player_oam.h src/poly.h src/select_file.h src/sprite.h src/sprite_main.h src/tagalong.h src/tile_detect.h src/zelda_cpu_infra.h 

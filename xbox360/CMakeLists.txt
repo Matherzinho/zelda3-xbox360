@@ -1,7 +1,14 @@
 cmake_minimum_required(VERSION 3.25)
+# Optimise by default: the xsdk toolchain file sets no -O level, and an unoptimised build is too slow.
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)
+endif()
 project(zelda3_xbox360 C)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_EXTENSIONS ON)
+set(CMAKE_C_FLAGS_RELEASE "-O2")
+# The game reads bytes as words throughout (as on the PC build); keep the optimiser from assuming otherwise.
+add_compile_options(-fno-strict-aliasing)
 set(ZELDA_ROOT "${CMAKE_CURRENT_LIST_DIR}/..")
 set(ZELDA_SDL_XENON_DIR "$ENV{HOME}/SDL-xenon" CACHE PATH "Path to the external SDL-xenon checkout")
 

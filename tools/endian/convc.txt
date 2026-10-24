@@ -1,1 +1,0 @@
-src/ancilla.c src/attract.c src/dungeon.c src/ending.c src/game.c src/hud.c src/load_gfx.c src/messaging.c src/misc.c src/nmi.c src/overlord.c src/overworld.c src/player.c src/player_oam.c src/poly.c src/select_file.c src/sprite.c src/sprite_main.c src/tagalong.c src/tile_detect.c src/zelda_rtl.c 

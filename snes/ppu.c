@@ -116,7 +116,13 @@ void ppu_saveload(Ppu *ppu, SaveLoadFunc *func, void *ctx) {
   func(ctx, tmp, 520);
   for (int i = 0; i < 4; i++) {
     func(ctx, tmp, 4);
+#if ZELDA_BIG_ENDIAN_HOST
+    ppu->bgLayer[i].tilemapAdr = swap16(ppu->bgLayer[i].tilemapAdr);
+#endif
     func(ctx, &ppu->bgLayer[i].tilemapWider, 4);
+#if ZELDA_BIG_ENDIAN_HOST
+    ppu->bgLayer[i].tilemapAdr = swap16(ppu->bgLayer[i].tilemapAdr);
+#endif
     func(ctx, tmp, 4);
   }
   func(ctx, tmp, 123);
