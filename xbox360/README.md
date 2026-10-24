@@ -11,5 +11,7 @@ The port has two parts:
 - `zelda3/zelda3_port.c` is that description for zelda3: its options map onto zelda3's own features (the PC build's
   `zelda3.ini`) and render flags.
 
+Reusing this layer for another SNES game: [PORTING.md](PORTING.md).
+
 Building, controls and how to run it on the console: [../BUILDING_XBOX360.md](../BUILDING_XBOX360.md).
 `prepare-usb-package.ps1` copies the `.xex` and `zelda3_assets.dat` into `build/usb-package` for a USB drive.

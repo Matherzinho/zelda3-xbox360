@@ -17,7 +17,8 @@ same as the PC build frame for frame (checked over all 13 of the upstream refere
   settings, menu, worker threads).
 
 How to build it and run it: [BUILDING_XBOX360.md](BUILDING_XBOX360.md). What is done and what is known:
-[PORT_STATUS.md](PORT_STATUS.md). This community port is not affiliated with Nintendo or Microsoft. Supply your own
+[PORT_STATUS.md](PORT_STATUS.md). **Porting another SNES game with this platform layer:**
+[xbox360/PORTING.md](xbox360/PORTING.md). This community port is not affiliated with Nintendo or Microsoft. Supply your own
 legally obtained US ROM and build `zelda3_assets.dat` yourself; do not commit or share ROMs, extracted assets or the
 files built from them. HQ2x and HQ4x are Maxim Stepin's hqx, under the GNU LGPL 2.1 (`xbox360/platform/hqx`).
 
