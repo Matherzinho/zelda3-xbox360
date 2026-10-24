@@ -5,7 +5,8 @@ The port has two parts:
 - `platform/` is **snes360**, a small Xbox 360 platform layer meant to be reused for other SNES-derived ports. It owns
   video (a texture drawn as one quad, with the TV 4:3, square-pixel, whole-scale and stretched modes), audio through
   SDL-xenon, the controller (mapped to the SNES pad by position), settings saved to `<name>.ini` beside the `.xex`,
-  an 8x8 text overlay and the in-game options menu. A game describes itself with one `S360Game` (`snes360.h`): its
+  an 8x8 text overlay, the in-game options menu, display filters and scanlines (`blit.frag`), worker threads
+  (`s360_jobs.c`) and the HQ2x/HQ4x filters (`hqx/`, Maxim Stepin's hqx under the GNU LGPL 2.1, `hqx/COPYING`). A game describes itself with one `S360Game` (`snes360.h`): its
   frame size, its options, and functions to start, apply settings, run a frame, draw and render sound.
 - `zelda3/zelda3_port.c` is that description for zelda3: its options map onto zelda3's own features (the PC build's
   `zelda3.ini`) and render flags.

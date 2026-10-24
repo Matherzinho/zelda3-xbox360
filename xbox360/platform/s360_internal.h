@@ -7,7 +7,13 @@
 // Video (s360_video.c)
 bool s360_video_open(int max_w, int max_h);
 uint32_t *s360_video_pixels(int *pitch);
-void s360_video_present(int w, int h, int aspect);
+// The display filters (kS360Filter_*) and scanline strengths the settings offer.
+enum { kS360Filter_Nearest, kS360Filter_Bilinear, kS360Filter_SharpBilinear, kS360Filter_Hq2x, kS360Filter_Hq4x };
+enum { kS360Scanlines_Off, kS360Scanlines_Light, kS360Scanlines_Medium, kS360Scanlines_Strong };
+typedef struct S360Display { int aspect, filter, scanlines; } S360Display;
+void s360_video_present(int w, int h, const S360Display *display);
+// Microseconds the last present spent filtering and uploading the picture, before it waited for the display.
+uint32_t s360_video_prepare_us(void);
 void s360_video_show_color(uint32_t rgb, int frames, int w, int h);
 void s360_video_close(void);
 

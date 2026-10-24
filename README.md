@@ -1,11 +1,25 @@
 # Zelda3
 
-## Xbox 360 Xenon port
+## Xbox 360 port
 
-This repository also contains an experimental Xbox 360 port in `xbox360/`, based on `snesrev/zelda3` baseline commit `45a149d8b4bb8098f53d1009f76e76e7d8b79bbf`. Xenon-specific files are in `xbox360/` and use `ZELDA_XENON` where needed. This independent community port is not affiliated with Nintendo or Microsoft. See [BUILDING_XBOX360.md](BUILDING_XBOX360.md) and [PORT_STATUS.md](PORT_STATUS.md).
+This repository is a port of zelda3 to the Xbox 360, for consoles that run homebrew (RGH/JTAG), built with the
+[xsdk](https://github.com/xenosworks/xsdk) homebrew SDK. It is based on `snesrev/zelda3` commit
+`45a149d8b4bb8098f53d1009f76e76e7d8b79bbf`; the game code is unchanged apart from big-endian support, and plays the
+same as the PC build frame for frame (checked over all 13 of the upstream reference playthroughs).
 
-Supply your own legally obtained compatible US ROM and generate `zelda3_assets.dat` locally as documented in [BUILDING_XBOX360.md](BUILDING_XBOX360.md). Do not commit ROMs, extracted assets, or build output.
+- 60 frames a second at 720p, with sound, saves and the Xbox controller.
+- An options menu in the game (click the right stick): picture shape, widescreen, display filter (sharp bilinear by
+  default, bilinear, sharp pixels, HQ2x, HQ4x), CRT scanlines, language, text speed, the high-resolution world map
+  and zelda3's optional fixes and conveniences. Every default is the original game.
+- Brazilian Portuguese from a translated ROM you own, interface included, alongside English; more languages can be
+  added the same way.
+- `xbox360/platform` is a small layer meant to be reused by other SNES ports (video and filters, sound, controller,
+  settings, menu, worker threads).
 
+How to build it and run it: [BUILDING_XBOX360.md](BUILDING_XBOX360.md). What is done and what is known:
+[PORT_STATUS.md](PORT_STATUS.md). This community port is not affiliated with Nintendo or Microsoft. Supply your own
+legally obtained US ROM and build `zelda3_assets.dat` yourself; do not commit or share ROMs, extracted assets or the
+files built from them. HQ2x and HQ4x are Maxim Stepin's hqx, under the GNU LGPL 2.1 (`xbox360/platform/hqx`).
 
 A reimplementation of Zelda 3.
 

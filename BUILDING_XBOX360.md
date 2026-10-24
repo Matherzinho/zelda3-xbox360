@@ -58,6 +58,11 @@ and applies it at once, B or Start returns to the game. Choices are saved to `ze
 that file to return to the defaults, which are always the original game.
 
 - Picture: TV 4:3 (as on a CRT), square pixels, whole-number scale, or stretched to 16:9.
+- Filter: sharp bilinear (the default: crisp pixels whose edges blend over one screen pixel, so scrolling stays
+  smooth), bilinear (soft), sharp pixels (nearest), HQ2x or HQ4x (the classic emulator filters, drawn on the worker
+  threads, then shown sharp bilinear). The high-resolution world map is drawn at 4x already and skips HQ.
+- Scanlines: off, light, medium or strong. Each line of the picture is a beam that is taller where it is brighter,
+  as on a tube television; they are hidden while the menu is open. Light suits the TV picture shape best.
 - Widescreen: shows more of the world each side (zelda3's extended view); it fills 16:9 in the TV and square modes.
 - Text speed: normal, fast (no delay between letters) or instant (whole box at once; pauses skipped). A still
   advances a box as on the SNES.

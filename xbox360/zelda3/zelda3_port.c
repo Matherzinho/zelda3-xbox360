@@ -117,7 +117,9 @@ static bool Init(char *error, size_t error_size) {
   if (s360_jobs_workers() > 0) PpuSetMode7Parallel(g_zenv.ppu, Mode7Parallel, NULL);
   FindLanguages();
   // In-game saves go to saves\sram.dat (ZeldaWriteSram); the folder must exist.
-  if (mkdir("saves", 0777) != 0 && errno != EEXIST) s360_log("zelda3: mkdir saves failed errno=%d", errno);
+  struct stat st;
+  if (stat("saves", &st) != 0 && mkdir("saves", 0777) != 0 && errno != EEXIST)  // asked first, so the log stays quiet
+    s360_log("zelda3: mkdir saves failed errno=%d", errno);
   ZeldaReadSram();
   return true;
 }
@@ -133,7 +135,11 @@ static void ApplySettings(S360Aspect aspect) {
     extra = (int)((224.0f * 16.0f / 9.0f / par - 256.0f) / 2.0f);
     if (extra > kPpuExtraLeftRight) extra = kPpuExtraLeftRight;
   }
-  g_zenv.ppu->extraLeftRight = (uint8)extra;
+  Ppu *ppu = g_zenv.ppu;
+  ppu->extraLeftRight = (uint8)extra;
+  // The columns in use each side stay within the new width: zelda3 only sets them while the width isn't 0, so turning
+  // widescreen off would otherwise leave them past the picture's edge.
+  PpuSetExtraSideSpace(ppu, ppu->extraLeftCur, ppu->extraRightCur, ppu->extraBottomCur);
 
   uint32 f = 0;
   if (extra) f |= kFeatures0_ExtendScreen64 | kFeatures0_WidescreenVisualFixes;

@@ -15,6 +15,10 @@ set(ZELDA_SDL_XENON_DIR "$ENV{HOME}/SDL-xenon" CACHE PATH "Path to the external 
 set(SDL3_DIR "${ZELDA_SDL_XENON_DIR}/build-xsdk" CACHE PATH "SDL-xenon build folder")
 find_package(SDL3 REQUIRED CONFIG)
 
+# ---- hqx (LGPL 2.1, platform/hqx/COPYING): the HQ2x and HQ4x filters, kept a library of their own ----
+add_library(snes360_hqx STATIC platform/hqx/hq2x.c platform/hqx/hq4x.c platform/hqx/init.c)
+target_compile_options(snes360_hqx PRIVATE -O3)
+
 # ---- snes360: the reusable Xbox 360 platform layer for SNES ports (video, audio, input, settings, menu) ----
 add_library(snes360 STATIC
   platform/s360_main.c platform/s360_video.c platform/s360_audio.c platform/s360_input.c
@@ -22,7 +26,7 @@ add_library(snes360 STATIC
 target_include_directories(snes360 PUBLIC "${CMAKE_CURRENT_LIST_DIR}/platform")
 target_compile_options(snes360 PRIVATE -Wall -Wextra -Werror)
 target_compile_definitions(snes360 PRIVATE S360_HAVE_XSDK=1)
-target_link_libraries(snes360 PUBLIC SDL3::SDL3-static)
+target_link_libraries(snes360 PUBLIC snes360_hqx SDL3::SDL3-static)
 xsdk_add_shaders(snes360 platform/blit.vert platform/blit.frag)
 
 # ---- zelda3's game core, unchanged from the PC build apart from big-endian support ----

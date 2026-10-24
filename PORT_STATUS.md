@@ -15,6 +15,8 @@ Nintendo or Microsoft.
 - Xbox frontend (`xbox360/platform`, reusable as snes360): controller mapping in the game's input format, picture
   modes for 720p, audio through SDL-xenon, in-game saves in `saves\sram.dat`. Runs at full speed on a console with
   zelda3's faster renderer.
+- Display filters in the pixel shader (sharp bilinear by default, bilinear, sharp pixels) and CRT scanlines; HQ2x and
+  HQ4x (hqx, LGPL 2.1) on the worker threads. The log's perf lines give the time each frame spends filtering.
 - In-game options menu (click the right stick), saved to `zelda3.ini`: picture mode, widescreen, language, text speed,
   high-resolution world map, no sprite limit and zelda3's optional fixes and quality-of-life features. Every option
   defaults to the original game.
@@ -30,8 +32,8 @@ Nintendo or Microsoft.
 
 - The options menu, widescreen and text speeds were tested in a simulator of the frontend, not yet on a console.
 - MSU-1 audio and the PC's snapshot/replay hotkeys are not enabled on Xbox.
-- Worker threads, picture-sized textures and the Portuguese text were tested in QEMU and a simulator of the frontend,
-  not yet on a console.
+- The filters and scanlines were checked in a simulator of the frontend that runs the shader's maths in C; not yet on
+  a console. HQ4x is the heaviest option: if a console log shows it under 60 frames a second, HQ2x is the lighter one.
 - The title screen's lettering and the file select screen's labels are pictures in the assets, so they stay in
   English; the title would need its subtitle drawn again for each language.
 

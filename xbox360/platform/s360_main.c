@@ -21,10 +21,17 @@ void s360_log(const char *format, ...) {
 }
 
 static const char *const kAspectChoices[] = { "TV 4:3", "Quadrado", "Inteiro", "Esticar", NULL };
+static const char *const kFilterChoices[] = {
+  "Pixels", "Bilinear", "Bilinear n\xC3\xADtido", "HQ2x", "HQ4x", NULL,
+};
+static const char *const kScanlineChoices[] = { "Desligadas", "Leves", "M\xC3\xA9" "dias", "Fortes", NULL };
 static const char *const kNoYes[] = { "N\xC3\xA3o", "Sim", NULL };
+enum { kPlatAspect, kPlatFilter, kPlatScanlines, kPlatShowFps };
 static S360Setting g_platform[] = {
-  { "aspect", "Propor\xC3\xA7\xC3\xA3o", kAspectChoices, 0, kS360Aspect_TV, false },
-  { "show_fps", "Mostrar FPS", kNoYes, 0, 0, false },
+  [kPlatAspect] = { "aspect", "Propor\xC3\xA7\xC3\xA3o", kAspectChoices, 0, kS360Aspect_TV, false },
+  [kPlatFilter] = { "filter", "Filtro", kFilterChoices, kS360Filter_SharpBilinear, kS360Filter_SharpBilinear, false },
+  [kPlatScanlines] = { "scanlines", "Scanlines", kScanlineChoices, 0, kS360Scanlines_Off, false },
+  [kPlatShowFps] = { "show_fps", "Mostrar FPS", kNoYes, 0, 0, false },
 };
 enum { kNumPlatform = sizeof g_platform / sizeof g_platform[0] };
 
@@ -38,7 +45,7 @@ static void StatAdd(Stat *s, uint64_t v) { s->sum += v; if (v > s->max) s->max =
 
 static void Apply(const S360Game *game) {
   s360_audio_lock();
-  game->apply_settings((S360Aspect)g_platform[0].value);
+  game->apply_settings((S360Aspect)g_platform[kPlatAspect].value);
   s360_audio_unlock();
 }
 
@@ -70,8 +77,10 @@ int s360_run(const S360Game *game) {
   int frame = 0, quit_hold = 0, fps_shown = 0;
   bool dirty = false;
   Stat st_run = { 0, 0 }, st_draw = { 0, 0 }, st_present = { 0, 0 }, st_frame = { 0, 0 };
+  Stat st_filter = { 0, 0 }, st_input = { 0, 0 };  // filtering and upload; controller, menu and settings
   uint64_t t_last = NowUs(), t_fps = t_last;
   for (;;) {
+    uint64_t t_input = NowUs();
     S360Pad pad;
     s360_input_poll(&pad);
     const uint16_t quit_mask = INPUT_GAMEPAD_BACK | INPUT_GAMEPAD_START;
@@ -86,6 +95,7 @@ int s360_run(const S360Game *game) {
     if (menu == kS360Menu_Closed && dirty) { s360_settings_save(game, g_platform, kNumPlatform); dirty = false; }
 
     uint64_t t0 = NowUs();
+    StatAdd(&st_input, t0 - t_input);
     if (!s360_menu_is_open()) {  // the game is paused while the menu is open
       s360_audio_lock();
       game->run_frame(pad.snes);
@@ -96,7 +106,7 @@ int s360_run(const S360Game *game) {
     uint32_t *px = s360_video_pixels(&pitch);
     game->draw(px, pitch, &w, &h);
     if (s360_menu_is_open()) s360_menu_draw(px, pitch, w, h);
-    if (g_platform[1].value) {
+    if (g_platform[kPlatShowFps].value) {
       char fps[16];
       snprintf(fps, sizeof fps, "%d", fps_shown);
       int k = h >= 448 ? h / 224 : 1;
@@ -105,9 +115,13 @@ int s360_run(const S360Game *game) {
       s360_draw_set_scale(1);
     }
     uint64_t t2 = NowUs();
-    s360_video_present(w, h, g_platform[0].value);
+    // The menu is drawn without scanlines, so its text reads clearly.
+    S360Display display = { g_platform[kPlatAspect].value, g_platform[kPlatFilter].value,
+                            s360_menu_is_open() ? kS360Scanlines_Off : g_platform[kPlatScanlines].value };
+    s360_video_present(w, h, &display);
     uint64_t t3 = NowUs();
     StatAdd(&st_run, t1 - t0); StatAdd(&st_draw, t2 - t1); StatAdd(&st_present, t3 - t2); StatAdd(&st_frame, t3 - t_last);
+    StatAdd(&st_filter, s360_video_prepare_us());
     t_last = t3;
     if (++frame % 60 == 0) {  // frames a second over the last 60 frames, rounded
       fps_shown = (int)((60000000ull + (t3 - t_fps) / 2) / (t3 - t_fps));
@@ -115,12 +129,17 @@ int s360_run(const S360Game *game) {
     }
     if (frame % 600 == 0) {
       // Microseconds per frame, average/max; 16683 us is the SNES's 59.94 frames a second.
-      s360_log("%s: perf frames=%d run=%u/%u draw=%u/%u present=%u/%u frame=%u/%u (us avg/max) fps=%u.%u picture=%dx%d",
-               game->name, frame, (unsigned)(st_run.sum / 600), (unsigned)st_run.max, (unsigned)(st_draw.sum / 600),
+      // filter: the part of present that filters and uploads the picture (the rest waits for the display).
+      s360_log("%s: perf frames=%d input=%u/%u run=%u/%u draw=%u/%u present=%u/%u filter=%u/%u frame=%u/%u (us avg/max) "
+               "fps=%u.%u picture=%dx%d display=%s scanlines=%s",
+               game->name, frame, (unsigned)(st_input.sum / 600), (unsigned)st_input.max,
+               (unsigned)(st_run.sum / 600), (unsigned)st_run.max, (unsigned)(st_draw.sum / 600),
                (unsigned)st_draw.max, (unsigned)(st_present.sum / 600), (unsigned)st_present.max,
+               (unsigned)(st_filter.sum / 600), (unsigned)st_filter.max,
                (unsigned)(st_frame.sum / 600), (unsigned)st_frame.max, (unsigned)(600000000ull / st_frame.sum),
-               (unsigned)(6000000000ull / st_frame.sum % 10), w, h);
-      st_run = st_draw = st_present = st_frame = (Stat){ 0, 0 };
+               (unsigned)(6000000000ull / st_frame.sum % 10), w, h, kFilterChoices[g_platform[kPlatFilter].value],
+               kScanlineChoices[g_platform[kPlatScanlines].value]);
+      st_run = st_draw = st_present = st_frame = st_filter = st_input = (Stat){ 0, 0 };
     }
   }
   if (dirty) s360_settings_save(game, g_platform, kNumPlatform);
