@@ -70,14 +70,15 @@ int main(int argc, char **argv) {
   enum { PITCH = 1024 * 4 };
   uint8 *pix = calloc(1024, PITCH);
   extern uint8 g_ram[131072];
+  uint32 render_flags = getenv("ZRENDER_FLAGS") ? (uint32)atoi(getenv("ZRENDER_FLAGS")) : 0;  // 1 = new renderer
   bool audio = getenv("ZAUDIO") != NULL;  // also generate 48 kHz stereo audio each frame, as the Xbox frontend does
   int16 audio_buf[801 * 2];
   FILE *st = getenv("ZSTATE") ? fopen(getenv("ZSTATE"), "wb") : NULL;
   for (int f = 0; f < frames; f++) {
     ZeldaGameUpdate(PadForFrame(f));
-    int scale = PpuGetCurrentRenderScale(g_zenv.ppu, 0);
+    int scale = PpuGetCurrentRenderScale(g_zenv.ppu, render_flags);
     int w = 256 * scale, h = 224 * scale;
-    ZeldaGameRender(pix, PITCH, 0);
+    ZeldaGameRender(pix, PITCH, render_flags);
     uint64_t hp = 1469598103934665603ull;
     for (int y = 0; y < h; y++) for (int x = 0; x < w; x += 2) {  // hash pixel values, not host byte order
       uint32 p0, p1; memcpy(&p0, pix + (size_t)y * PITCH + x * 4, 4); memcpy(&p1, pix + (size_t)y * PITCH + x * 4 + 4, 4);

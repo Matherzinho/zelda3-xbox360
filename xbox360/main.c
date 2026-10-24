@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <time.h>
 #include <SDL3/SDL.h>
 #include "game.h"
 #include "zelda_rtl.h"
@@ -99,6 +100,15 @@ static void StartAudio(void) {
   xsdk_log_write("zelda3: stage=audio_ok freq=%d frames_per_block=%d", kAudioFreq, g_frames_per_block);
 }
 
+// ---- Frame timing (logged every 600 frames, to see where a slow frame goes) --------------------------------------------
+static uint64_t NowUs(void) {
+  struct timespec ts;
+  clock_gettime(CLOCK_MONOTONIC, &ts);
+  return (uint64_t)ts.tv_sec * 1000000u + (uint64_t)ts.tv_nsec / 1000u;
+}
+typedef struct { uint64_t sum, max; } Stat;
+static void StatAdd(Stat *s, uint64_t v) { s->sum += v; if (v > s->max) s->max = v; }
+
 // ---- Assets --------------------------------------------------------------------------------------------------------
 // Colour codes shown while starting, so a failure is visible without reading the log.
 enum { COLOR_RENDERER_OK = 0x0000FF, COLOR_ASSETS_FAIL = 0xFF0000, COLOR_ASSETS_OK = 0x00FF00 };
@@ -160,6 +170,10 @@ int main(void) {
 
   xsdk_log_write("zelda3: stage=main_loop_enter (hold Back+Start to quit)");
   int frame = 0, quit_hold = 0;
+  // The PC build's default: whole-line PPU rendering, ~9x faster than the per-pixel renderer.
+  const uint32_t render_flags = kPpuRenderFlags_NewRenderer;
+  Stat st_update = { 0, 0 }, st_render = { 0, 0 }, st_present = { 0, 0 }, st_frame = { 0, 0 };
+  uint64_t t_last = NowUs();
   for (;;) {
     INPUT_STATE state = { 0 };
     uint32_t input_result = XamInputGetState(0, 0, &state);
@@ -175,20 +189,34 @@ int main(void) {
       break;
     }
     if (frame == 0) xsdk_log_write("zelda3: stage=first_update_begin");
+    uint64_t t0 = NowUs();
     ZeldaApuLock();
     ZeldaGameUpdate(MapInput(&state.gamepad));
     ZeldaApuUnlock();
+    uint64_t t1 = NowUs();
     if (frame == 0) xsdk_log_write("zelda3: stage=first_update_ok");
 
     uint8_t *pixels = NULL; int pitch = 0;
     renderer.BeginDraw(256, 224, &pixels, &pitch);
     if (!pixels) { xsdk_log_write("zelda3: frame buffer unavailable"); break; }
-    ZeldaGameRender(pixels, (size_t)pitch, 0);
+    ZeldaGameRender(pixels, (size_t)pitch, render_flags);
+    uint64_t t2 = NowUs();
     if (frame == 0) xsdk_log_write("zelda3: stage=first_frame_render_ok");
     renderer.EndDraw();
+    uint64_t t3 = NowUs();
     if (frame == 0) xsdk_log_write("zelda3: stage=first_frame_present_returned");
-    if (frame == 600) xsdk_log_write("zelda3: 600 frames ran");
+    StatAdd(&st_update, t1 - t0); StatAdd(&st_render, t2 - t1); StatAdd(&st_present, t3 - t2); StatAdd(&st_frame, t3 - t_last);
+    t_last = t3;
     frame++;
+    if (frame % 600 == 0) {
+      // Microseconds per frame, average/max. 16683 us is the SNES's 59.94 frames a second.
+      xsdk_log_write("zelda3: perf frames=%d update=%u/%u render=%u/%u present=%u/%u frame=%u/%u (us avg/max) fps=%u.%u",
+                     frame, (unsigned)(st_update.sum / 600), (unsigned)st_update.max, (unsigned)(st_render.sum / 600),
+                     (unsigned)st_render.max, (unsigned)(st_present.sum / 600), (unsigned)st_present.max,
+                     (unsigned)(st_frame.sum / 600), (unsigned)st_frame.max,
+                     (unsigned)(600000000ull / st_frame.sum), (unsigned)(6000000000ull / st_frame.sum % 10));
+      st_update = st_render = st_present = st_frame = (Stat){ 0, 0 };
+    }
   }
   xsdk_log_write("zelda3: stage=renderer_close frames=%d", frame);
   zelda_xenon_renderer_close();

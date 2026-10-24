@@ -13,10 +13,9 @@
 
 // Draws the game's 256x224 frame as a textured quad on the 720p display.
 //
-// Pixel format: the PPU writes one native-endian uint32 0x00RRGGBB per pixel. Xenos reads an A8R8G8B8 texel as
-// 0xAARRGGBB stored little-endian, i.e. bytes B, G, R, A in memory (xsdk docs/HARDWARE.md, "A title's buffer on
-// screen": the CPU word 0x0000FFFF shows red), and a point-sampled texel drawn without blending reaches the frame
-// as uploaded (xsdk docs/GUIDE.md). So each pixel is uploaded as bswap32(0xFF000000 | px).
+// Pixel format: the PPU writes one native-endian uint32 0x00RRGGBB per pixel, and an A8R8G8B8 texture is sampled as
+// the CPU's own 0xAARRGGBB words (checked on the console: byte-swapping them rotated the channels, red showing as
+// cyan). So each pixel only gets an opaque alpha.
 
 enum { BUFFERS = 2, SWAP_INTERVAL = 1, BEGIN_TIMEOUT_MS = 5000, MAX_W = 1024, MAX_H = 1024, STRIDE = 16 };
 static const XsdkVertexElement layout[] = {
@@ -28,8 +27,7 @@ static XsdkShader vs, ps;
 static XsdkTexture frame;
 static XsdkSamplerState sampler;
 static volatile uint32_t *vertices;
-static uint32_t *staging;   // what the game draws into (native 0x00RRGGBB)
-static uint32_t *upload;    // the same pixels in the texel byte order Xenos reads
+static uint32_t *staging;   // what the game draws into (native 0x00RRGGBB), uploaded as 0xFFRRGGBB
 static uint32_t sw, sh, dw, dh;
 static bool open;
 static bool logged_first_present;
@@ -86,8 +84,7 @@ bool zelda_xenon_renderer_open(uint32_t width, uint32_t height) {
                            .address_v = XSDK_ADDRESS_CLAMP };
   xsdk_texture_sampler_state(&sampler, &sm);
   staging = calloc(sw * sh, 4);
-  upload = calloc(sw * sh, 4);
-  if (!staging || !upload) { xsdk_log_write("zelda3: renderer staging allocation failed"); return false; }
+  if (!staging) { xsdk_log_write("zelda3: renderer staging allocation failed"); return false; }
   open = true;
   logged_first_present = false;
   xsdk_log_write("zelda3: renderer stage=open_ok");
@@ -108,8 +105,8 @@ void zelda_xenon_renderer_begin(int width, int height, uint8_t **pixels, int *ou
 void zelda_xenon_renderer_end(void) {
   if (!open) return;
   for (uint32_t i = 0; i < sw * sh; i++)
-    upload[i] = __builtin_bswap32(0xFF000000u | staging[i]);
-  xsdk_texture_upload(&frame, 0, upload, sw * 4);
+    staging[i] |= 0xFF000000u;
+  xsdk_texture_upload(&frame, 0, staging, sw * 4);
   xsdk_gpu_invalidate(frame.address, frame.size_bytes);
   uint32_t address;
   NTSTATUS status = xsdk_present_begin(&address, BEGIN_TIMEOUT_MS);
@@ -140,7 +137,6 @@ void zelda_xenon_renderer_show_color(uint32_t rgb, int frames) {
 
 void zelda_xenon_renderer_close(void) {
   free(staging); staging = NULL;
-  free(upload); upload = NULL;
   if (vertices) xsdk_gpu_free((void *)vertices);
   vertices = NULL;
   if (frame.texels) xsdk_texture_free(&frame);
